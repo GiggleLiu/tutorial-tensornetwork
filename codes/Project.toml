@@ -1,0 +1,3 @@
+[deps]
+TensorQEC = "0500ac79-7fb5-4262-aaea-37bb1845d1ef"
+Yao = "5872b779-8223-5990-8dd0-5abbb0748c8c"
