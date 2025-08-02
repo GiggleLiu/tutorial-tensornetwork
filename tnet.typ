@@ -54,7 +54,7 @@ Advanced Materials Thrust, Function Hub, HKUST(GZ)])
 
 #pagebreak()
 
-= Tensor networks
+= Tensor Networks
 _Tensor network_ is an important concept in quantum physics and quantum information, it is similar to  _einsum_@Harris2020, _unweighted probability graph_@Bishop2006, _sum product network_ and _junction tree_@Villescas2023 in other fields.
 It has been widely used to simulate quantum circuits@Markov2008, decode quantum error correction codes (which reference?), compress neural networks@Qing2024, and simulate the dynamics of a quantum system@Haegeman2016.
 
@@ -115,7 +115,7 @@ From the diagram, we can see the representation of $tr(A B C)$, $tr(C A B)$ and 
 ])
 
 
-== Einsum Notation and Computational Complexity
+== Practice: Einsum notation and computational complexity
 In the program, a tensor network topology can be specified with `einsum` notation, which uses a string to denote the tensor network topology. For example, the matrix multiplication can be represented as `ij,jk->ik`. The intputs and outputs are separated by `->`, and the indices of different input tensors are separated by commas.
 In the following, we use the `OMEinsum` package to compute some simple tensor network contractions.
 
@@ -189,7 +189,7 @@ The kronecker product of two matrices $A_(i j)$ and $B_(k l)$, i.e. $A_(i j) tim
   content((0, 1), `ij,kl->ijkl`)
 }))
 
-== Contraction Order Optimization
+== Contraction order optimization
 
 Tensor networks can be contracted pairwise, with a given contraction order.
 The contraction complexity is determined by the chosen contraction order represented by a binary tree.
@@ -580,7 +580,7 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 })))
 
 
-=== Tensor train decomposition
+== Practice: Tensor train decomposition
 
 #align(center, text(10pt, canvas({
   import draw: *
@@ -704,7 +704,7 @@ $
 
 
 
-= Quantum circuit simulation
+= Quantum Circuit Simulation
 - initial state, product state
 - single-qubit gate, two-qubit gate, diagonal gate and CNOT gates.
 - expectation values
@@ -888,11 +888,10 @@ which can be simplified to
 Question: How to compute $angle.l "GHZ"|O|"GHZ" angle.r$ and what is the complexity?
 ])
 
-=== Example: Hadamard test
+== Practice: Hadamard test
 
 The Hadamard test is a quantum algorithm used to estimate the expectation value of a unitary operator $U$ with respect to a quantum state $|psi angle.r$. It provides a way to measure $angle.l psi | U | psi angle.r$ using an ancilla qubit.
 
-#exampleblock([
 *Hadamard test circuit*
 
 The Hadamard test circuit is shown below:
@@ -989,9 +988,6 @@ The corresponding tensor network representation is:
 #raw(read("codes/hadamardtest.jl"), lang: "julia", block: true)
 
 This implementation demonstrates how the Hadamard test can be used to estimate expectation values of unitary operators, which is fundamental for variational quantum algorithms and quantum machine learning.
-])
-
-
 
 === Implementation example
 
@@ -1004,7 +1000,7 @@ This example demonstrates how to prepare a GHZ state using both quill for quantu
 
 == Pauli basis and depolarizing error
 
-= Quantum error correction
+= Quantum Error Correction
 
 == Probabilistic modeling
 === Hidden Markov model
@@ -1088,8 +1084,9 @@ which solves the decoding problem.
 Since this tensor network has a chain structure, its contraction is computationally efficient.
 This algorithm is equivalent to the Viterbi algorithm.
 
+== Tanner graph
 === Surface code
 
-== Circuit level decoding
+== Practice: Circuit level decoding
 
 #bibliography("refs.bib")
