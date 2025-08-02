@@ -7,7 +7,6 @@ using .YaoQASMReader: yaocircuit_from_qasm
 using OMEinsum
 
 function main(; optimizer=TreeSA(), circuit_name = "sycamore_53_8_0")
-    # circuit source: https://github.com/brenjohn/Contraction-Order-Bench/tree/main/data/circuits
     @info("Running circuit `$(circuit_name)` with optimizer: $(optimizer)")
 
     # Create the TensorNetworkCircuit object for the circuit
