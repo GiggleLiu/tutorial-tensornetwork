@@ -5,7 +5,7 @@
 #import "@preview/quill:0.7.1": *
 
 #set math.equation(numbering: "(1)")
-
+#show heading.where(level: 1): set text(20pt)
 #show: thmrules
 
 #let definition = thmbox("definition", "Definition", inset: (x: 1.2em, top: 1em, bottom: 1em), base: none, stroke: black)
@@ -42,11 +42,16 @@
   )
 }
 
-#align(center, [= Tensor Networks\
+#align(center, [#text(22pt)[Tensor Networks for quantum circuit simulation and quantum error correction]\
 _Jin-Guo Liu_])
 
-= What is a tensor network?
+#outline()
 
+#pagebreak()
+
+= Tensor networks
+
+== Definition
 _Tensor network_ is a diagrammatic representation of tensor _contractions_.
 
 - tensor
@@ -170,7 +175,7 @@ When there are only one or two tensors involved, the strings are easy to read. H
 
 
 
-= Why do you need tensor networks?
+=== Why do you need tensor networks?
 
 It can be used to:
 - efficiently simulate shallow quantum circuits@Markov2008,
@@ -178,7 +183,7 @@ It can be used to:
 - compress neural networks@Qing2024.
 - simulate the dynamics of a quantum system@Haegeman2016.
 
-== Topological view of tensor algebra
+=== Topological view of tensor algebra
 
 #exampleblock([
 *Example: Proving trace permutation rule*
@@ -228,193 +233,7 @@ The kronecker product of two matrices $A_(i j)$ and $B_(k l)$, i.e. $A_(i j) tim
   content((0, 1), `ij,kl->ijkl`)
 }))
 
-
-== Quantum computing with tensor networks
-- initial state, product state
-- single-qubit gate, two-qubit gate, diagonal gate and CNOT gates.
-- expectation values
-
-Quantum circuits provide a natural setting for tensor network representations, where quantum gates are represented as tensors and quantum states as vectors. This mapping allows us to efficiently simulate quantum circuits using tensor network contraction algorithms.
-
-=== Basic quantum gates as tensors
-
-In quantum computing, a quantum state initialized to $|0 angle.r^(times.circle n)$ can be represented as a direct product of $n$ vectors:
-#figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  let n = 2
-  for j in range(n){
-    tensor((0, -j), "init", s[$|0 angle.r$])
-    line("init", (1, -j))
-  }
-  content((0, -2), s[$dots.v$])
-  tensor((0, -3), "init", s[$|0 angle.r$])
-  line("init", (1, -3))
-}))
-where $|0 angle.r = mat(1; 0)$. A single-qubit gate $U$ can be represented as a rank-2 tensor. For example, if we want to apply a Hadamard gate $H$ to the first qubit, we can represent it as:
-
-#figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  tensor((0, 0), "init", s[$|0 angle.r$])
-  tensor((1, 0.0), "H", s[$H$])
-  line("init", "H")
-  line("H", (2, 0))
-
-  tensor((0, -1), "init", s[$|0 angle.r$])
-  line("init", (1, -1))
-
-  content((0, -2), s[$dots.v$])
-  tensor((0, -3), "init", s[$|0 angle.r$])
-  line("init", (1, -3))
-}))
-
-It can be generalized to multiple qubits. Some quantum gates have more detailed structures, such as the CNOT gate:
-#figure(canvas({
-  import draw: *
-  let radius = 0.3
-  let dx = 1.5
-  let dy = 0.8
-  line((0, dy), (dx, dy), name: "a")
-  line((0, -dy), (dx, -dy), name: "b")
-  circle("a.mid", radius: 0.1, fill:black)
-  circle("b.mid", radius: radius)
-  line("a.mid", (rel: (0, -radius), to: "b.mid"))
-  content((2.3, 0), "=")
-  let W = 4
-  let ddx = 0.8
-  line((W - ddx, dy), (W + dx + ddx, dy), name: "c")
-  tensor((W + dx/2, 0), "H1", [$H$])
-  line("c.mid", "H1")
-  line((W + dx/2, -dy), "H1")
-  tensor((W, -dy), "H2", [$H$])
-  tensor((W + dx, -dy), "H3", [$H$])
-  line((W - ddx, -dy), "H2")
-  line((W + ddx + dx, -dy), "H3")
-  line("H2", "H3")
-}))
-where we ignored the extra constant factor $sqrt(2)$ on the right side.
-
-== Useful rules
-
-#figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  tensor((0, 0), "init", s[$|0 angle.r$])
-  tensor((1, 0), "H", s[$H$])
-  line("init", "H")
-  line("H", (rel: (1, 0)))
-  content((3, 0), "=")
-  tensor((4, 0), "id", s[$"id"$])
-  line("id", (rel: (1, 0)))
-}))
-
-#figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  tensor((0, 0), "H1", s[$H$])
-  tensor((1, 0), "Z", s[$Z$])
-  tensor((2, 0), "H2", s[$H$])
-  line("H1", "Z")
-  line("Z", "H2")
-  line("H1", (rel: (-1, 0)))
-  line("H2", (rel: (1, 0)))
-  content((3.5, 0), "=")
-  tensor((5, 0), "X", s[$X$])
-  line("X", (rel: (-1, 0)), name: "a")
-  line("X", (rel: (1, 0)), name: "b")
-}))
-
-#figure(canvas({
-  import draw: *
-  let radius = 0.3
-  let dx = 1.5
-  let dy = 0.8
-  line((0, dy), (dx, dy), name: "a")
-  line((0, -dy), (dx, -dy), name: "b")
-  circle("a.mid", radius: 0.1, fill:black)
-  circle("b.mid", radius: 0.1, fill:black)
-  line("a.mid", "b.mid")
-  content((2.3, 0), "=")
-  let W = 3
-  line((W, dy), (W + dx, dy), name: "c")
-  line((W, -dy), (W + dx, -dy), name: "d")
-  tensor((W + dx/2, 0), "H1", [$H$])
-  line("c.mid", "H1")
-  line("d.mid", "H1")
-}))
-
-
-#exampleblock([
-*Example: GHZ state preparation circuit*
-
-Consider a 3-qubit quantum circuit that prepares the GHZ state $|"GHZ" angle.r = 1/sqrt(2)(|000 angle.r + |111 angle.r)$. The quantum circuit generating this state is shown below:
-
-#align(center, quantum-circuit(
-  lstick($|0 angle.r$), $H$, ctrl(1), 1, [\ ],
-  lstick($|0 angle.r$), 1, targ(), ctrl(1), [\ ],
-  lstick($|0 angle.r$), 2, targ(), 1
-))
-
-The corresponding tensor network diagram is:
-
-#figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  let dy = 1.5
-  tensor((0, 0), "a", s[$|0 angle.r$])
-  tensor((0, -dy), "b", s[$|0 angle.r$])
-  tensor((0, -2*dy), "c", s[$|0 angle.r$])
-  tensor((1, 0), "H1", s[$H$])
-  tensor((1, -dy), "H2", s[$H$])
-  tensor((3, -dy), "H2b", s[$H$])
-  tensor((3, -2*dy), "H3", s[$H$])
-  tensor((5, -2*dy), "H3b", s[$H$])
-  tensor((2, -dy/2), "Ha", s[$H$])
-  tensor((4, -3*dy/2), "Hb", s[$H$])
-  line("a", "H1")
-  line("b", "H2")
-  line("c", "H3")
-  line("H2", "H2b", name: "l2")
-  line("H3", "H3b", name: "l3")
-  line("H1", (rel: (1, 0)), "Ha")
-  line("Ha", "l2.mid")
-  line((rel: (1, 0), to: "H1"), (6, 0))
-  line("H2b", (rel: (1, 0)), "Hb")
-  line("Hb", "l3.mid")
-  line((rel: (1, 0), to: "H2b"), (6, -dy))
-  line("H3b", (rel: (1, 0), to: "H3b"))
-}))
-
-which can be simplified to
-#figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  let dy = 1.5
-  tensor((3, -dy), "H2b", s[$H$])
-  tensor((5, -2*dy), "H3b", s[$H$])
-  tensor((2, -dy/2), "Ha", s[$H$])
-  tensor((4, -3*dy/2), "Hb", s[$H$])
-  line((2, 0), (6, 0))
-  line((2, 0), "Ha")
-  line("Ha", (rel: (0, -dy/2)), "H2b")
-  line("H2b", (rel: (1, 0)), "Hb")
-  line("Hb", (rel: (0, -dy/2)), "H3b")
-  line((rel: (1, 0), to: "H2b"), (6, -dy))
-  line("H3b", (rel: (1, 0), to: "H3b"))
-  content((7, -dy/2), "=")
-  set-origin((8, 0))
-  line((0, 0), (1, 0))
-  line((0, -dy), (1, -dy))
-  line((0, -2*dy), (1, -2*dy))
-  line((0, 0), (0, -2*dy))
-}))
-
-Question: How to compute $angle.l "GHZ"|O|"GHZ" angle.r$ and what is the complexity?
-])
-
-
-= Tensor network contraction orders matters
+== Contraction Order Optimization
 
 Tensor networks can be contracted pairwise, with a given contraction order.
 The contraction complexity is determined by the chosen contraction order represented by a binary tree.
@@ -695,7 +514,7 @@ Additionally, the `TreeSA` method supports the slicing technique.
 When the space complexity is too large, one can loop over a subset of indices, and then contract the intermediate results in the end.
 Such technique can reduce the space complexity, but slicing $n$ indices will increase the time complexity by $2^n$.
 
-== Slicing tensor networks
+== Slicing Technique
 
 Slicing is a technique to reduce the space complexity of the tensor network by looping over a subset of indices.
 This effectively reduces the size of the tensor network inside the loop, and the space complexity can potentially be reduced.
@@ -729,14 +548,14 @@ For example, in @fig:slicing, we slice the tensor network over the index $i$. Th
 
 
 
-= Tensor networks for data compression
+== Data Compression
 Let us define a complex matrix $A in CC^(m times n)$, and let its singular value decomposition be
 $
 A = U S V^dagger
 $
 where $U$ and $V$ are unitary matrices and $S$ is a diagonal matrix with non-negative real numbers on the diagonal.
 
-== CP-decomposition
+=== CP-decomposition
 
 For example, the CP-decomposition of a rank-4 tensor $T$ can be represented as
 $
@@ -770,7 +589,7 @@ $
   line("c", "L")
 })))
 
-== Tucker decomposition
+=== Tucker decomposition
 
 The Tucker decomposition of a rank-4 tensor $T$ can be represented as
 $
@@ -805,7 +624,7 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 })))
 
 
-== Tensor train decomposition
+=== Tensor train decomposition
 
 #align(center, text(10pt, canvas({
   import draw: *
@@ -920,7 +739,7 @@ end
 ```
 
 
-== Tensor network differentiation
+== Automatic Differentiation
 
 The differentiation rules for tensor network contraction can be represented as the contraction of the tensor network. Given a tensor network $X$ in @fig:tensor-network-differentiation(a), the Jacobian matrix of $X$ with respect to $U_2$ is given by @fig:tensor-network-differentiation(b), which is equivalent to cutting the tensor $U_2$ and then contracting the remaining tensor network. The backward-mode automatic differentiation of $X$ with respect to $U_2$ is given by @fig:tensor-network-differentiation(c).
 #figure(canvas({
@@ -1012,7 +831,198 @@ $
 ])
 
 
-= Probabilistic modeling with tensor networks
+
+= Quantum circuit simulation
+- initial state, product state
+- single-qubit gate, two-qubit gate, diagonal gate and CNOT gates.
+- expectation values
+
+Quantum circuits provide a natural setting for tensor network representations, where quantum gates are represented as tensors and quantum states as vectors. This mapping allows us to efficiently simulate quantum circuits using tensor network contraction algorithms.
+
+== Basic quantum gates as tensors
+
+In quantum computing, a quantum state initialized to $|0 angle.r^(times.circle n)$ can be represented as a direct product of $n$ vectors:
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  let n = 2
+  for j in range(n){
+    tensor((0, -j), "init", s[$|0 angle.r$])
+    line("init", (1, -j))
+  }
+  content((0, -2), s[$dots.v$])
+  tensor((0, -3), "init", s[$|0 angle.r$])
+  line("init", (1, -3))
+}))
+where $|0 angle.r = mat(1; 0)$. A single-qubit gate $U$ can be represented as a rank-2 tensor. For example, if we want to apply a Hadamard gate $H$ to the first qubit, we can represent it as:
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((0, 0), "init", s[$|0 angle.r$])
+  tensor((1, 0.0), "H", s[$H$])
+  line("init", "H")
+  line("H", (2, 0))
+
+  tensor((0, -1), "init", s[$|0 angle.r$])
+  line("init", (1, -1))
+
+  content((0, -2), s[$dots.v$])
+  tensor((0, -3), "init", s[$|0 angle.r$])
+  line("init", (1, -3))
+}))
+
+It can be generalized to multiple qubits. Some quantum gates have more detailed structures, such as the CNOT gate:
+#figure(canvas({
+  import draw: *
+  let radius = 0.3
+  let dx = 1.5
+  let dy = 0.8
+  line((0, dy), (dx, dy), name: "a")
+  line((0, -dy), (dx, -dy), name: "b")
+  circle("a.mid", radius: 0.1, fill:black)
+  circle("b.mid", radius: radius)
+  line("a.mid", (rel: (0, -radius), to: "b.mid"))
+  content((2.3, 0), "=")
+  let W = 4
+  let ddx = 0.8
+  line((W - ddx, dy), (W + dx + ddx, dy), name: "c")
+  tensor((W + dx/2, 0), "H1", [$H$])
+  line("c.mid", "H1")
+  line((W + dx/2, -dy), "H1")
+  tensor((W, -dy), "H2", [$H$])
+  tensor((W + dx, -dy), "H3", [$H$])
+  line((W - ddx, -dy), "H2")
+  line((W + ddx + dx, -dy), "H3")
+  line("H2", "H3")
+}))
+where we ignored the extra constant factor $sqrt(2)$ on the right side.
+
+== Useful rules
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((0, 0), "init", s[$|0 angle.r$])
+  tensor((1, 0), "H", s[$H$])
+  line("init", "H")
+  line("H", (rel: (1, 0)))
+  content((3, 0), "=")
+  tensor((4, 0), "id", s[$"id"$])
+  line("id", (rel: (1, 0)))
+}))
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((0, 0), "H1", s[$H$])
+  tensor((1, 0), "Z", s[$Z$])
+  tensor((2, 0), "H2", s[$H$])
+  line("H1", "Z")
+  line("Z", "H2")
+  line("H1", (rel: (-1, 0)))
+  line("H2", (rel: (1, 0)))
+  content((3.5, 0), "=")
+  tensor((5, 0), "X", s[$X$])
+  line("X", (rel: (-1, 0)), name: "a")
+  line("X", (rel: (1, 0)), name: "b")
+}))
+
+#figure(canvas({
+  import draw: *
+  let radius = 0.3
+  let dx = 1.5
+  let dy = 0.8
+  line((0, dy), (dx, dy), name: "a")
+  line((0, -dy), (dx, -dy), name: "b")
+  circle("a.mid", radius: 0.1, fill:black)
+  circle("b.mid", radius: 0.1, fill:black)
+  line("a.mid", "b.mid")
+  content((2.3, 0), "=")
+  let W = 3
+  line((W, dy), (W + dx, dy), name: "c")
+  line((W, -dy), (W + dx, -dy), name: "d")
+  tensor((W + dx/2, 0), "H1", [$H$])
+  line("c.mid", "H1")
+  line("d.mid", "H1")
+}))
+
+
+#exampleblock([
+*Example: GHZ state preparation circuit*
+
+Consider a 3-qubit quantum circuit that prepares the GHZ state $|"GHZ" angle.r = 1/sqrt(2)(|000 angle.r + |111 angle.r)$. The quantum circuit generating this state is shown below:
+
+#align(center, quantum-circuit(
+  lstick($|0 angle.r$), $H$, ctrl(1), 1, [\ ],
+  lstick($|0 angle.r$), 1, targ(), ctrl(1), [\ ],
+  lstick($|0 angle.r$), 2, targ(), 1
+))
+
+The corresponding tensor network diagram is:
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  let dy = 1.5
+  tensor((0, 0), "a", s[$|0 angle.r$])
+  tensor((0, -dy), "b", s[$|0 angle.r$])
+  tensor((0, -2*dy), "c", s[$|0 angle.r$])
+  tensor((1, 0), "H1", s[$H$])
+  tensor((1, -dy), "H2", s[$H$])
+  tensor((3, -dy), "H2b", s[$H$])
+  tensor((3, -2*dy), "H3", s[$H$])
+  tensor((5, -2*dy), "H3b", s[$H$])
+  tensor((2, -dy/2), "Ha", s[$H$])
+  tensor((4, -3*dy/2), "Hb", s[$H$])
+  line("a", "H1")
+  line("b", "H2")
+  line("c", "H3")
+  line("H2", "H2b", name: "l2")
+  line("H3", "H3b", name: "l3")
+  line("H1", (rel: (1, 0)), "Ha")
+  line("Ha", "l2.mid")
+  line((rel: (1, 0), to: "H1"), (6, 0))
+  line("H2b", (rel: (1, 0)), "Hb")
+  line("Hb", "l3.mid")
+  line((rel: (1, 0), to: "H2b"), (6, -dy))
+  line("H3b", (rel: (1, 0), to: "H3b"))
+}))
+
+which can be simplified to
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  let dy = 1.5
+  tensor((3, -dy), "H2b", s[$H$])
+  tensor((5, -2*dy), "H3b", s[$H$])
+  tensor((2, -dy/2), "Ha", s[$H$])
+  tensor((4, -3*dy/2), "Hb", s[$H$])
+  line((2, 0), (6, 0))
+  line((2, 0), "Ha")
+  line("Ha", (rel: (0, -dy/2)), "H2b")
+  line("H2b", (rel: (1, 0)), "Hb")
+  line("Hb", (rel: (0, -dy/2)), "H3b")
+  line((rel: (1, 0), to: "H2b"), (6, -dy))
+  line("H3b", (rel: (1, 0), to: "H3b"))
+  content((7, -dy/2), "=")
+  set-origin((8, 0))
+  line((0, 0), (1, 0))
+  line((0, -dy), (1, -dy))
+  line((0, -2*dy), (1, -2*dy))
+  line((0, 0), (0, -2*dy))
+}))
+
+Question: How to compute $angle.l "GHZ"|O|"GHZ" angle.r$ and what is the complexity?
+])
+
+== Quantum channel simulation
+
+== Pauli basis and depolarizing error
+
+= Quantum error correction
+
+== Probabilistic modeling with tensor networks
 == Hidden Markov model
 
 A Hidden Markov Model (HMM)@Bishop2006 is a simple probabilistic graphical model that describes a Markov process with unobserved (hidden) states. The model consists of:
@@ -1146,8 +1156,6 @@ $
 This equation updates the emission probability matrix $B$. For each state $i$ and observation $k$, we compute the expected number of times the model emits observation $k$ while in state $i$ (numerator) divided by the expected total number of times the model is in state $i$ (denominator). The indicator function $I(x_t = k)$ equals 1 when the observation at time $t$ is $k$, and 0 otherwise.
 
 The Baum-Welch algorithm does not guarantee to find the global maximum of the likelihood function.
-
-== Quantum error correction
 
 === Surface code
 
