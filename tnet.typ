@@ -8,6 +8,10 @@
 #show heading.where(level: 1): set text(20pt)
 #show: thmrules
 
+#show raw.where(block: true): it=>{
+  block(fill:rgb("#fcf9ec"),inset:1.5em,width:99%,text(it))
+}
+
 #let definition = thmbox("definition", "Definition", inset: (x: 1.2em, top: 1em, bottom: 1em), base: none, stroke: black)
 #let theorem = thmbox("theorem", "Theorem", base: none, stroke: black)
 #let proof = thmproof("proof", "Proof")
@@ -42,24 +46,24 @@
   )
 }
 
-#align(center, [#text(22pt)[Tensor Networks for quantum circuit simulation and quantum error correction]\
-_Jin-Guo Liu_])
-
+#align(center, [#text(22pt)[Tensor Networks for quantum circuit simulation and quantum error correction]\ #v(1em)
+_Jin-Guo Liu_ and _Zhong-Yi Ni_\
+Advanced Materials Thrust, Function Hub, HKUST(GZ)])
+#v(1em)
 #outline(depth: 2)
 
 #pagebreak()
 
 = Tensor networks
+_Tensor network_ is an important concept in quantum physics and quantum information, it is similar to  _einsum_@Harris2020, _unweighted probability graph_@Bishop2006, _sum product network_ and _junction tree_@Villescas2023 in other fields.
+It has been widely used to simulate quantum circuits@Markov2008, decode quantum error correction codes (which reference?), compress neural networks@Qing2024, and simulate the dynamics of a quantum system@Haegeman2016.
 
 == Definition
-_Tensor network_ is a diagrammatic representation of tensor _contractions_.
-
-- tensor
-- delta tensor, hyperedge
-- tensor contraction
-- tensor contraction order (use a ladder graph as an example)
-
-In this representation, a tensor is represented as a node, and an index is represented as a hyperedge (a hyperedge can connect to any number of nodes). For example, vectors, matrices and higher order tensors can be represented as
+In short, _Tensor network_ is a diagrammatic representation of _multilinear algebra_. Consider multiplying a sequence a matrices:
+$
+  O_(i n) = sum_(j,k,l,m) A_(i j) B_(j k) C_(k l) D_(l m) E_(m n)
+$ <eq:tensor-contraction>
+The output $O_(i n)$ is linear to each input tensor, and we have multiple input tensors. So, this operation defines a _multilinear map_, which is called _tensor contraction_. In tensor network, we further generalizes it to tensors with multiple indices. We represent a tensor as a node, and an index as a leg. For example, vectors, matrices and higher order tensors can be represented as:
 
 #align(center, text(10pt, canvas({
   import draw: *
@@ -77,41 +81,47 @@ In this representation, a tensor is represented as a node, and an index is repre
   content((rel: (0, -1), to: "A"), [Rank-3 tensor $A_(i j k)$])
 })))
 
-Tensor contraction is a generalized matrix multiplication, which is defined as the summation of the element products from multiple tensors.
-
-#exampleblock[
-*Example: Tensor network representation of matrix multiplication*
-
-Matrix multiplication can be described as the contraction of a tensor network given by
-$
-C_(i k) = "contract"({i,j,k}, {A_(i j), B_(j k)}, {i, k}),
-$
-where the input matrices $A$ and $B$ are indexed by the variable sets ${i, j}, {j, k}$, respectively, which are subsets of $Lambda = {i, j, k}$. As a remark of notation, when an set is used as subscripts, we omit the comma and the braces. The output tensor is indexed by variables ${i, k}$ and the summation runs over variables $Lambda without {i, k} = {j}$. The contraction corresponds to
-$
-C_(i k) = sum_j A_(i j) B_(j k),
-$
-which is consistent with the matrix multiplication.
-
-In the diagramatic representation, the tensors associated with the same variable are connected by the same hyperedge. If a variable appears in the output tensor, the hyperedge is left _open_. For example, the diagrammatic representation of the matrix multiplication is given as follows:
-
+The diagramatic representation of @eq:tensor-contraction is:
 #align(center, text(10pt, canvas({
   import draw: *
-  tensor((-2, 1), "A", [$A$])
-  tensor((0, 1), "B", [$B$])
-  labeledge("A", (rel: (-1.5, 0)), [$i$])
-  labeledge("A", (rel: (1.5, 0)), [$j$])
-  labeledge("B", (rel: (1.5, 0)), [$k$])
+  let tensors = ("A", "B", "C", "D", "E")
+  for (i, t) in tensors.enumerate() {
+    tensor((1.5*i, 1), t, [$#t$])
+  }
+  for (label, (a, b)) in (("j", ("A", "B")), ("k", ("B", "C")), ("l", ("C", "D")), ("m", ("D", "E"))) {
+    labeledge(a, b, label)
+  }
+  labeledge("A", (rel: (-1, 0)), "i")
+  labeledge("E", (rel: (1, 0)), "n")
 })))
-]
+This diagrammatic representation is more intuitive than the algebraic representation, which can be better seen from the following example.
 
-In the program, a tensor network is also known as `einsum`, which uses a string to denote the tensor network topology. For example, the matrix multiplication can be represented as `ij,jk->ik`. The intputs and outputs are separated by `->`, and the indices of different input tensors are separated by commas.
+#exampleblock([
+*Example: Proving trace permutation rule*
+
+Let $A, B$ and $C$ be three square matrices with the same size. The trace permutation rule $tr(A B C) = tr(C A B) = tr(B C A)$ can be proved by the following tensor network diagram.
+
+#figure(canvas({
+  import draw: *
+  tensor((1, 1), "A", "A")
+  tensor((3, 1), "B", "B")
+  tensor((5, 1), "C", "C")
+  labeledge("A", "B", "j")
+  labeledge("B", "C", "k")
+  bezier("A.north", "C.north", (1, 3), (5, 3), name:"line")
+  content("line.mid", "i", align: center, fill:white, frame:"rect", padding:0.1, stroke: none)
+}))
+From the diagram, we can see the representation of $tr(A B C)$, $tr(C A B)$ and $tr(B C A)$ are identical, indicating the same operation. The diagrammatic representation is less redundant than the algebraic representation.
+])
 
 
-In the following example, we use the `OMEinsum` package to compute some simple tensor network contractions:
+== Einsum Notation and Computational Complexity
+In the program, a tensor network topology can be specified with `einsum` notation, which uses a string to denote the tensor network topology. For example, the matrix multiplication can be represented as `ij,jk->ik`. The intputs and outputs are separated by `->`, and the indices of different input tensors are separated by commas.
+In the following, we use the `OMEinsum` package to compute some simple tensor network contractions.
 
-#raw(read("codes/basic.jl"), lang: "julia")
+#raw(read("codes/basic.jl"), lang: "julia", block: true)
 
-When there are only one or two tensors involved, the strings are easy to read. However, when there are more than two tensors, the strings can be quite complicated. Then the diagrammatic representation is more helpful. For example, the star contraction has the following diagrammatic representation:
+For example, the star contraction has the following diagrammatic representation:
 
 #align(center, text(10pt, canvas({
   import draw: *
@@ -149,38 +159,6 @@ When there are only one or two tensors involved, the strings are easy to read. H
 })))
 
 
-
-
-=== Why do you need tensor networks?
-
-It can be used to:
-- efficiently simulate shallow quantum circuits@Markov2008,
-- decode quantum error correction codes (which reference?),
-- compress neural networks@Qing2024.
-- simulate the dynamics of a quantum system@Haegeman2016.
-
-=== Topological view of tensor algebra
-
-#exampleblock([
-*Example: Proving trace permutation rule*
-
-Let $A, B$ and $C$ be three square matrices with the same size. Represent the trace operation $tr(A B C)$ with a tensor network diagram.
-
-*Solution*
-#figure(canvas({
-  import draw: *
-  tensor((1, 1), "A", "A")
-  tensor((3, 1), "B", "B")
-  tensor((5, 1), "C", "C")
-  labeledge("A", "B", "j")
-  labeledge("B", "C", "k")
-  bezier("A.north", "C.north", (1, 3), (5, 3), name:"line")
-  content("line.mid", "i", align: center, fill:white, frame:"rect", padding:0.1, stroke: none)
-}))
-
-The corresponding einsum notation is `ij,jk,ki->`. From this diagram, we can see the trace permutation rule: $tr(A B C) = tr(C A B) = tr(B C A)$.
-])
-
 For example, the contraction of two tensors $A_(i j k)$ and $B_(k l)$, i.e. $sum_k A_(i j k) B_(k l)$, can be diagrammatically represented as
 
 #align(center, canvas({
@@ -192,6 +170,8 @@ For example, the contraction of two tensors $A_(i j k)$ and $B_(k l)$, i.e. $sum
   labeledge("A", (rel: (0, 1.5)), "j")
   labeledge("A", (rel: (-1.5, 0)), "i")
 }))
+
+
 
 The kronecker product of two matrices $A_(i j)$ and $B_(k l)$, i.e. $A_(i j) times.circle B_(k l)$, can be diagrammatically represented as
 
@@ -628,7 +608,7 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 
 In the following example, we implement the tensor train decomposition in Julia. We use tensor train to represent a uniform tensor of size $2^(20)$ with a rank of 1.
 
-#raw(read("codes/mps.jl"), lang: "julia")
+#raw(read("codes/mps.jl"), lang: "julia", block: true)
 
 
 == Automatic Differentiation
@@ -908,149 +888,6 @@ which can be simplified to
 Question: How to compute $angle.l "GHZ"|O|"GHZ" angle.r$ and what is the complexity?
 ])
 
-== Quantum channel simulation
-
-== Pauli basis and depolarizing error
-
-= Quantum error correction
-
-== Probabilistic modeling
-=== Hidden Markov model
-
-A Hidden Markov Model (HMM)@Bishop2006 is a simple probabilistic graphical model that describes a Markov process with unobserved (hidden) states. The model consists of:
-
-- A sequence of hidden states $z_t$ following a Markov chain with transition probability $P(z_(t+1)|z_t)$
-- A sequence of observations $x_t$ that depend only on the current hidden state through emission probability $P(x_t|z_t)$
-
-The joint probability of a sequence of $T+1$ hidden states and $T$ observations can be written as:
-
-$
-P(bold(z), bold(x)) = P(z_0) product_(t=1)^T P(z_(t)|z_(t-1))P(x_t|z_t).
-$
-Note that the conditional probability $P(z_(t)|z_(t-1))$ can be represented as a tensor with two indices. The joint probability $P(bold(z), bold(x))$ can be represented as a tensor network diagram:
-
-#let hmm(n) = {
-  import draw: *
-  let s(it) = text(11pt, it)
-  
-  // Draw transition matrices
-  let dx = 2.0
-  tensor((0, 0), "A0", []) 
-  for i in range(1, n){
-    tensor((dx*i, 0), "A" + str(i), []) 
-  }
-  for i in range(n - 1){
-   labeledge("A" + str(i), "A" + str(i+1), s[$z_#(i+1)$], name: "z" + str(i))
-  }
-  labeledge("A" + str(n - 1), (rel: (1.6, 0), to:"A" + str(n - 1)), s[$z_#(n)$], name: "z" + str(n - 1))
-
-  for i in range(n){
-    tensor((rel: (0, -1), to: "z" + str(i)), "B" + str(i), [])
-    line("z" + str(i), "B" + str(i))
-    labeledge("B" + str(i), (rel: (0, -1.2)), s[$x_#(i+1)$])
-  }
-}
-
-#figure(canvas({
-  import draw: *
-  hmm(5)
-}),
-caption: [The tensor network representation of a Hidden Markov Model (HMM) with observed variables $x_1, x_2, dots, x_T$ and hidden states $z_0, z_1, dots, z_T$. The circles are conditional probabilities $P(z_t|z_(t-1))$ and $P(x_t|z_t)$.]
-)
-
-=== Likelihood
-The likelihood of the observed sequence:
-$
-P(bold(x)|theta) = sum_(bold(z)) P(bold(x), bold(z)|theta)
-$
-
-#figure(canvas({
-  import draw: *
-  hmm(5)
-  let s(it) = text(11pt, it)
-  for i in range(5){
-    tensor((rel: (0, -1.6), to: "B" + str(i)), "p" + str(i), s[$x_#(i+1)$])
-  }
-  tensor((rel: (2, 0), to: "A4"), "e", [id])
-}))
-where nodes with $x_t$ are observed variables, which are represented as projection tensors.
-
-=== Decoding
-This is the _decoding problem_ of HMM: Given a sequence of observations $bold(x) = (x_1, x_2, ..., x_T)$, how to find the most likely sequence of hidden states $bold(z)$? The equivalent mathematical formulation is:
-$
-  arg max_(bold(z)) P(z_0) product_(t=1)^T P(z_(t)|z_(t-1))P(overshell(x)_t|z_t),
-$ <eq:decoding>
-where $overshell(x)_t$ denotes an observed variable $x_t$ with a fixed value. It is equivalent to contracting the following tensor network:
-$
-  cases(Lambda = {z_0, z_1, dots, z_T},
-  cal(T) = {P(z_0), P(z_1|z_0), dots, P(z_T|z_(T-1)), P(overshell(x)_1|z_1), P(overshell(x)_2|z_2), dots, P(overshell(x)_T|z_T)},
-  V_0 = emptyset
-  )
-$ <eq:decoding-tensor>
-Since $overshell(x)_1, overshell(x)_2, dots, overshell(x)_T$ are fixed and not involved in the contraction, $P(overshell(x)_t|z_t)$ is a vector indexed by $z_t$ rather than a matrix.
-To solve @eq:decoding, we first convert @eq:decoding-tensor into a tropical tensor network $(Lambda, {log(t) | t in cal(T)}, V_0)$, where $log(t)$ is obtained by taking the logarithm of each element in $t$. Then the contraction of this tropical tensor network is equivalent to
-$
-  arg max_(bold(z)) sum_(bold(z)) log P(z_0) + sum_(t=1)^T log P(z_t|z_(t-1)) + sum_(t=1)^T log P(overshell(x)_t|z_t),
-$
-which solves the decoding problem.
-Since this tensor network has a chain structure, its contraction is computationally efficient.
-This algorithm is equivalent to the Viterbi algorithm.
-
-=== Baum-Welch algorithm
-The Baum-Welch algorithm is an expectation-maximization (EM) algorithm used to find the unknown parameters of a Hidden Markov Model (HMM). It addresses the _learning problem_ of HMM: Given a sequence of observations $bold(x) = (x_1, x_2, ..., x_T)$, how to estimate the model parameters $theta = (A, B, pi)$, where $A$ is the transition probability matrix, $B$ is the emission probability matrix, and $pi$ is the initial state distribution?
-
-#figure(canvas({
-  import draw: *
-  hmm(5)
-  let s(it) = text(11pt, it)
-  for i in range(5){
-    tensor((rel: (0, -1.6), to: "B" + str(i)), "p" + str(i), s[$x_#(i+1)$])
-    content("B"+str(i), s[$B$])
-    if i == 0{
-      content("A"+str(i), s[$pi$])
-    }
-    else{
-      content("A"+str(i), s[$A$])
-    }
-  }
-  line("z1", (rel: (0, 1), to: "z1"), stroke: blue)
-  content((rel: (0, 1.3), to: "z1"), text(11pt, blue)[$eta_2 (x_2, z_2)$])
-  line("z2", (rel: (0, 1), to: "z2"), stroke: red)
-  line("z3", (rel: (0, 1), to: "z3"), stroke: red)
-  content((rel: (0, 1.3), to: "A3"), text(11pt, red)[$xi_3 (z_3, z_4)$])
-  tensor((rel: (2, 0), to: "A4"), "e", s[id])
-}), caption: [The tensor network representation of the expectation maximization problem for HMMs. The $pi$, $A$ and $B$ are the model parameters to be estimated, and $x_1, x_2, dots, x_T$ are the observed variables. When evaluating the transition probability $xi_t (i,j)$ in @eq:transition-probability, the variables $z_3$ and $z_4$ are set open (red lines). When evaluating the emission probability $eta_t (i,k)$ in @eq:emission-probability, the variable $z_2$ is set open (blue line).])
-
-The transition probability from state $i$ to state $j$ is given by
-$
-xi_t (i,j) = P(z_t=i, z_(t+1)=j | bold(x), theta)
-$ <eq:transition-probability>
-
-The emission probability from state $i$ to symbol $k$ is given by
-$
-eta_t (i,k) = P(x_t=k | z_t=i, theta)
-$ <eq:emission-probability>
-
-In practice, to evaluate tensor networks with multiple open indices, we can utilize the backward-mode automatic differentiation.
-
-*Parameter Update*: Use the forward and backward variables to compute the expected counts of transitions and emissions, and update the model parameters accordingly:
-
-$
-A_(i j) = (sum_(t=1)^(T-1) xi_t (i,j))/(sum_(t=1)^(T-1) sum_(j=1)^N xi_t (i,j))
-$
-
-This equation updates the transition probability matrix $A$. For each pair of states $(i,j)$, we compute the expected number of transitions from state $i$ to state $j$ (numerator) divided by the expected total number of transitions from state $i$ to any state (denominator).
-
-$
-B_(i k) = (sum_(t=1)^T eta_t (i,k) dot I(x_t = k))/(sum_(t=1)^T eta_t (i,k))
-$
-
-This equation updates the emission probability matrix $B$. For each state $i$ and observation $k$, we compute the expected number of times the model emits observation $k$ while in state $i$ (numerator) divided by the expected total number of times the model is in state $i$ (denominator). The indicator function $I(x_t = k)$ equals 1 when the observation at time $t$ is $k$, and 0 otherwise.
-
-The Baum-Welch algorithm does not guarantee to find the global maximum of the likelihood function.
-
-=== Surface code
-
 === Example: Hadamard test
 
 The Hadamard test is a quantum algorithm used to estimate the expectation value of a unitary operator $U$ with respect to a quantum state $|psi angle.r$. It provides a way to measure $angle.l psi | U | psi angle.r$ using an ancilla qubit.
@@ -1149,7 +986,7 @@ The corresponding tensor network representation is:
 
 *Yao implementation*:
 
-#raw(read("codes/hadamardtest.jl"), lang: "julia")
+#raw(read("codes/hadamardtest.jl"), lang: "julia", block: true)
 
 This implementation demonstrates how the Hadamard test can be used to estimate expectation values of unitary operators, which is fundamental for variational quantum algorithms and quantum machine learning.
 ])
@@ -1161,6 +998,97 @@ This implementation demonstrates how the Hadamard test can be used to estimate e
 Here's a Julia implementation using `Yao` for the quantum circuit simulation:
 
 This example demonstrates how to prepare a GHZ state using both quill for quantum circuit visualization and Yao for quantum circuit simulation. The resulting state exhibits perfect three-qubit entanglement, with equal probabilities for |000⟩ and |111⟩ states and zero probability for all other computational basis states.
+
+
+== Quantum channel simulation
+
+== Pauli basis and depolarizing error
+
+= Quantum error correction
+
+== Probabilistic modeling
+=== Hidden Markov model
+
+A Hidden Markov Model (HMM)@Bishop2006 is a simple probabilistic graphical model that describes a Markov process with unobserved (hidden) states. The model consists of:
+
+- A sequence of hidden states $z_t$ following a Markov chain with transition probability $P(z_(t+1)|z_t)$
+- A sequence of observations $x_t$ that depend only on the current hidden state through emission probability $P(x_t|z_t)$
+
+The joint probability of a sequence of $T+1$ hidden states and $T$ observations can be written as:
+
+$
+P(bold(z), bold(x)) = P(z_0) product_(t=1)^T P(z_(t)|z_(t-1))P(x_t|z_t).
+$
+Note that the conditional probability $P(z_(t)|z_(t-1))$ can be represented as a tensor with two indices. The joint probability $P(bold(z), bold(x))$ can be represented as a tensor network diagram:
+
+#let hmm(n) = {
+  import draw: *
+  let s(it) = text(11pt, it)
+  
+  // Draw transition matrices
+  let dx = 2.0
+  tensor((0, 0), "A0", []) 
+  for i in range(1, n){
+    tensor((dx*i, 0), "A" + str(i), []) 
+  }
+  for i in range(n - 1){
+   labeledge("A" + str(i), "A" + str(i+1), s[$z_#(i+1)$], name: "z" + str(i))
+  }
+  labeledge("A" + str(n - 1), (rel: (1.6, 0), to:"A" + str(n - 1)), s[$z_#(n)$], name: "z" + str(n - 1))
+
+  for i in range(n){
+    tensor((rel: (0, -1), to: "z" + str(i)), "B" + str(i), [])
+    line("z" + str(i), "B" + str(i))
+    labeledge("B" + str(i), (rel: (0, -1.2)), s[$x_#(i+1)$])
+  }
+}
+
+#figure(canvas({
+  import draw: *
+  hmm(5)
+}),
+caption: [The tensor network representation of a Hidden Markov Model (HMM) with observed variables $x_1, x_2, dots, x_T$ and hidden states $z_0, z_1, dots, z_T$. The circles are conditional probabilities $P(z_t|z_(t-1))$ and $P(x_t|z_t)$.]
+)
+
+=== Likelihood
+The likelihood of the observed sequence:
+$
+P(bold(x)|theta) = sum_(bold(z)) P(bold(x), bold(z)|theta)
+$
+
+#figure(canvas({
+  import draw: *
+  hmm(5)
+  let s(it) = text(11pt, it)
+  for i in range(5){
+    tensor((rel: (0, -1.6), to: "B" + str(i)), "p" + str(i), s[$x_#(i+1)$])
+  }
+  tensor((rel: (2, 0), to: "A4"), "e", [id])
+}))
+where nodes with $x_t$ are observed variables, which are represented as projection tensors.
+
+=== Decoding
+This is the _decoding problem_ of HMM: Given a sequence of observations $bold(x) = (x_1, x_2, ..., x_T)$, how to find the most likely sequence of hidden states $bold(z)$? The equivalent mathematical formulation is:
+$
+  arg max_(bold(z)) P(z_0) product_(t=1)^T P(z_(t)|z_(t-1))P(overshell(x)_t|z_t),
+$ <eq:decoding>
+where $overshell(x)_t$ denotes an observed variable $x_t$ with a fixed value. It is equivalent to contracting the following tensor network:
+$
+  cases(Lambda = {z_0, z_1, dots, z_T},
+  cal(T) = {P(z_0), P(z_1|z_0), dots, P(z_T|z_(T-1)), P(overshell(x)_1|z_1), P(overshell(x)_2|z_2), dots, P(overshell(x)_T|z_T)},
+  V_0 = emptyset
+  )
+$ <eq:decoding-tensor>
+Since $overshell(x)_1, overshell(x)_2, dots, overshell(x)_T$ are fixed and not involved in the contraction, $P(overshell(x)_t|z_t)$ is a vector indexed by $z_t$ rather than a matrix.
+To solve @eq:decoding, we first convert @eq:decoding-tensor into a tropical tensor network $(Lambda, {log(t) | t in cal(T)}, V_0)$, where $log(t)$ is obtained by taking the logarithm of each element in $t$. Then the contraction of this tropical tensor network is equivalent to
+$
+  arg max_(bold(z)) sum_(bold(z)) log P(z_0) + sum_(t=1)^T log P(z_t|z_(t-1)) + sum_(t=1)^T log P(overshell(x)_t|z_t),
+$
+which solves the decoding problem.
+Since this tensor network has a chain structure, its contraction is computationally efficient.
+This algorithm is equivalent to the Viterbi algorithm.
+
+=== Surface code
 
 == Circuit level decoding
 
