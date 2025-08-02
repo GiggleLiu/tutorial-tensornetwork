@@ -119,7 +119,7 @@ From the diagram, we can see the representation of $tr(A B C)$, $tr(C A B)$ and 
 In the program, a tensor network topology can be specified with `einsum` notation, which uses a string to denote the tensor network topology. For example, the matrix multiplication can be represented as `ij,jk->ik`. The intputs and outputs are separated by `->`, and the indices of different input tensors are separated by commas.
 In the following, we use the `OMEinsum` package to compute some simple tensor network contractions.
 
-#raw(read("codes/basic.jl"), lang: "julia", block: true)
+#raw(read("examples/basic/basic.jl"), lang: "julia", block: true)
 
 For example, the star contraction has the following diagrammatic representation:
 
@@ -608,7 +608,7 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 
 In the following example, we implement the tensor train decomposition in Julia. We use tensor train to represent a uniform tensor of size $2^(20)$ with a rank of 1.
 
-#raw(read("codes/mps.jl"), lang: "julia", block: true)
+#raw(read("examples/basic/mps.jl"), lang: "julia", block: true)
 
 
 == Automatic Differentiation
@@ -985,7 +985,7 @@ The corresponding tensor network representation is:
 
 *Yao implementation*:
 
-#raw(read("codes/hadamardtest.jl"), lang: "julia", block: true)
+#raw(read("examples/basic/hadamardtest.jl"), lang: "julia", block: true)
 
 This implementation demonstrates how the Hadamard test can be used to estimate expectation values of unitary operators, which is fundamental for variational quantum algorithms and quantum machine learning.
 
