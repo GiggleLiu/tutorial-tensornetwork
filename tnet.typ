@@ -45,7 +45,7 @@
 #align(center, [#text(22pt)[Tensor Networks for quantum circuit simulation and quantum error correction]\
 _Jin-Guo Liu_])
 
-#outline()
+#outline(depth: 2)
 
 #pagebreak()
 
@@ -109,31 +109,7 @@ In the program, a tensor network is also known as `einsum`, which uses a string 
 
 In the following example, we use the `OMEinsum` package to compute some simple tensor network contractions:
 
-```julia
-s = fill(1)  # scalar
-w, v = [1, 2], [4, 5];  # vectors
-A, B = [1 2; 3 4], [5 6; 7 8]; # matrices
-T1, T2 = reshape(1:8, 2, 2, 2), reshape(9:16, 2, 2, 2); # 3D tensor
-
-# Single tensor operations
-ein"i->"(w)  # sum of the elements of a vector.
-ein"ij->i"(A)  # sum of the rows of a matrix.
-ein"ii->"(A)  # sum of the diagonal elements of a matrix, i.e., the trace.
-ein"ij->"(A)  # sum of the elements of a matrix.
-ein"i->ii"(w)  # create a diagonal matrix.
-ein",->"(s, s)  # scalar multiplication.
-
-# Two tensor operations
-ein"ij, jk -> ik"(A, B)  # matrix multiplication.
-ein"ijb,jkb->ikb"(T1, T2)  # batch matrix multiplication.
-ein"ij,ij->ij"(A, B)  # element-wise multiplication.
-ein"ij,ij->"(A, B)  # sum of the element-wise multiplication.
-ein"ij,->ij"(A, s)  # element-wise multiplication by a scalar.
-
-# More than two tensor operations
-optein"ai,aj,ak->ijk"(A, A, B)  # star contraction.
-optein"ia,ajb,bkc,cld,dm->ijklm"(A, T1, T2, T1, A)  # tensor train contraction.
-```
+#raw(read("codes/basic.jl"), lang: "julia")
 
 When there are only one or two tensors involved, the strings are easy to read. However, when there are more than two tensors, the strings can be quite complicated. Then the diagrammatic representation is more helpful. For example, the star contraction has the following diagrammatic representation:
 
@@ -651,92 +627,8 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 })))
 
 In the following example, we implement the tensor train decomposition in Julia. We use tensor train to represent a uniform tensor of size $2^(20)$ with a rank of 1.
-```julia
-using OMEinsum
-using LinearAlgebra
 
-struct MPS{T}
-    tensors::Vector{Array{T, 3}}
-end
-
-# Function to compress a tensor using Tensor Train (TT) decomposition
-function tensor_train_decomposition(tensor::AbstractArray, largest_rank::Int; atol=1e-6)
-    dims = size(tensor)
-    n = length(dims)
-    
-    # Initialize the cores of the TT decomposition
-    tensors = Array{Float64, 3}[]
-    
-    # Reshape the tensor into a matrix
-    rpre = 1
-    current_tensor = reshape(tensor, dims[1], :)
-    
-    # Perform SVD for each core except the last one
-    for i in 1:(n-1)
-        # Truncate to the specified rank
-        U_truncated, S_truncated, V_truncated, r = truncated_svd(current_tensor, largest_rank, atol)
-
-        # Middle cores have shape (largest_rank, dims[i], r)
-        push!(tensors, reshape(U_truncated, (rpre, dims[i], r)))
-        
-        # Prepare the tensor for the next iteration
-        current_tensor = S_truncated * V_truncated'
-        
-        # Reshape for the next SVD
-        current_tensor = reshape(current_tensor, r * dims[i+1], :)
-        rpre = r
-    end
-    
-    # Add the last core
-    push!(tensors, reshape(current_tensor, (rpre, dims[n], 1)))
-    
-    return MPS(tensors)
-end
-
-function truncated_svd(current_tensor::AbstractArray, largest_rank::Int, atol)
-    # Compute SVD
-    U, S, V = svd(current_tensor)
-    r = min(largest_rank, sum(S .> atol))
-    S_truncated = Diagonal(S[1:r])
-    U_truncated = U[:, 1:r]
-    V_truncated = V[:, 1:r]
-    return U_truncated, S_truncated, V_truncated, r
-end
-
-# Function to contract the TT cores to reconstruct the tensor
-function contract(mps::MPS)
-    n = length(mps.tensors)
-    code = EinCode([[2i-1, 2i, 2i+1] for i in 1:n], Int[2i for i in 1:n])
-    size_dict = OMEinsum.get_size_dict(code.ixs, mps.tensors)
-    optcode = optimize_code(code, size_dict, GreedyMethod())
-    return optcode(mps.tensors...)
-end
-
-# Example usage: compressing a uniform tensor of size 2^20
-tensor = ones(Float64, fill(2, 20)...);
-
-# Perform TT decomposition
-mps = tensor_train_decomposition(tensor, 5)
-
-# Reconstruct the tensor from TT cores
-reconstructed_tensor = contract(mps);
-
-# Calculate the relative error
-relative_error = norm(tensor - reconstructed_tensor) / norm(tensor)
-println("Relative error of reconstruction: ", relative_error)
-
-# Calculate compression ratio
-original_size = prod(size(tensor))
-compressed_size = sum([prod(size(core)) for core in mps.tensors])
-compression_ratio = original_size / compressed_size
-println("Compression ratio: ", compression_ratio)
-
-# Print the shapes of the TT cores
-println("TT core shapes:")
-for (i, core) in enumerate(mps.tensors)
-    println("Core $i: $(size(core))")
-end
-```
+#raw(read("codes/mps.jl"), lang: "julia")
 
 
 == Automatic Differentiation
@@ -839,7 +731,7 @@ $
 
 Quantum circuits provide a natural setting for tensor network representations, where quantum gates are represented as tensors and quantum states as vectors. This mapping allows us to efficiently simulate quantum circuits using tensor network contraction algorithms.
 
-== Basic quantum gates as tensors
+== Basic quantum circuit simulation
 
 In quantum computing, a quantum state initialized to $|0 angle.r^(times.circle n)$ can be represented as a direct product of $n$ vectors:
 #figure(canvas({
@@ -898,7 +790,7 @@ It can be generalized to multiple qubits. Some quantum gates have more detailed 
 }))
 where we ignored the extra constant factor $sqrt(2)$ on the right side.
 
-== Useful rules
+=== Useful rules
 
 #figure(canvas({
   import draw: *
@@ -1022,8 +914,8 @@ Question: How to compute $angle.l "GHZ"|O|"GHZ" angle.r$ and what is the complex
 
 = Quantum error correction
 
-== Probabilistic modeling with tensor networks
-== Hidden Markov model
+== Probabilistic modeling
+=== Hidden Markov model
 
 A Hidden Markov Model (HMM)@Bishop2006 is a simple probabilistic graphical model that describes a Markov process with unobserved (hidden) states. The model consists of:
 
@@ -1257,68 +1149,7 @@ The corresponding tensor network representation is:
 
 *Yao implementation*:
 
-```julia
-using Yao
-
-function hadamard_test(psi::AbstractRegister, U::AbstractBlock)
-    # Ensure psi is a single-qubit state
-    @assert nqubits(psi) == 1
-    
-    # Create ancilla qubit initialized to |0⟩
-    ancilla = zero_state(1)
-    
-    # Combine qubits: [ancilla, psi]
-    reg = join(ancilla, psi)
-    
-    # Apply Hadamard test circuit
-    reg |> put(1=>H)                    # H on ancilla
-    reg |> put((1,2)=>control(1, 2=>U)) # Controlled-U
-    reg |> put(1=>H)                    # H on ancilla
-    
-    # Measure ancilla qubit
-    result = measure!(reg, 1)
-    
-    # Return probability of measuring |0⟩
-    return result[1] == 0 ? 1.0 : 0.0
-end
-
-# Example usage: estimating expectation value of Z gate on |+⟩ state
-psi = zero_state(1) |> put(1=>H)  # |+⟩ state
-U = Z                             # Pauli-Z gate
-
-# Run Hadamard test multiple times to estimate probability
-num_trials = 1000
-success_count = 0
-
-for _ in 1:num_trials
-    psi_copy = copy(psi)
-    success_count += hadamard_test(psi_copy, U)
-end
-
-prob_zero = success_count / num_trials
-expectation_value = 2 * prob_zero - 1
-
-println("Probability of measuring |0⟩: $prob_zero")
-println("Estimated ⟨ψ|U|ψ⟩: $expectation_value")
-println("Theoretical ⟨+|Z|+⟩: 0.0")
-
-# Example with different unitary: X gate
-println("\nTesting with X gate:")
-U_x = X
-success_count_x = 0
-
-for _ in 1:num_trials
-    psi_copy = copy(psi)
-    success_count_x += hadamard_test(psi_copy, U_x)
-end
-
-prob_zero_x = success_count_x / num_trials
-expectation_value_x = 2 * prob_zero_x - 1
-
-println("Probability of measuring |0⟩: $prob_zero_x")
-println("Estimated ⟨ψ|X|ψ⟩: $expectation_value_x")
-println("Theoretical ⟨+|X|+⟩: 1.0")
-```
+#raw(read("codes/hadamardtest.jl"), lang: "julia")
 
 This implementation demonstrates how the Hadamard test can be used to estimate expectation values of unitary operators, which is fundamental for variational quantum algorithms and quantum machine learning.
 ])
@@ -1330,5 +1161,7 @@ This implementation demonstrates how the Hadamard test can be used to estimate e
 Here's a Julia implementation using `Yao` for the quantum circuit simulation:
 
 This example demonstrates how to prepare a GHZ state using both quill for quantum circuit visualization and Yao for quantum circuit simulation. The resulting state exhibits perfect three-qubit entanglement, with equal probabilities for |000⟩ and |111⟩ states and zero probability for all other computational basis states.
+
+== Circuit level decoding
 
 #bibliography("refs.bib")
