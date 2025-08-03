@@ -5,6 +5,7 @@
 #import "@preview/quill:0.7.1": *
 
 #set math.equation(numbering: "(1)")
+#show link: set text(blue)
 #show heading.where(level: 1): set text(20pt)
 #show: thmrules
 
@@ -17,7 +18,7 @@
 #let proof = thmproof("proof", "Proof")
 
 
-#let exampleblock(it) = block(fill: rgb("#ffffff"), inset: 1em, radius: 4pt, stroke: black, it)
+#let exampleblock(it) = block(fill: rgb("#ffffff"), width:100%, inset: 1em, radius: 4pt, stroke: black, it)
 #let tensor(location, name, label) = {
   import draw: *
   circle(location, radius: 10pt, name: name)
@@ -115,7 +116,7 @@ From the diagram, we can see the representation of $tr(A B C)$, $tr(C A B)$ and 
 ])
 
 
-== Practice: Einsum notation and computational complexity
+== Einsum notation and computational complexity
 In the program, a tensor network topology can be specified with `einsum` notation, which uses a string to denote the tensor network topology. For example, the matrix multiplication can be represented as `ij,jk->ik`. The intputs and outputs are separated by `->`, and the indices of different input tensors are separated by commas.
 In the following, we use the `OMEinsum` package to demonstrate how to specify a tensor network topology, optimize the contraction order, and perform the contraction. A tensor network topology can be specified with the `ein` string literal, or the more flexible `EinCode` constructor.
 
@@ -159,56 +160,64 @@ Space complexity: 2^13.287712379549449
 Read-write complexity: 2^15.287712379549449
 ```
 
+Contraction complexity can be measured from different perspectives:
+- The _time complexity_ is $100^4$, which represents the number of floating-point operations (FLOPs) required to contract the tensor network. For an einsum contraction, this is determined by multiplying the sizes of all unique indices involved, since a unique index either appears under the summation sign or in the output tensor. Later we will see the time complexity can be reduced by specifying the contraction order.
+- The _space complexity_ is $100^2$, which measures the memory required to store the largest intermediate tensor during contraction.
+- The _read-write complexity_ is $4 times 100^2$, which quantifies the total memory bandwidth usage by counting the number of floating-point numbers read from and written to memory during the entire contraction process. This is proportional to the total size of all intermediate tensors.
+
 The `EinCode` object is callable, which can be used to perform the contraction.
 
 ```julia
 julia> code(randn(2, 2), randn(2, 2), randn(2, 2))  # not recommended
-2×2×2 Array{Float64, 3}:
-[:, :, 1] =
- -1.24356   -1.64908
-  0.205614   0.991596
-
-[:, :, 2] =
- -1.39586    -1.72087
-  0.0673963   1.03412
+2×2 Matrix{Float64}:
+ -0.974692  3.06151
+ -0.674225  1.40281
 ```
 However, this is not recommended, since the unordered contraction is not optimized in `OMEinsum`. A better way to to specify an order for it:
 
 ```julia
-julia> nested_code = ein"(ab,bc),ac->ijk"
-ac, ac -> ijk
+julia> nested_code = ein"(ab,bc),cd->ad"
+ac, cd -> ad
 ├─ ab, bc -> ac
 │  ├─ ab
 │  └─ bc
-└─ ac
+└─ cd
 ```
-The return type is a `NestedEinsum` object, which performs a two step contraction. The first step is to contract the first two input tensors, and the second step is to contract the result with the third tensor. The time complexity is increased though.
+The return type is a `NestedEinsum` object, which performs a two step contraction. The first step is to contract the first two input tensors, and the second step is to contract the result with the third tensor. The time complexity is significantly reduced.
 
 ```julia
 julia> contraction_complexity(nested_code, label_sizes)
-Time complexity: 2^4.584962500721156
-Space complexity: 2^3.0
-Read-write complexity: 2^5.169925001442312
+Time complexity: 2^20.931568569324174
+Space complexity: 2^13.287712379549449
+Read-write complexity: 2^15.872674880270605
 ```
 
-For star contraction, the gain of specifying the order seems to be negative from the complexity perspective. Is that reflected in the true performance? No!
+The performance gain is more than this. In OMEinsum, binary contractions can be accelerated by BLAS library.
+
 ```julia
+julia> using BenchmarkTools
+
 julia> @btime code(randn(100, 100), randn(100, 100), randn(100, 100)); # naive
-  104.571 ms (36 allocations: 7.86 MiB)
+  86.418 ms (36 allocations: 385.48 KiB)
 
 julia> @btime nested_code(randn(100, 100), randn(100, 100), randn(100, 100));
-  1.650 ms (261 allocations: 15.65 MiB)
+  133.167 μs (157 allocations: 486.06 KiB)
 ```
-Without hardware acceleration, the computation can be incredibly slow.
 
-#raw(read("examples/basic/basic.jl"), lang: "julia", block: true)
+// #raw(read("examples/basic/basic.jl"), lang: "julia", block: true)
 
-For example, the star contraction has the following diagrammatic representation:
+#exampleblock([
+*Example A: Star contraction*
 
-#align(center, text(10pt, canvas({
+The star contraction of three matrices $A, B, C in bb(R)^(n times n)$ is defined as
+$
+O_(i j k) = sum_a A_(i a) B_(a j) C_(a k)
+$
+Its diagrammatic representation is:
+
+#figure(canvas({
   import draw: *
   let s(it) = text(10pt, it)
-  content((-5, 0.5), s[`ai,aj,ak->ijk` = \ (Star)])
   tensor((-1.0, 0), "A", s[$A$])
   tensor((1.0, 0), "B", s[$A$])
   tensor((0, 1.0), "C", s[$B$])
@@ -219,43 +228,17 @@ For example, the star contraction has the following diagrammatic representation:
   line("a", "A")
   line("a", "B")
   line("a", "C")
-
-  set-origin((-2, -2))
-  content((-3.5, 0.5), [`ia,ajb,bkc,cld,dm->ijklm` = \ (Tensor train)])
-
-  tensor((0, 0), "A", [$A$])
-  tensor((1.5, 0), "B", [$T_1$])
-  tensor((3, 0), "C", [$T_2$])
-  tensor((4.5, 0), "D", [$T_1$])
-  tensor((6, 0), "E", [$A$])
-  labeledge("A", (rel: (0, 1.2)), [$i$])
-  labeledge("B", (rel: (0, 1.2)), [$j$])
-  labeledge("C", (rel: (0, 1.2)), [$k$])
-  labeledge("D", (rel: (0, 1.2)), [$l$])
-  labeledge("E", (rel: (0, 1.2)), [$m$])
-
-  labeledge("A", "B", [$a$])
-  labeledge("B", "C", [$b$])
-  labeledge("C", "D", [$c$])
-  labeledge("D", "E", [$d$])
-})))
-
-
-For example, the contraction of two tensors $A_(i j k)$ and $B_(k l)$, i.e. $sum_k A_(i j k) B_(k l)$, can be diagrammatically represented as
-
-#align(center, canvas({
-  import draw: *
-  tensor((1, 1), "A", "A")
-  tensor((3, 1), "B", "B")
-  labeledge("A", "B", "k")
-  labeledge("B", (rel: (1.5, 0)), "l")
-  labeledge("A", (rel: (0, 1.5)), "j")
-  labeledge("A", (rel: (-1.5, 0)), "i")
 }))
 
+The einsum notation for the star contraction is `ai,aj,ak->ijk`. Its time complexity is $O(n^4)$ in big O notation.
 
+*Example B: Kronecker product*
 
-The kronecker product of two matrices $A_(i j)$ and $B_(k l)$, i.e. $A_(i j) times.circle B_(k l)$, can be diagrammatically represented as
+The kronecker product of two matrices $A, B in bb(R)^(n times n)$ is defined as
+$
+C_(i j k l) = A_(i j) B_(k l)
+$
+Its diagrammatic representation is:
 
 #figure(canvas({
   import draw: *
@@ -265,16 +248,48 @@ The kronecker product of two matrices $A_(i j)$ and $B_(k l)$, i.e. $A_(i j) tim
   labeledge("A", (rel: (0, 1.5)), "i")
   labeledge("B", (rel: (0, -1.5)), "l")
   labeledge("B", (rel: (0, 1.5)), "k")
-  set-origin((5.5, 0))
-  content((0, 1), $arrow$)
-  set-origin((3, 0))
-  content((0, 1), `ij,kl->ijkl`)
 }))
+
+The einsum notation for the kronecker product is `ij,kl->ijkl`. Its time complexity is $O(n^4)$.
+])
 
 == Contraction order optimization
 
-Tensor networks can be contracted pairwise according to a specified contraction order.
-The computational complexity of this contraction is determined by the chosen order, which can be represented as a binary tree, where leaves are the input tensors and the root is the output tensor. (TODO: add a figure)
+The time complexity to contract a tensor network is determined by the chosen contraction order, which is represented as a binary tree.
+The leaves of the tree are the input tensors, and the root is the output tensor.
+For example, the contraction `ein"ab,bc,cd->ad"` can be represented as the following two binary trees:
+
+#figure(canvas({
+  import draw: *
+  set-origin((4, 0.35))
+  let DY = 1.2
+  let DX1 = 1.5
+  let DX2 = 0.9
+  let root = (0, DY)
+  let left = (-DX1, 0)
+  let right = (DX1, 0)
+  let left_left = (-DX1 - DX2, -DY)
+  let left_right = (-DX1 + DX2, -DY)
+
+  for (l, t, lb) in ((root, [$a d$], "C"), (left, [$a c$], "A"), (right, [$c d$], "B"), (left_left, [$a b$], "T_1"), (left_right, [$b c$], "T_4")){
+    tensor(l, lb, text(11pt, t))
+  }
+  for (a, b) in (("C", "A"), ("C", "B"), ("A", "T_1"), ("A", "T_4")){
+    line(a, b)
+  }
+  content((0, -2), text(10pt)[`ein"(ab,bc),cd->ad"`])
+  set-origin((6, 0))
+  for (l, t, lb) in ((root, [$a d$], "C"), (left, text(8pt)[$a b c d$], "A"), (right, [$b c$], "B"), (left_left, [$a b$], "T_1"), (left_right, [$c d$], "T_4")){
+    tensor(l, lb, text(11pt, t))
+  }
+  for (a, b) in (("C", "A"), ("C", "B"), ("A", "T_1"), ("A", "T_4")){
+    line(a, b)
+  }
+  content((0, -2), text(10pt)[`ein"(ab,cd),bc->ad"`])
+}))
+
+The left one is superior to the right one. The right one computes a kronecker product first and creates a large intermediate tensor of size $O(n^4)$, while the left one has a time complexity $O(n^3)$ and space complexity $O(n^2)$.
+
 Finding the optimal contraction order—the one with minimal complexity—is an NP-complete problem@Markov2008.
 However, in practice, a close-to-optimal contraction order is usually sufficient and can be found efficiently using heuristic optimization methods.
 Over the past decade, researchers have developed various optimization techniques, including both exact and heuristic approaches.
@@ -385,7 +400,7 @@ caption: [(a) A tensor network. (b) A line graph for the tensor network. Labels 
 
 The tree decomposition in (c) consists of 6 bags, each containing at most 3 indices, indicating that the treewidth of the tensor network is 2. The tensors $T_1$, $T_2$, $T_3$ and $T_4$ are contained in bags $B_1$, $B_5$, $B_6$ and $B_2$ respectively. Following the tree structure, we perform the contraction from the leaves. First, we contract bags $B_1$ and $B_2$ into $B_3$, yielding an intermediate tensor $I_(1 4) = T_1 * T_4$ (where "$*$" denotes tensor contraction) with indices $B$ and $E$. Next, we contract bags $B_5$ and $B_6$ into $B_4$, producing another intermediate tensor $I_(2 3) = T_2 * T_3$ also with indices $B$ and $E$. Finally, contracting $B_3$ and $B_4$ yields the desired scalar result.
 
-#align(center, canvas(length:1.0cm, {
+#figure(canvas({
   import draw: *
   set-origin((4, 0.35))
   let DY = 1.2
@@ -406,25 +421,55 @@ The tree decomposition in (c) consists of 6 bags, each containing at most 3 indi
   for (a, b) in (("C", "A"), ("C", "B"), ("A", "T_1"), ("A", "T_4"), ("B", "T_3"), ("B", "T_2")){
     line(a, b)
   }
-
-
 }))
 
-Contraction complexity can be measured from different perspectives:
-- The _time complexity_ represents the number of floating-point operations (FLOPs) required to contract the tensor network. For an einsum contraction, this is determined by multiplying the sizes of all unique indices involved. The logarithm of FLOPs for the bottleneck contraction corresponds to the largest bag size in the tree decomposition.
-
-- The _space complexity_ measures the memory required to store intermediate tensors during contraction. Its logarithm corresponds to the largest separator size in the tree decomposition, which determines the maximum intermediate tensor size.
-
-- The _read-write complexity_ quantifies the total memory bandwidth usage by counting the number of floating-point numbers read from and written to memory during the entire contraction process. This is proportional to the total size of all intermediate tensors.
-
-These complexity metrics, particularly time and space complexity, align naturally with the goal of finding minimal-width tree decompositions. This is because the time complexity is typically dominated by the bottleneck contraction, which corresponds directly to the tree decomposition's maximum bag size.
+Finding the optimal contraction order is almost equivalent to finding the minimal-width tree decomposition of the line graph.
+The log time complexity for the bottleneck contraction corresponds to the largest bag size in the tree decomposition.
+The log space complexity is equivalent to the largest separator (the set of vertices connecting two bags) size in the tree decomposition.
 
 === Heuristic methods for finding the optimal contraction order
 
+`OMEinsum` provides multiple heuristic methods for finding the optimal contraction order. They are implemented in the dependency `OMEinsumContractionOrders`. To demonstrate the usage, we first generate a large enough random tensor network with the help of the `Graphs` package.
+
+```julia
+julia> using OMEinsum, Graphs
+
+julia> function demo_network(n::Int)
+           g = random_regular_graph(n, 3)
+           code = EinCode([[e.src, e.dst] for e in edges(g)], Int[])
+           sizes = uniformsize(code, 2)
+           tensors = [randn([sizes[leg] for leg in ix]...) for ix in getixsv(code)]
+           return code, tensors, sizes
+       end
+demo_network (generic function with 1 method)
+
+julia> code, tensors, sizes = demo_network(100);
+
+julia> contraction_complexity(code, sizes)
+Time complexity: 2^100.0
+Space complexity: 2^0.0
+Read-write complexity: 2^9.231221180711184
+```
+
+We first generate a random 3-regular graph with 100 vertices. Then we associate each vertex with a binary variable and each edge with a tensor of size $2 times 2$. The time complexity without contraction order optimization is $2^100$, which is equivalent to brute-force. The order can be optimized with the `optimize_code` function.
+
+```julia
+julia> optcode = optimize_code(code, sizes, TreeSA());
+
+julia> cc = contraction_complexity(optcode, sizes)
+Time complexity: 2^17.241796993093228
+Space complexity: 2^13.0
+Read-write complexity: 2^16.360864226366807
+```
+The `optimize_code` function takes three inputs: the `EinCode` object, the tensor sizes, and the contraction order solver. It returns a `NestedEinsum` object of time complexity $~2^17.2$. It is much smaller than the number of vertices. It is a very reasonable number because the treewidth of a 3-regular graph is approximately upper bounded by $1\/6$ of the number of vertices@Fomin2006.
+
 #figure(image("images/sycamore_53_20_0.svg", width: 60%),
-caption: [The time to optimize the contraction order for different methods. The x-axis is the time to optimize the contraction order, and the y-axis is the time to contract the tensor network. For details, please check #link("https://arrogantgao.github.io/blogs/contractionorder/")[this blog].]
+caption: [The contraction order quality measured by the space complexity ($x$-axis) and time complexity ($y$-axis) for different methods with different hyper-parameters. For details, please check GitHub repository #link("https://github.com/TensorBFS/OMEinsumContractionOrdersBenchmark")[`OMEinsumContractionOrdersBenchmark`].]
 )
 
+Among the available solver backends, `TreeSA` and `HyperND` usually provide the best contraction order quality. However, they are slow. For overhead sensitive applications, one can use `GreedyMethod` or `Treewidth` method.
+
+In the following, we introduce the local search method `TreeSA` in detail.
 
 #let triangle(loc, radius) = {
   import draw: *
@@ -580,7 +625,26 @@ For example, in @fig:slicing, we slice the tensor network over the index $i$. Th
   content((rel: (0, 0.5), to: "e4.mid"), text(14pt)[$i$])
 }), caption: [The slicing technique. The tensor network is sliced over the index $i$.]) <fig:slicing>
 
+Continuing from the previous example, we can use the `slice_code` function to reduce the space complexity.
+```julia
+julia> sliced_code = slice_code(optcode, sizes, TreeSASlicer(score=ScoreFunction(sc_target=cc.sc-3)));
 
+julia> sliced_code.slicing
+3-element Vector{Int64}:
+ 14
+ 76
+ 60
+
+julia> contraction_complexity(sliced_code, sizes)
+Time complexity: 2^17.800899899920303
+Space complexity: 2^10.0
+Read-write complexity: 2^17.199595668955244
+```
+The `slice_code` function takes three inputs: the `NestedEinsum` object, the tensor sizes, and the slicing strategy. Here, we use the `TreeSASlicer` with the `ScoreFunction` to reduce the space complexity by 3. The result type is `SlicedEinsum`, which contains a `slicing` field for storing the slice indices. After slicing, the space complexity is reduced by $3$, while the time complexity is only slightly increased. The usage of `SlicedEinsum` is the same as the `NestedEinsum` object.
+
+```julia
+julia> @assert sliced_code(tensors...) ≈ optcode(tensors...)
+```
 
 == Data Compression
 Let us define a complex matrix $A in CC^(m times n)$, and let its singular value decomposition be
@@ -662,6 +726,28 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 
 #align(center, text(10pt, canvas({
   import draw: *
+  set-origin((-2, -2))
+  content((-3.5, 0.5), [`ia,ajb,bkc,cld,dm->ijklm` = \ (Tensor train)])
+
+  tensor((0, 0), "A", [$A$])
+  tensor((1.5, 0), "B", [$T_1$])
+  tensor((3, 0), "C", [$T_2$])
+  tensor((4.5, 0), "D", [$T_1$])
+  tensor((6, 0), "E", [$A$])
+  labeledge("A", (rel: (0, 1.2)), [$i$])
+  labeledge("B", (rel: (0, 1.2)), [$j$])
+  labeledge("C", (rel: (0, 1.2)), [$k$])
+  labeledge("D", (rel: (0, 1.2)), [$l$])
+  labeledge("E", (rel: (0, 1.2)), [$m$])
+
+  labeledge("A", "B", [$a$])
+  labeledge("B", "C", [$b$])
+  labeledge("C", "D", [$c$])
+  labeledge("D", "E", [$d$])
+})))
+
+#align(center, text(10pt, canvas({
+  import draw: *
   tensor((-3.5, 0), "T", [$T$])
   labeledge("T", (rel: (0, 1.2)), [$i$])
   labeledge("T", (rel: (-1.2, 0)), [$j$])
@@ -690,6 +776,13 @@ In the following example, we implement the tensor train decomposition in Julia. 
 
 
 == Automatic Differentiation
+
+```julia
+# autodiff
+cost_and_gradient(optcode, (tensors...,))
+```
+
+
 
 The differentiation rules for tensor network contraction can be represented as the contraction of the tensor network. Given a tensor network $X$ in @fig:tensor-network-differentiation(a), the Jacobian matrix of $X$ with respect to $U_2$ is given by @fig:tensor-network-differentiation(b), which is equivalent to cutting the tensor $U_2$ and then contracting the remaining tensor network. The backward-mode automatic differentiation of $X$ with respect to $U_2$ is given by @fig:tensor-network-differentiation(c).
 #figure(canvas({
