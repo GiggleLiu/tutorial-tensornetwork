@@ -192,7 +192,7 @@ The kronecker product of two matrices $A_(i j)$ and $B_(k l)$, i.e. $A_(i j) tim
 == Contraction order optimization
 
 Tensor networks can be contracted pairwise according to a specified contraction order.
-The computational complexity of this contraction is determined by the chosen order, which can be represented as a binary tree.
+The computational complexity of this contraction is determined by the chosen order, which can be represented as a binary tree, where leaves are the input tensors and the root is the output tensor. (TODO: add a figure)
 Finding the optimal contraction order—the one with minimal complexity—is an NP-complete problem@Markov2008.
 However, in practice, a close-to-optimal contraction order is usually sufficient and can be found efficiently using heuristic optimization methods.
 Over the past decade, researchers have developed various optimization techniques, including both exact and heuristic approaches.
