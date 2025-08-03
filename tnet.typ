@@ -117,7 +117,89 @@ From the diagram, we can see the representation of $tr(A B C)$, $tr(C A B)$ and 
 
 == Practice: Einsum notation and computational complexity
 In the program, a tensor network topology can be specified with `einsum` notation, which uses a string to denote the tensor network topology. For example, the matrix multiplication can be represented as `ij,jk->ik`. The intputs and outputs are separated by `->`, and the indices of different input tensors are separated by commas.
-In the following, we use the `OMEinsum` package to compute some simple tensor network contractions.
+In the following, we use the `OMEinsum` package to demonstrate how to specify a tensor network topology, optimize the contraction order, and perform the contraction. A tensor network topology can be specified with the `ein` string literal, or the more flexible `EinCode` constructor.
+
+```julia
+julia> using OMEinsum
+
+julia> code = ein"ab,bc,cd->ad"  # using string literal
+ab, bc, cd -> ad
+
+julia> EinCode([[1,2], [2, 3], [3, 4]], [1, 4]) # alternatively
+1∘2, 2∘3, 3∘4 -> 1∘4
+```
+
+Its defining properties can be obtained with the `getixsv` and `getiyv` functions.
+```julia
+julia> getixsv(code)  # get the indices of the input tensors
+3-element Vector{Vector{Char}}:
+ ['a', 'b']
+ ['b', 'c']
+ ['c', 'd']
+
+julia> getiyv(code)  # get the indices of the output tensor
+2-element Vector{Char}:
+ 'a': ASCII/Unicode U+0061 (category Ll: Letter, lowercase)
+ 'd': ASCII/Unicode U+0064 (category Ll: Letter, lowercase)
+```
+
+The complexity of the contraction can be computed with the `contraction_complexity` function. It requires the sizes of the indices, which can be specified with a dictionary that maps the indices to their sizes. Here, we use the `uniformsize` function to specify that all indices have the same size.
+
+```julia
+julia> label_sizes = uniformsize(code, 100)  # define the sizes of the indices
+Dict{Char, Int64} with 4 entries:
+  'a' => 100
+  'c' => 100
+  'd' => 100
+  'b' => 100
+
+julia> contraction_complexity(code, label_sizes)
+Time complexity: 2^26.575424759098897
+Space complexity: 2^13.287712379549449
+Read-write complexity: 2^15.287712379549449
+```
+
+The `EinCode` object is callable, which can be used to perform the contraction.
+
+```julia
+julia> code(randn(2, 2), randn(2, 2), randn(2, 2))  # not recommended
+2×2×2 Array{Float64, 3}:
+[:, :, 1] =
+ -1.24356   -1.64908
+  0.205614   0.991596
+
+[:, :, 2] =
+ -1.39586    -1.72087
+  0.0673963   1.03412
+```
+However, this is not recommended, since the unordered contraction is not optimized in `OMEinsum`. A better way to to specify an order for it:
+
+```julia
+julia> nested_code = ein"(ab,bc),ac->ijk"
+ac, ac -> ijk
+├─ ab, bc -> ac
+│  ├─ ab
+│  └─ bc
+└─ ac
+```
+The return type is a `NestedEinsum` object, which performs a two step contraction. The first step is to contract the first two input tensors, and the second step is to contract the result with the third tensor. The time complexity is increased though.
+
+```julia
+julia> contraction_complexity(nested_code, label_sizes)
+Time complexity: 2^4.584962500721156
+Space complexity: 2^3.0
+Read-write complexity: 2^5.169925001442312
+```
+
+For star contraction, the gain of specifying the order seems to be negative from the complexity perspective. Is that reflected in the true performance? No!
+```julia
+julia> @btime code(randn(100, 100), randn(100, 100), randn(100, 100)); # naive
+  104.571 ms (36 allocations: 7.86 MiB)
+
+julia> @btime nested_code(randn(100, 100), randn(100, 100), randn(100, 100));
+  1.650 ms (261 allocations: 15.65 MiB)
+```
+Without hardware acceleration, the computation can be incredibly slow.
 
 #raw(read("examples/basic/basic.jl"), lang: "julia", block: true)
 
