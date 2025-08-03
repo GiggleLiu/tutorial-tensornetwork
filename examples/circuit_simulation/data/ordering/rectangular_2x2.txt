@@ -1,0 +1,13 @@
+# CUT BETWEEN A AND B
+cut () 1 3
+
+# EXPAND PATCH A
+expand A 0
+expand A 1
+
+# EXPAND PATCH B
+expand B 2
+expand B 3
+
+# MERGE PATCHES A-B
+merge A B

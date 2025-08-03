@@ -1,0 +1,97 @@
+# TODO: improve this ordering for reusage of tensors across cut instances.
+# BEGIN INITIAL CUTS
+cut () 33 34
+cut () 43 44
+cut () 34 44
+#
+# EXPAND PATCH A
+expand Aa 72
+expand Aa 73
+expand Ab 76
+expand Ab 75
+expand A 94
+expand A 84
+expand A 83
+expand A 85
+merge Ab A
+expand A 74
+merge Aa A
+#
+# EXPAND PATCH B
+expand B 39
+expand B 49
+expand B 38
+expand B 48
+#
+# EXPAND PATCH D
+expand Da 41
+expand Da 42
+expand Db 50
+expand Db 51
+expand Dc 61
+expand Dc 62
+expand Dd 58 
+expand Dd 57 
+expand De 28 
+expand De 27 
+expand D 32
+expand D 33
+merge Da D
+expand D 43
+merge Db D
+expand D 52
+expand D 53
+merge Dc D
+expand D 63
+#
+# MERGE PATCHES A-D
+merge A D
+#
+# EXPAND PATCH D
+#
+expand D 64
+expand D 65
+expand D 66
+expand D 67
+expand D 54
+expand D 55
+expand D 56
+merge Dd D
+# EXPAND PATCH D
+#
+expand D 44
+expand D 45
+expand D 46
+expand D 47
+#
+# MERGE PATCHES B-D
+merge B D
+#
+expand D 37
+expand D 36
+expand D 35
+expand D 34
+merge De D
+expand D 26
+expand D 25
+expand D 24
+#
+# BEGIN TERMINAL CUTS
+cut (0) 5
+cut (0) 6
+cut (0) 14
+cut (0) 15
+cut (0) 16
+cut (0) 17
+#
+# EXPAND PATCH C
+expand C 14
+expand C 15
+expand Ca 16
+expand Ca 17
+expand C 5
+expand C 6
+merge Ca C
+#
+# MERGE PATCHES B-C
+merge D C

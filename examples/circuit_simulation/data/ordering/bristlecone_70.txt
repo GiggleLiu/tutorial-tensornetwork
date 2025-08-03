@@ -1,0 +1,179 @@
+# BEGIN INITIAL CUTS
+# (4, 1)-(5, 1)
+cut () 49 61
+# (4, 2)-(5, 2)
+cut () 50 62
+# (4, 3)-(5, 3)
+cut () 51 63
+# (4, 4)-(5, 4)
+cut () 52 64
+#
+# EXPAND PATCH A
+# (5, 1)
+expand A 61
+# (6, 1)
+expand A 73
+# (5, 2)
+expand A 62
+# (6, 2)
+expand A 74
+# (7, 2)
+expand A 86
+# (5, 3)
+expand A 63
+# (6, 3)
+expand A 75
+# (7, 3)
+expand A 87
+# (8, 3)
+expand A 99
+# (5, 4)
+expand A 64
+# (6, 4)
+expand A 76
+# (7, 4)
+expand A 88
+# (8, 4)
+expand A 100
+# (9, 4)
+expand A 112
+# (5, 5)
+expand A 65
+# (6, 5)
+expand A 77
+# (7, 5)
+expand A 89
+# (8, 5)
+expand A 101
+# (9, 5)
+expand A 113
+# (10, 5)
+expand A 125
+# (10, 6)
+expand A 126
+# (9, 6)
+expand A 114
+# (8, 6)
+expand A 102
+# (7, 6)
+expand A 90
+# (6, 6)
+expand A 78
+# (5, 6)
+expand A 66
+# (9, 7)
+expand A 115
+# (8, 7)
+expand A 103
+# (7, 7)
+expand A 91
+# (6, 7)
+expand A 79
+# (5, 7)
+expand A 67
+# (8, 8)
+expand A 104
+# (7, 8)
+expand A 92
+# (6, 8)
+expand A 80
+# (5, 8)
+expand A 68
+#
+# EXPAND PATCH B
+# (4, 1)
+expand B 49
+# (4, 2)
+expand B 50
+# (3, 2)
+expand B 38
+# (4, 3)
+expand B 51
+# (3, 3)
+expand B 39
+# (2, 3)
+expand B 27
+# (4, 4)
+expand B 52
+# (3, 4)
+expand B 40
+# (2, 4)
+expand B 28
+# (1, 4)
+expand B 16
+# (4, 5)
+expand B 53
+# (3, 5)
+expand B 41
+# (2, 5)
+expand B 29
+# (1, 5)
+expand B 17
+# (0, 5)
+expand B 5
+# (0, 6)
+expand B 6
+# (1, 6)
+expand B 18
+# (2, 6)
+expand B 30
+# (3, 6)
+expand B 42
+# (4, 6)
+expand B 54
+# (1, 7)
+expand B 19
+# (2, 7)
+expand B 31
+# (3, 7)
+expand B 43
+# (4, 7)
+expand B 55
+# (2, 8)
+expand B 32
+# (3, 8)
+expand B 44
+# (4, 8)
+expand B 56
+#
+# MERGE PATCHES A-B
+merge A B
+#
+# BEGIN TERMINAL CUTS
+# (3, 9)
+cut (0) 45
+# (4, 9)
+cut (0) 57
+# (4, 10)
+cut (0) 58
+# (5, 9)
+cut (0) 69
+# (5, 10)
+cut (0) 70
+# (6, 9)
+cut (0) 81
+# (6, 10)
+cut (0) 82
+# (7, 9)
+cut (0) 93
+#
+# EXPAND PATCH C
+# (4, 10)
+expand C 58
+# (5, 10)
+expand C 70
+# (6, 10)
+expand C 82
+# (4, 9)
+expand C 57
+# (3, 9)
+expand C 45
+# (5, 9)
+expand C 69
+# (6, 9)
+expand C 81
+# (7, 9)
+expand C 93
+#
+# MERGE PATCHES B-C
+merge B C

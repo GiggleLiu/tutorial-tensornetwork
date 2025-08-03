@@ -5,7 +5,7 @@ include("reader.jl")
 using .YaoQASMReader: yaocircuit_from_qasm
 
 # load a visualize
-filename = joinpath(@__DIR__, "data", "sycamore_53_8_0.txt")
+filename = joinpath(@__DIR__, "data", "circuits", "bristlecone_60_1-24-1_0.txt")
 @info "Circuit: $(filename)"
 c = yaocircuit_from_qasm(filename)
 vizcircuit(c)

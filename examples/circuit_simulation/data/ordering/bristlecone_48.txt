@@ -1,0 +1,131 @@
+# BEGIN INITIAL CUTS
+# (3, 2)-(4, 2)
+cut (0) 38 50
+# (3, 3)-(4, 3)
+cut (1,0) 39 51
+#
+# EXPAND PATCH A
+# (4, 2)
+expand A 50
+# (5, 2)
+expand A 62
+# (4, 3)
+expand A 51
+# (5, 3)
+expand A 63
+# (6, 3)
+expand A 75
+# (4, 4)
+expand A 52
+# (5, 4)
+expand A 64
+# (6, 4)
+expand A 76
+# (7, 4)
+expand A 88
+# (4, 5)
+expand A 53
+# (5, 5)
+expand A 65
+# (6, 5)
+expand A 77
+# (7, 5)
+expand A 89
+# (8, 5)
+expand A 101
+# (8, 6)
+expand A 102
+# (7, 6)
+expand A 90
+# (6, 6)
+expand A 78
+# (5, 6)
+expand A 66
+# (4, 6)
+expand A 54
+# (7, 7)
+expand A 91
+# (6, 7)
+expand A 79
+# (5, 7)
+expand A 67
+# (4, 7)
+expand A 55
+#
+# EXPAND PATCH B
+# (3, 2)
+expand B 38
+# (3, 3)
+expand B 39
+# (2, 3)
+expand B 27
+# (3, 4)
+expand B 40
+# (2, 4)
+expand B 28
+# (1, 4)
+expand B 16
+# (3, 5)
+expand B 41
+# (2, 5)
+expand B 29
+# (1, 5)
+expand B 17
+# (0, 5)
+expand B 5
+# (0, 6)
+expand B 6
+# (1, 6)
+expand B 18
+# (2, 6)
+expand B 30
+# (3, 6)
+expand B 42
+# (1, 7)
+expand B 19
+# (2, 7)
+expand B 31
+# (3, 7)
+expand B 43
+#
+# MERGE PATCHES A-B
+merge A B
+#
+# BEGIN TERMINAL CUTS
+# (3, 8)
+cut (0) 44
+# (3, 9)
+cut (0) 45
+# (4, 8)
+cut (0) 56
+# (4, 9)
+cut () 57
+# (5, 8)
+cut (0) 68
+# (5, 9)
+cut (0) 69
+# (2, 8)
+cut () 32
+# (6, 8)
+cut (0) 80
+#
+# EXPAND PATCH C
+# (3, 9)
+expand C 45
+# (4, 9)
+expand C 57
+# (5, 9)
+expand C 69
+# (3, 8)
+expand C 44
+# (2, 8)
+expand C 32
+# (4, 8)
+expand C 56
+# (5, 8)
+expand C 68
+# (6, 8)
+expand C 80
+#
+# MERGE PATCHES B-C
+merge B C

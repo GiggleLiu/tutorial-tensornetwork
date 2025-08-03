@@ -1,0 +1,111 @@
+# NO INITIAL CUTS
+#
+# EXPAND PATCH p74
+expand p74 83
+expand p74 74
+#
+# EXPAND PATCH p78
+expand p78 87
+expand p78 78
+#
+# EXPAND PATCH A
+expand A 75
+merge p74 A
+#
+# EXPAND PATCH B
+expand B 77
+merge p78 B
+#
+# EXPAND PATCH C
+expand C 55
+expand C 54
+expand C 63
+expand C 72
+expand C 73
+# MERGE C A
+merge C A
+# EXPAND PATCH D
+expand D 67
+expand D 76
+# EXPAND PATCH E
+expand E 61
+expand E 62
+expand E 71
+expand E 80
+expand E 79
+# MERGE E B
+merge E B
+#
+# EXPAND PATCH F
+expand F 57
+expand F 56
+expand F 47
+# EXPAND PATCH G
+expand G 59
+expand G 58
+# EXPAND PATCH H
+expand H 51
+expand H 60
+#
+# EXPAND PATCH I
+expand I 19
+expand I 18
+expand I 27
+expand I 36
+expand I 37
+expand I 38
+expand I 39
+# EXPAND PATCH J
+expand J 31
+expand J 40
+# EXPAND PATCH K
+expand K 25
+expand K 26
+expand K 35
+expand K 44
+expand K 43
+expand K 42
+expand K 41
+#
+# EXPAND PATCH L
+expand L 20
+# EXPAND PATCH M
+expand M 21
+expand M 22
+expand M 23
+# EXPAND PATCH N
+expand N 24
+#
+# MERGE PATCHES
+merge A D
+merge B H
+merge G F
+merge D F
+merge H F
+merge F I
+merge J I
+merge K I
+merge M L
+merge I L
+merge N L
+#
+# BEGIN TERMINAL CUTS
+cut (0) 2
+cut (0) 3
+cut (0) 4
+cut (0) 5
+cut (0) 6
+cut (0) 11
+cut (0) 15
+#
+# EXPAND PATCH O
+expand O 11
+expand O 2
+expand O 3
+expand O 4
+expand O 5
+expand O 6
+expand O 15
+#
+# MERGE PATCHES L O
+merge L O

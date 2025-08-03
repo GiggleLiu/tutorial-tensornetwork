@@ -1,0 +1,8 @@
+cut () 1 3
+expand a 1
+expand a 0
+expand a 2
+cut () 5
+expand b 5
+expand b 3
+merge a b
