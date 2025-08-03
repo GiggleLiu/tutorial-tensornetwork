@@ -209,13 +209,14 @@ The _width_ of a tree decomposition is the size of its largest bag minus one. Th
 ])
 
 
-A line graph of a tensor network is a graph where vertices represent indices and edges represent tensors sharing indices. A tensor network contraction order is related to the tree decomposition of the line graph in the following way:
-- A leg in the tensor network is a vertex in the line graph, and a tensor in the tensor network is a hyperedge (an edge that connects multiple vertices) in the tree decomposition.
-- The first two requirements of the tree decomposition are equivalent to: all tensors must be included in at least one bag, and a bag corresponds to a contraction step.
-- The third requirement of the tree decomposition is equivalent to: a leg can not be eliminated until all tensors connected to it are considered.
-- For tensor networks with non-uniform leg sizes, we can related its contraction order with the weighted tree decomposition, where the weight of a vertex is the logarithm of the leg size.
+The line graph of a tensor network is a graph where vertices represent indices and edges represent tensors sharing those indices. The relationship between a tensor network's contraction order and the tree decomposition of its line graph can be understood through several key correspondences:
 
-The figure below shows (a) a tensor network with four tensors $T_1$, $T_2$, $T_3$ and $T_4$ and eight indices $A$ through $H$, (b) its line graph, and (c) a tree decomposition of the line graph.
+- Each leg (index) in the tensor network becomes a vertex in the line graph, while each tensor becomes a hyperedge connecting multiple vertices.
+- The tree decomposition's first two requirements ensure that all tensors are accounted for in the contraction sequence - each tensor must appear in at least one bag, with each bag representing a contraction step.
+- The third requirement of the tree decomposition maps to an important constraint in tensor contraction: an index can only be eliminated after considering all tensors connected to it.
+- For tensor networks with varying index dimensions, we can extend this relationship to weighted tree decompositions, where vertex weights correspond to the logarithm of the index dimensions.
+
+The figure below illustrates these concepts with (a) a tensor network containing four tensors $T_1$, $T_2$, $T_3$ and $T_4$ and eight indices labeled $A$ through $H$, (b) its corresponding line graph, and (c) a tree decomposition of that line graph.
 
 #figure(canvas({
   import draw: *
@@ -300,7 +301,7 @@ The figure below shows (a) a tensor network with four tensors $T_1$, $T_2$, $T_3
 caption: [(a) A tensor network. (b) A line graph for the tensor network. Labels are connected if and only if they appear in the same tensor. (c) A tree decomposition (T. D.) of the line graph.]
 )
 
-The tree decomposition in (c) has 5 bags, each has a at most 3 indices. So, the treewidth of the tensor network is 2. Tensors $T_1$, $T_2$, $T_3$ and $T_4$ are included in bags $B_1$, $B_5$, $B_6$ and $B_2$ respectively. We start the contraction from the leaves. In the first step, $B_1$ and $B_2$ are contracted to $B_3$, and the result is a tensor $I_(1 4) = T_1 * T_4$ (we slightly abuse the notation "$*$" to denote the tensor contraction), which has two legs $B$ and $E$. In the second step, $B_5$ and $B_6$ are contracted to $B_4$, and the result is a tensor $I_(2 3) = T_2 * T_3$, which has two legs $B$ and $E$ as well. In the last step, $B_3$ and $B_4$ are contracted to a scalar.
+The tree decomposition in (c) consists of 6 bags, each containing at most 3 indices, indicating that the treewidth of the tensor network is 2. The tensors $T_1$, $T_2$, $T_3$ and $T_4$ are contained in bags $B_1$, $B_5$, $B_6$ and $B_2$ respectively. Following the tree structure, we perform the contraction from the leaves. First, we contract bags $B_1$ and $B_2$ into $B_3$, yielding an intermediate tensor $I_(1 4) = T_1 * T_4$ (where "$*$" denotes tensor contraction) with indices $B$ and $E$. Next, we contract bags $B_5$ and $B_6$ into $B_4$, producing another intermediate tensor $I_(2 3) = T_2 * T_3$ also with indices $B$ and $E$. Finally, contracting $B_3$ and $B_4$ yields the desired scalar result.
 
 #align(center, canvas(length:1.0cm, {
   import draw: *
@@ -326,6 +327,15 @@ The tree decomposition in (c) has 5 bags, each has a at most 3 indices. So, the 
 
 
 }))
+
+Contraction complexity can be measured from different perspectives:
+- The _time complexity_ represents the number of floating-point operations (FLOPs) required to contract the tensor network. For an einsum contraction, this is determined by multiplying the sizes of all unique indices involved. The logarithm of FLOPs for the bottleneck contraction corresponds to the largest bag size in the tree decomposition.
+
+- The _space complexity_ measures the memory required to store intermediate tensors during contraction. Its logarithm corresponds to the largest separator size in the tree decomposition, which determines the maximum intermediate tensor size.
+
+- The _read-write complexity_ quantifies the total memory bandwidth usage by counting the number of floating-point numbers read from and written to memory during the entire contraction process. This is proportional to the total size of all intermediate tensors.
+
+These complexity metrics, particularly time and space complexity, align naturally with the goal of finding minimal-width tree decompositions. This is because the time complexity is typically dominated by the bottleneck contraction, which corresponds directly to the tree decomposition's maximum bag size.
 
 === Heuristic methods for finding the optimal contraction order
 
