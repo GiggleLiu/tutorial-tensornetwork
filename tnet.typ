@@ -200,6 +200,24 @@ Among these methods, multiple heuristic methods can handle networks with more th
 
 The optimal contraction order is closely related to the _tree decomposition_@Markov2008 of the line graph of the tensor network.
 
+#definition([Tree decomposition and treewidth], [A _tree decomposition_ of a (hyper)graph $G=(V,E)$ is a tree $T=(B,F)$ where each node $B_i in B$ contains a subset of vertices in $V$ (called a "bag"), satisfying:
+
+1. Every vertex $v in V$ appears in at least one bag.
+2. For each (hyper)edge $e in E$, there exists a bag containing all vertices in $e$.
+3. For each vertex $v in V$, the bags containing $v$ form a connected subtree of $T$.
+
+The _width_ of a tree decomposition is the size of its largest bag minus one. The _treewidth_ of a graph is the minimum width among all possible tree decompositions.
+])
+
+
+A tensor network contraction order is related to the tree decomposition in the following way:
+- A leg in the tensor network is a vertex in the line graph, and a tensor in the tensor network is a hyperedge (an edge that connects multiple vertices) in the tree decomposition.
+- The first two requirements of the tree decomposition are equivalent to: all tensors must be included in at least one bag, and a bag corresponds to a contraction step.
+- The third requirement of the tree decomposition is equivalent to: a leg can not be eliminated until all tensors connected to it are considered.
+- For tensor networks with non-uniform leg sizes, we can related its contraction order with the weighted tree decomposition, where the weight of a vertex is the logarithm of the leg size.
+
+The figure below shows (a) a tensor network with four tensors $T_1$, $T_2$, $T_3$ and $T_4$ and eight indices $A$ through $H$, (b) its line graph where vertices represent indices and edges represent tensors sharing indices, and (c) a tree decomposition of the line graph.
+
 #figure(canvas({
   import draw: *
   let d = 1.1
