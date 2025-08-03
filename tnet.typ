@@ -253,7 +253,7 @@ Its diagrammatic representation is:
 The einsum notation for the kronecker product is `ij,kl->ijkl`. Its time complexity is $O(n^4)$.
 ])
 
-== Contraction order optimization
+== Contraction order optimization and slicing
 
 The time complexity to contract a tensor network is determined by the chosen contraction order, which is represented as a binary tree.
 The leaves of the tree are the input tensors, and the root is the output tensor.
@@ -593,7 +593,7 @@ Additionally, the `TreeSA` method supports the slicing technique.
 When the space complexity is too large, one can loop over a subset of indices, and then contract the intermediate results in the end.
 Such technique can reduce the space complexity, but slicing $n$ indices will increase the time complexity by $2^n$.
 
-== Slicing Technique
+=== Slicing Technique
 
 Slicing is a technique to reduce the space complexity of the tensor network by looping over a subset of indices.
 This effectively reduces the size of the tensor network inside the loop, and the space complexity can potentially be reduced.
@@ -722,7 +722,7 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 })))
 
 
-== Practice: Tensor train decomposition
+== Tensor train decomposition
 
 #align(center, text(10pt, canvas({
   import draw: *
@@ -746,31 +746,39 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
   labeledge("D", "E", [$d$])
 })))
 
-#align(center, text(10pt, canvas({
-  import draw: *
-  tensor((-3.5, 0), "T", [$T$])
-  labeledge("T", (rel: (0, 1.2)), [$i$])
-  labeledge("T", (rel: (-1.2, 0)), [$j$])
-  labeledge("T", (rel: (0, -1.2)), [$k$])
-  labeledge("T", (rel: (1.2, 0)), [$l$])
+// #align(center, text(10pt, canvas({
+//   import draw: *
+//   tensor((-3.5, 0), "T", [$T$])
+//   labeledge("T", (rel: (0, 1.2)), [$i$])
+//   labeledge("T", (rel: (-1.2, 0)), [$j$])
+//   labeledge("T", (rel: (0, -1.2)), [$k$])
+//   labeledge("T", (rel: (1.2, 0)), [$l$])
 
-  content((-1.5, 0), [$=$])
+//   content((-1.5, 0), [$=$])
 
-  tensor((0, 0), "A", [$U_1$])
-  tensor((1.5, 0), "B", [$U_2$])
-  tensor((3, 0), "C", [$U_3$])
-  tensor((4.5, 0), "D", [$A_4$])
-  labeledge("A", (rel: (0, 1.2)), [$i$])
-  labeledge("B", (rel: (0, 1.2)), [$j$])
-  labeledge("C", (rel: (0, 1.2)), [$k$])
-  labeledge("D", (rel: (0, 1.2)), [$l$])
+//   tensor((0, 0), "A", [$U_1$])
+//   tensor((1.5, 0), "B", [$U_2$])
+//   tensor((3, 0), "C", [$U_3$])
+//   tensor((4.5, 0), "D", [$A_4$])
+//   labeledge("A", (rel: (0, 1.2)), [$i$])
+//   labeledge("B", (rel: (0, 1.2)), [$j$])
+//   labeledge("C", (rel: (0, 1.2)), [$k$])
+//   labeledge("D", (rel: (0, 1.2)), [$l$])
 
-  labeledge("A", "B", [$a$])
-  labeledge("B", "C", [$b$])
-  labeledge("C", "D", [$c$])
-})))
+//   labeledge("A", "B", [$a$])
+//   labeledge("B", "C", [$b$])
+//   labeledge("C", "D", [$c$])
+// })))
 
-In the following example, we implement the tensor train decomposition in Julia. We use tensor train to represent a uniform tensor of size $2^(20)$ with a rank of 1.
+In the following example, we show a uniform state can be represented as a tensor train of rank 1.
+
+```julia
+julia> uniform_state(n) = fill(sqrt(1/2^n), 2^n);
+
+julia> L, M, R = fill(sqrt(0.5), 2, 1), fill(sqrt(0.5), 1, 2, 1), fill(sqrt(0.5), 1, 2);
+
+julia> @assert ein"ia,ajb,bkc,cld,dm->ijklm"(L, M, M, M, R) ≈ uniform_state(5)
+```
 
 #raw(read("examples/basic/mps.jl"), lang: "julia", block: true)
 
