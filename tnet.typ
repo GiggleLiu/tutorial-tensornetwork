@@ -191,15 +191,14 @@ The kronecker product of two matrices $A_(i j)$ and $B_(k l)$, i.e. $A_(i j) tim
 
 == Contraction order optimization
 
-Tensor networks can be contracted pairwise, with a given contraction order.
-The contraction complexity is determined by the chosen contraction order represented by a binary tree.
-Finding the optimal contraction order, i.e., the contraction order with minimal complexity, is NP-complete@Markov2008.
-Luckily, a close-to-optimal contraction order is usually acceptable, which could be found in a reasonable time with a heuristic optimizer.
-In the past decade, methods have been developed to optimize the contraction orders, including both exact ones and heuristic ones.
-Among these methods, multiple heuristic methods can handle networks with more than $10^4$ tensors efficiently@Gray2021,@Roa2024.
+Tensor networks can be contracted pairwise according to a specified contraction order.
+The computational complexity of this contraction is determined by the chosen order, which can be represented as a binary tree.
+Finding the optimal contraction order—the one with minimal complexity—is an NP-complete problem@Markov2008.
+However, in practice, a close-to-optimal contraction order is usually sufficient and can be found efficiently using heuristic optimization methods.
+Over the past decade, researchers have developed various optimization techniques, including both exact and heuristic approaches.
+Some of these heuristic methods have proven highly scalable, capable of handling networks containing more than $10^4$ tensors@Gray2021,@Roa2024.
 
-The optimal contraction order is closely related to the _tree decomposition_@Markov2008 of the line graph of the tensor network.
-
+The optimal contraction order has a deep mathematical connection to the _tree decomposition_@Markov2008 of the tensor network's line graph.
 #definition([Tree decomposition and treewidth], [A _tree decomposition_ of a (hyper)graph $G=(V,E)$ is a tree $T=(B,F)$ where each node $B_i in B$ contains a subset of vertices in $V$ (called a "bag"), satisfying:
 
 1. Every vertex $v in V$ appears in at least one bag.
@@ -210,13 +209,13 @@ The _width_ of a tree decomposition is the size of its largest bag minus one. Th
 ])
 
 
-A tensor network contraction order is related to the tree decomposition in the following way:
+A line graph of a tensor network is a graph where vertices represent indices and edges represent tensors sharing indices. A tensor network contraction order is related to the tree decomposition of the line graph in the following way:
 - A leg in the tensor network is a vertex in the line graph, and a tensor in the tensor network is a hyperedge (an edge that connects multiple vertices) in the tree decomposition.
 - The first two requirements of the tree decomposition are equivalent to: all tensors must be included in at least one bag, and a bag corresponds to a contraction step.
 - The third requirement of the tree decomposition is equivalent to: a leg can not be eliminated until all tensors connected to it are considered.
 - For tensor networks with non-uniform leg sizes, we can related its contraction order with the weighted tree decomposition, where the weight of a vertex is the logarithm of the leg size.
 
-The figure below shows (a) a tensor network with four tensors $T_1$, $T_2$, $T_3$ and $T_4$ and eight indices $A$ through $H$, (b) its line graph where vertices represent indices and edges represent tensors sharing indices, and (c) a tree decomposition of the line graph.
+The figure below shows (a) a tensor network with four tensors $T_1$, $T_2$, $T_3$ and $T_4$ and eight indices $A$ through $H$, (b) its line graph, and (c) a tree decomposition of the line graph.
 
 #figure(canvas({
   import draw: *
@@ -252,6 +251,7 @@ The figure below shows (a) a tensor network with four tensors $T_1$, $T_2$, $T_3
   set-origin((5, 0))
   for (loc, bag) in (((0, 0), "B1"), ((0, -2), "B2"), ((1, -1), "B3"), ((3, -1), "B4"), ((4, 0), "B5"), ((4, -2), "B6")) {
     circle(loc, radius: 0.55, name: bag)
+    content((rel: (0, -0.75)), text(10pt, gray)[#bag])
   }
   let topleft = (-0.2, 0.2)
   let topright = (0.2, 0.2)
@@ -300,6 +300,8 @@ The figure below shows (a) a tensor network with four tensors $T_1$, $T_2$, $T_3
 caption: [(a) A tensor network. (b) A line graph for the tensor network. Labels are connected if and only if they appear in the same tensor. (c) A tree decomposition (T. D.) of the line graph.]
 )
 
+The tree decomposition in (c) has 5 bags, each has a at most 3 indices. So, the treewidth of the tensor network is 2. Tensors $T_1$, $T_2$, $T_3$ and $T_4$ are included in bags $B_1$, $B_5$, $B_6$ and $B_2$ respectively. We start the contraction from the leaves. In the first step, $B_1$ and $B_2$ are contracted to $B_3$, and the result is a tensor $I_(1 4) = T_1 * T_4$ (we slightly abuse the notation "$*$" to denote the tensor contraction), which has two legs $B$ and $E$. In the second step, $B_5$ and $B_6$ are contracted to $B_4$, and the result is a tensor $I_(2 3) = T_2 * T_3$, which has two legs $B$ and $E$ as well. In the last step, $B_3$ and $B_4$ are contracted to a scalar.
+
 #align(center, canvas(length:1.0cm, {
   import draw: *
   set-origin((4, 0.35))
@@ -314,56 +316,22 @@ caption: [(a) A tensor network. (b) A line graph for the tensor network. Labels 
   let right_left = (DX1 - DX2, -DY)
   let right_right = (DX1 + DX2, -DY)
 
-  for (l, t, lb) in ((root, [$$], "C"), (left, [$I_12$], "A"), (right, [$I_34$], "B"), (left_left, [$T_1$], "T_1"), (left_right, [$T_2$], "T_2"), (right_left, [$T_3$], "T_3"), (right_right, [$T_4$], "T_4")){
+  for (l, t, lb) in ((root, [$$], "C"), (left, [$I_14$], "A"), (right, [$I_23$], "B"), (left_left, [$T_1$], "T_1"), (left_right, [$T_4$], "T_4"), (right_left, [$T_3$], "T_3"), (right_right, [$T_2$], "T_2")){
     tensor(l, lb, text(11pt, t))
   }
 
-  for (a, b) in (("C", "A"), ("C", "B"), ("A", "T_1"), ("A", "T_2"), ("B", "T_3"), ("B", "T_4")){
+  for (a, b) in (("C", "A"), ("C", "B"), ("A", "T_1"), ("A", "T_4"), ("B", "T_3"), ("B", "T_2")){
     line(a, b)
   }
 
 
 }))
 
-#figure(canvas(length:0.9cm, {
-  import plot
-  import draw: *
-  let s(it) = text(11pt, it)
-  plot.plot(size: (10,7),
-    x-tick-step: none,
-    y-tick-step: none,
-    x-label: text(13pt)[Time to optimize contraction order],
-    y-label: text(13pt)[Time to contract],
-    y-max: 10,
-    y-min: -2,
-    x-max: 10,
-    x-min: 0,
-    name: "plot",
-    {
-      let greedy = (1, 9)
-      let localsearch = (4, 3)
-      let bipartition = (3, 4)
-      let tw = (9, 1)
-      let tamaki = (5, 2)
-      plot.add(
-        (greedy, bipartition, localsearch, tamaki, tw), style: (stroke: black), mark:"o",
-      )
-      plot.add-anchor("greedy", greedy)
-      plot.add-anchor("localsearch", localsearch)
-      plot.add-anchor("bipartition", bipartition)
-      plot.add-anchor("tw", tw)
-      plot.add-anchor("tamaki", tamaki)
-    }
-  )
-  content((rel: (2.5, 0), to: "plot.greedy"), s[Greedy (`GreedyMethod`)])
-  content((rel: (2.5, 0), to: "plot.localsearch"), s[Local Search (`TreeSA`)])
-  content((rel: (3.0, 0), to: "plot.bipartition"), s[Min cut (`KaHyParBipartite`)])
-  content((rel: (0, -0.8), to: "plot.tw"), box(fill: white, inset: 1pt, s[Exact tree-width (`ExactTreewidth`)\ State compression]))
-  content((rel: (-1.0, -0.4), to: "plot.tamaki"), box(fill: white, s[Positive instance driven], inset: 1pt))
-}),
+=== Heuristic methods for finding the optimal contraction order
+
+#figure(image("images/sycamore_53_20_0.svg", width: 60%),
 caption: [The time to optimize the contraction order for different methods. The x-axis is the time to optimize the contraction order, and the y-axis is the time to contract the tensor network. For details, please check #link("https://arrogantgao.github.io/blogs/contractionorder/")[this blog].]
 )
-
 
 
 #let triangle(loc, radius) = {
@@ -468,7 +436,7 @@ $
   (A * B) * C = (A * C) * B = (C * B) * A, \
   A * (B * C) = B * (A * C) = C * (B * A),
 $
-where we slightly abuse the notation ``$*$'' to denote the tensor contraction, and $A, B, C$ are the sub-networks to be contracted.
+where $A, B, C$ are the sub-networks to be contracted.
 Due to the commutative property of the tensor contraction, such transformations do not change the result of the contraction.
 Even through these transformations are simple, all possible contraction orders can be reached from any initial contraction order.
 The local search method starts from a random contraction tree.
