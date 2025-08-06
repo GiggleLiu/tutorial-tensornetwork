@@ -8,9 +8,9 @@ using OMEinsum
 function dump_network(input::String; bitstring, output_folder, sc_target::Int=Inf, optimizer=TreeSA(ntrials=1), overwrite=false)
     filename = joinpath(@__DIR__, "data", "circuits", input)
     output = joinpath(@__DIR__, "data", "networks", output_folder)
-    isfile(output) && !overwrite && return
-
     c = yaocircuit_from_qasm(filename)
+    isdir(output) && !overwrite && return c
+
     initial_state = Dict(zip(1:nqubits(c), zeros(Int,nqubits(c))))
     final_state = Dict(zip(1:nqubits(c), bitstring))
     net = yao2einsum(c; initial_state, final_state, optimizer, slicer=TreeSASlicer(score=ScoreFunction(sc_target=sc_target)))
@@ -23,7 +23,7 @@ end
 function dump_noisy_network(input::String; observable, depolarizing, output_folder, sc_target::Int=Inf, optimizer=TreeSA(ntrials=1), overwrite=false)
     filename = joinpath(@__DIR__, "data", "circuits", input)
     output = joinpath(@__DIR__, "data", "networks_noisy", output_folder)
-    isfile(output) && !overwrite && return
+    isdir(output) && !overwrite && return
 
     c = yaocircuit_from_qasm(filename)
     noisy_c = add_depolarizing_noise(c, depolarizing)
