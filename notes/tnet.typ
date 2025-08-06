@@ -780,7 +780,7 @@ julia> L, M, R = fill(sqrt(0.5), 2, 1), fill(sqrt(0.5), 1, 2, 1), fill(sqrt(0.5)
 julia> @assert ein"ia,ajb,bkc,cld,dm->ijklm"(L, M, M, M, R) ≈ uniform_state(5)
 ```
 
-#raw(read("examples/basic/mps.jl"), lang: "julia", block: true)
+#raw(read("../examples/basic/mps.jl"), lang: "julia", block: true)
 
 
 == Automatic Differentiation
@@ -1164,7 +1164,7 @@ The corresponding tensor network representation is:
 
 *Yao implementation*:
 
-#raw(read("examples/basic/hadamardtest.jl"), lang: "julia", block: true)
+#raw(read("../examples/basic/hadamardtest.jl"), lang: "julia", block: true)
 
 This implementation demonstrates how the Hadamard test can be used to estimate expectation values of unitary operators, which is fundamental for variational quantum algorithms and quantum machine learning.
 
