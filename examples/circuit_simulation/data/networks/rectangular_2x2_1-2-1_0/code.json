@@ -1,0 +1,1193 @@
+{
+"slices": [],
+"output": [],
+"tree": {
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+23
+],
+[
+23,
+26
+]
+],
+"iy": []
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+24,
+28
+],
+[
+23,
+24
+]
+],
+"iy": [
+23
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+28
+],
+[
+28,
+24
+]
+],
+"iy": [
+24,
+28
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 39
+},
+{
+"isleaf": true,
+"tensorindex": 36
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+20,
+18
+],
+[
+23,
+24,
+18,
+20
+]
+],
+"iy": [
+23,
+24
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+13,
+15,
+19,
+20
+],
+[
+13,
+15,
+18,
+19
+]
+],
+"iy": [
+20,
+18
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+13,
+14,
+15,
+16
+],
+[
+14,
+16,
+19,
+20
+]
+],
+"iy": [
+13,
+15,
+19,
+20
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+10,
+11,
+13,
+14
+],
+[
+11,
+10,
+15,
+16
+]
+],
+"iy": [
+13,
+14,
+15,
+16
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+9,
+10
+],
+[
+9,
+11,
+13,
+14
+]
+],
+"iy": [
+10,
+11,
+13,
+14
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+5,
+6,
+9,
+10
+],
+[
+6,
+5
+]
+],
+"iy": [
+9,
+10
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+10
+],
+[
+10,
+5,
+6,
+9
+]
+],
+"iy": [
+5,
+6,
+9,
+10
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 16
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+9
+],
+[
+9,
+10,
+5,
+6
+]
+],
+"iy": [
+10,
+5,
+6,
+9
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 15
+},
+{
+"isleaf": true,
+"tensorindex": 13
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+2,
+6
+],
+[
+1,
+5
+]
+],
+"iy": [
+6,
+5
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+6
+],
+[
+6,
+2
+]
+],
+"iy": [
+2,
+6
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 10
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+2
+],
+[
+6,
+2
+]
+],
+"iy": [
+6,
+2
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 4
+},
+{
+"isleaf": true,
+"tensorindex": 6
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+5
+],
+[
+5,
+1
+]
+],
+"iy": [
+1,
+5
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 9
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+1
+],
+[
+5,
+1
+]
+],
+"iy": [
+5,
+1
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 2
+},
+{
+"isleaf": true,
+"tensorindex": 5
+}
+]
+}
+]
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+14
+],
+[
+14,
+9,
+11,
+13
+]
+],
+"iy": [
+9,
+11,
+13,
+14
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 23
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+13
+],
+[
+13,
+14,
+9,
+11
+]
+],
+"iy": [
+14,
+9,
+11,
+13
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 21
+},
+{
+"isleaf": true,
+"tensorindex": 19
+}
+]
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+11,
+12
+],
+[
+10,
+12,
+15,
+16
+]
+],
+"iy": [
+11,
+10,
+15,
+16
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+7,
+8,
+11,
+12
+],
+[
+8,
+7
+]
+],
+"iy": [
+11,
+12
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+12
+],
+[
+12,
+7,
+8,
+11
+]
+],
+"iy": [
+7,
+8,
+11,
+12
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 18
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+11
+],
+[
+11,
+12,
+7,
+8
+]
+],
+"iy": [
+12,
+7,
+8,
+11
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 17
+},
+{
+"isleaf": true,
+"tensorindex": 14
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+4,
+8
+],
+[
+3,
+7
+]
+],
+"iy": [
+8,
+7
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+8
+],
+[
+8,
+4
+]
+],
+"iy": [
+4,
+8
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 12
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+4
+],
+[
+8,
+4
+]
+],
+"iy": [
+8,
+4
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 3
+},
+{
+"isleaf": true,
+"tensorindex": 8
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+7
+],
+[
+7,
+3
+]
+],
+"iy": [
+3,
+7
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 11
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+3
+],
+[
+7,
+3
+]
+],
+"iy": [
+7,
+3
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 1
+},
+{
+"isleaf": true,
+"tensorindex": 7
+}
+]
+}
+]
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+16
+],
+[
+16,
+10,
+12,
+15
+]
+],
+"iy": [
+10,
+12,
+15,
+16
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 24
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+15
+],
+[
+15,
+16,
+10,
+12
+]
+],
+"iy": [
+16,
+10,
+12,
+15
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 22
+},
+{
+"isleaf": true,
+"tensorindex": 20
+}
+]
+}
+]
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+20
+],
+[
+20,
+14,
+16,
+19
+]
+],
+"iy": [
+14,
+16,
+19,
+20
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 30
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+19
+],
+[
+19,
+20,
+14,
+16
+]
+],
+"iy": [
+20,
+14,
+16,
+19
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 29
+},
+{
+"isleaf": true,
+"tensorindex": 26
+}
+]
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+13,
+15,
+17,
+18
+],
+[
+17,
+19
+]
+],
+"iy": [
+13,
+15,
+18,
+19
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+18
+],
+[
+18,
+13,
+15,
+17
+]
+],
+"iy": [
+13,
+15,
+17,
+18
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 28
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+17
+],
+[
+17,
+18,
+13,
+15
+]
+],
+"iy": [
+18,
+13,
+15,
+17
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 27
+},
+{
+"isleaf": true,
+"tensorindex": 25
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+21,
+22,
+17,
+19
+],
+[
+21,
+22
+]
+],
+"iy": [
+17,
+19
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 31
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+21,
+25
+],
+[
+22,
+27
+]
+],
+"iy": [
+21,
+22
+]
+},
+"args": [
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+25
+],
+[
+25,
+21
+]
+],
+"iy": [
+21,
+25
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 38
+},
+{
+"isleaf": true,
+"tensorindex": 33
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+27
+],
+[
+27,
+22
+]
+],
+"iy": [
+22,
+27
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 37
+},
+{
+"isleaf": true,
+"tensorindex": 35
+}
+]
+}
+]
+}
+]
+}
+]
+}
+]
+},
+{
+"isleaf": true,
+"tensorindex": 32
+}
+]
+}
+]
+},
+{
+"isleaf": false,
+"eins": {
+"ixs": [
+[
+26
+],
+[
+26,
+23
+]
+],
+"iy": [
+23,
+26
+]
+},
+"args": [
+{
+"isleaf": true,
+"tensorindex": 40
+},
+{
+"isleaf": true,
+"tensorindex": 34
+}
+]
+}
+]
+},
+"label-type": "Int64",
+"inputs": [
+[
+3
+],
+[
+1
+],
+[
+4
+],
+[
+2
+],
+[
+5,
+1
+],
+[
+6,
+2
+],
+[
+7,
+3
+],
+[
+8,
+4
+],
+[
+5
+],
+[
+6
+],
+[
+7
+],
+[
+8
+],
+[
+9,
+10,
+5,
+6
+],
+[
+11,
+12,
+7,
+8
+],
+[
+9
+],
+[
+10
+],
+[
+11
+],
+[
+12
+],
+[
+13,
+14,
+9,
+11
+],
+[
+15,
+16,
+10,
+12
+],
+[
+13
+],
+[
+15
+],
+[
+14
+],
+[
+16
+],
+[
+17,
+18,
+13,
+15
+],
+[
+19,
+20,
+14,
+16
+],
+[
+17
+],
+[
+18
+],
+[
+19
+],
+[
+20
+],
+[
+21,
+22,
+17,
+19
+],
+[
+23,
+24,
+18,
+20
+],
+[
+25,
+21
+],
+[
+26,
+23
+],
+[
+27,
+22
+],
+[
+28,
+24
+],
+[
+27
+],
+[
+25
+],
+[
+28
+],
+[
+26
+]
+]
+}
