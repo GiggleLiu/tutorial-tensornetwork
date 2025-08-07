@@ -32,7 +32,9 @@
 #let labeledge(from, to, label, name: none) = {
   import draw: *
   line(from, to, name: "line")
-  labelnode("line.mid", label, name: name)
+  if label != none {
+    labelnode("line.mid", label, name: name)
+  }
 }
 
 #let infobox(title, body, stroke: blue) = {
@@ -724,26 +726,27 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 
 == Tensor train decomposition
 
+A tensor train is a tensor network with the following data structure.
 #align(center, text(10pt, canvas({
   import draw: *
   set-origin((-2, -2))
-  content((-3.5, 0.5), [`ia,ajb,bkc,cld,dm->ijklm` = \ (Tensor train)])
+  content((-2.5, 0.5), [$psi(i,j,k,l,m) quad =$])
 
-  tensor((0, 0), "A", [$A$])
-  tensor((1.5, 0), "B", [$T_1$])
-  tensor((3, 0), "C", [$T_2$])
-  tensor((4.5, 0), "D", [$T_1$])
-  tensor((6, 0), "E", [$A$])
+  tensor((0, 0), "A", [])
+  tensor((1.5, 0), "B", [])
+  tensor((3, 0), "C", [])
+  tensor((4.5, 0), "D", [])
+  tensor((6, 0), "E", [])
   labeledge("A", (rel: (0, 1.2)), [$i$])
   labeledge("B", (rel: (0, 1.2)), [$j$])
   labeledge("C", (rel: (0, 1.2)), [$k$])
   labeledge("D", (rel: (0, 1.2)), [$l$])
   labeledge("E", (rel: (0, 1.2)), [$m$])
 
-  labeledge("A", "B", [$a$])
-  labeledge("B", "C", [$b$])
-  labeledge("C", "D", [$c$])
-  labeledge("D", "E", [$d$])
+  labeledge("A", "B", none)
+  labeledge("B", "C", none)
+  labeledge("C", "D", none)
+  labeledge("D", "E", none)
 })))
 
 // #align(center, text(10pt, canvas({
@@ -770,7 +773,61 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 //   labeledge("C", "D", [$c$])
 // })))
 
-In the following example, we show a uniform state can be represented as a tensor train of rank 1.
+It represents a high dimensional tensor with a compact 1-dimensional tensor network. Researchers like this 1D representation due to the following nice properties:
+1. The inner product is easy to compute.
+  #figure(canvas({
+  import draw: *
+  set-origin((-2, -2))
+  content((-3.5, 0.75), [$sum_(i j k l m)phi^*(i,j,k,l,m)psi(i,j,k,l,m) quad =$])
+  let n = 5
+  for i in range(n) {
+    tensor((1.5 * i, 0), "A"+str(i), [])
+    tensor((1.5 * i, 1.5), "B"+str(i), [])
+    line("A"+str(i), "B"+str(i))
+  }
+  for i in range(n - 1) {
+    line("A"+str(i), "A"+str(i+1))
+    line("B"+str(i), "B"+str(i+1))
+  }
+}))
+
+2. Has polynomial time compression algorithm, which could be achieved through iterative application of the following two processes on different bonds:
+ #figure(canvas({
+  import draw: *
+  set-origin((-2, -2))
+  content((-3.5, 0.5), [1. Contract two tensors])
+  let n = 4
+  for i in range(n) {
+    tensor((1.5 * i, 0), "A"+str(i), [])
+  }
+  line("A0", (rel: (0, 1)))
+  line("A1", (rel: (0, 1)))
+  line("A2", (rel: (-0.5, 1)))
+  line("A2", (rel: (0.5, 1)))
+  line("A3", (rel: (0, 1)))
+  circle("A2", radius: 0.7, stroke: (dash: "dashed"))
+  for i in range(n - 1) {
+    line("A"+str(i), "A"+str(i+1))
+  }
+  set-origin((0, -2))
+  content((-3.5, 0.5), [2. Tensor factorization])
+  let n = 5
+  for i in range(n) {
+    tensor((1.5 * i, 0), "A"+str(i), [])
+  }
+  line("A0", (rel: (0, 1)))
+  line("A1", (rel: (0, 1)))
+  line("A2", (rel: (0, 1)))
+  line("A3", (rel: (0, 1)))
+  line("A4", (rel: (0, 1)))
+  for i in range(n - 1) {
+    line("A"+str(i), "A"+str(i+1), name: "l" + str(i))
+  }
+  circle("l2", radius: (1.5, 0.7), stroke: (dash: "dashed"))
+
+}))
+  The factorization is usually done by first reshaping the tensor into a matrix and then applying singular value decomposition. By eliminating small singular values, the bond dimension can be reduced.
+  Easy to compress is a feature of all loopless tensor networks, including the tensor train. In the following example, we show a uniform state can be represented as a tensor train of rank 1.
 
 ```julia
 julia> uniform_state(n) = fill(sqrt(1/2^n), 2^n);
