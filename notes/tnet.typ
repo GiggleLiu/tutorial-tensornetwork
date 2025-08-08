@@ -809,7 +809,7 @@ It represents a high dimensional tensor with a compact 1-dimensional tensor netw
   for i in range(n - 1) {
     line("A"+str(i), "A"+str(i+1))
   }
-  set-origin((0, -2))
+  set-origin((0, -2.5))
   content((-3.5, 0.5), [2. Tensor factorization])
   let n = 5
   for i in range(n) {
@@ -824,6 +824,7 @@ It represents a high dimensional tensor with a compact 1-dimensional tensor netw
     line("A"+str(i), "A"+str(i+1), name: "l" + str(i))
   }
   circle("l2", radius: (1.5, 0.7), stroke: (dash: "dashed"))
+  content((rel: (0, 1), to: "l2"), [SVD])
 
 }))
   The factorization is usually done by first reshaping the tensor into a matrix and then applying singular value decomposition. By eliminating small singular values, the bond dimension can be reduced.
