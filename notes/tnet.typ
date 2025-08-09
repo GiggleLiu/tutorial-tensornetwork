@@ -1414,7 +1414,7 @@ The circuit maps to a tensor network where the Bell pair is a rank-2 tensor, gat
 
 == ZX calculus
 
-The ZX-calculus is a graphical language for reasoning about quantum circuits and processes. It represents quantum operations as diagrams composed of nodes (spiders) and wires, governed by rewrite rules that preserve quantum mechanical equivalence. Unlike traditional tensor networks, ZX-calculus provides a complete graphical language—any equation that holds between quantum processes can be derived using ZX rules.
+The ZX-calculus@Duncan2019 is a graphical language for reasoning about quantum circuits and processes. It represents quantum operations as diagrams composed of nodes (spiders) and wires, governed by rewrite rules that preserve quantum mechanical equivalence. Unlike traditional tensor networks, ZX-calculus provides a complete graphical language—any equation that holds between quantum processes can be derived using ZX rules.
 
 The two spiders are defined as follows:
 #let zspider(loc, phase: none, name: none) = {
@@ -1499,34 +1499,13 @@ For convenience, we also define the Hadamard box as follows:
   line("Z2", (rel: (0.8, 0)))
 }))
 Here we use "$~$" to denote the equivalence of the two diagrams up to a constant.
+Since ZX-calculus is color exchange symmetric, the color exchanged Hadamard box is also a valid rule.
 
 We have the following simple observations:
 - The 1st order Z-spider with phase $0$/$pi$ is the $ket("+")$/$ket(dash)$ state.
 - The 1st order X-spider with phase $0$/$pi$ is the $ket(0)$/$ket(1)$ state.
 - The 2nd order Z-spider with phase $0$/$pi$ is the identity/Pauli-Z gate.
 - The 2nd order X-spider with phase $0$/$pi$ is the identity/Pauli-X gate.
-- Z-spiders and X-spiders can be converted to each other by a Hadamard box.
-  #figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  
-  // Green Z-spider
-  zspider((0, 0), phase: [$alpha$], name: "Z")
-  line("Z.north", (rel: (0, 0.5)))
-  line("Z.east", (rel: (0.5, 0)))
-  line("Z.west", (rel: (-0.5, 0)))
-
-  set-origin((1.5, 0))
-  content((0, 0), s[$=$])
-
-  // Red X-spider
-  set-origin((2, 0))
-  xspider((0, 0), phase: [$alpha$], name: "X")
-  hline("X.north", (rel: (0, 1)))
-  hline("X.east", (rel: (1, 0)))
-  hline("X.west", (rel: (-1, 0)))
-}))
-
 
 === Core rewrite rules
 
@@ -1546,10 +1525,10 @@ The ZX-calculus is governed by several key rewrite rules:
   zspider((3, 0), phase: text(6pt)[$alpha + beta$], name: "Z3")
   line("Z3", (rel: (0.8, 0)))
   line("Z3", (rel: (-0.8, 0)))
-  content((1.5, -1), s[Spider fusion])
+  content((1.5, -1), s[(f) fusion])
   
-  // Bialgebra (copying)
-  set-origin((6, 0))
+  // identity
+  set-origin((5, 0))
   let O = (0, 0)
   zspider(O, phase: "0", name: "Z5")
   line("Z5", (rel: (0, 0.8)))
@@ -1560,12 +1539,105 @@ The ZX-calculus is governed by several key rewrite rules:
   line(O, (rel: (0, 0.8)))
   line(O, (rel: (0.6, 0.4)))
   line(O, (rel: (0.6, -0.4)))
-  content((1.3, -1), s[Copying])
-}), caption: [Key ZX rules: Spider fusion allows merging connected spiders of the same color (phases add). Color change via Hadamard boxes converts between Z and X spiders. Copying rules enable classical-like behavior for computational basis operations.])
+  content((1.3, -1), s[(i1) identity])
+
+  set-origin((4, 0))
+  content((1.5, -1), [(i2) cancellation])
+  // Green Z-spider
+  hbox((0, 0), name: "H1")
+  hbox((1, 0), name: "H2")
+  line("H1", "H2")
+  line("H1", (rel: (-0.7, 0)))
+  line("H2", (rel: (0.7, 0)))
+  content((2, 0), s[$=$])
+  line((2.5, 0), (3.5, 0))
+
+  set-origin((-9, -3))
+  content((1.5, -1), [(h) Hadamard])
+  // Green Z-spider
+  zspider((0, 0), phase: s[$alpha$], name: "Z")
+  line("Z.north", (rel: (0, 0.5)))
+  line("Z.east", (rel: (0.5, 0)))
+  line("Z.west", (rel: (-0.5, 0)))
+
+  set-origin((1.2, 0))
+  content((0, 0), s[$=$])
+
+  // Red X-spider
+  set-origin((1.7, 0))
+  xspider((0, 0), phase: [$alpha$], name: "X")
+  hline("X.north", (rel: (0, 1)))
+  hline("X.east", (rel: (1, 0)))
+  hline("X.west", (rel: (-1, 0)))
+
+  // pi commute
+  set-origin((-3, -3))
+  xspider((0, 0), phase: s[$pi$], name: "X")
+  zspider((1, 0), phase: s[$alpha$], name: "Z")
+  line("X", "Z")
+  line("X", (rel: (-0.7, 0)))
+  bezier("Z.north", (rel: (0.5, 0.2)), (rel: (0.2, 0.6), to: "Z"))
+  bezier("Z.south", (rel: (0.5, -0.2)), (rel: (0.2, -0.6), to: "Z"))
+  content((1.5, 0), s[$dots.v$])
+  content((2.2, 0), s[$=$])
+  content((2.2, -1.2), [($pi$) $pi$ commute])
+  set-origin((3.5, 0))
+  xspider((1, 0.7), phase: s[$pi$], name: "X1")
+  xspider((1, -0.7), phase: s[$pi$], name: "X2")
+  zspider((0, 0), phase: s[$-alpha$], name: "Z")
+  line("X1", (rel: (0.7, 0)))
+  line("X2", (rel: (0.7, 0)))
+  line("Z", (rel: (-0.7, 0)))
+  bezier("Z.north", "X1.west", (rel: (0.2, 0.6), to: "Z"))
+  bezier("Z.south", "X2.west", (rel: (0.2, -0.6), to: "Z"))
+  content((1, 0), s[$dots.v$])
+
+  // copy
+  set-origin((3, 3))
+  xspider((0, 0), phase: s[$0$], name: "X")
+  zspider((1, 0), phase: s[$alpha$], name: "Z")
+  line("X", "Z")
+  bezier("Z.north", (rel: (0.5, 0.2)), (rel: (0.2, 0.6), to: "Z"))
+  bezier("Z.south", (rel: (0.5, -0.2)), (rel: (0.2, -0.6), to: "Z"))
+  content((1.5, 0), s[$dots.v$])
+  content((2.2, 0), s[$=$])
+  content((2.2, -1.2), [(c) copy])
+  set-origin((2.5, 0))
+  xspider((1, 0.7), phase: s[$0$], name: "X1")
+  xspider((1, -0.7), phase: s[$0$], name: "X2")
+  line("X1", (rel: (0.7, 0)))
+  line("X2", (rel: (0.7, 0)))
+  content((1, 0), s[$dots.v$])
+
+  // bialgebra
+  set-origin((-2.2, -3))
+  xspider((0, 0), phase: s[$0$], name: "X")
+  zspider((1, 0), phase: s[$0$], name: "Z")
+  line("X", "Z")
+  bezier("X.north", (rel: (-0.3, 0.2)), (rel: (-0.2, 0.6), to: "X"))
+  bezier("X.south", (rel: (-0.3, -0.2)), (rel: (-0.2, -0.6), to: "X"))
+  bezier("Z.north", (rel: (0.3, 0.2)), (rel: (0.2, 0.6), to: "Z"))
+  bezier("Z.south", (rel: (0.3, -0.2)), (rel: (0.2, -0.6), to: "Z"))
+  content((2.2, 0), s[$=$])
+  content((2.2, -1.2), [(b) bialgebra])
+  set-origin((2.5, 0))
+  xspider((2, 0.5), phase: s[$0$], name: "X1")
+  xspider((2, -0.5), phase: s[$0$], name: "X2")
+  zspider((1, 0.5), phase: s[$0$], name: "Z1")
+  zspider((1, -0.5), phase: s[$0$], name: "Z2")
+  line("X1", (rel: (0.7, 0)))
+  line("X2", (rel: (0.7, 0)))
+  line("Z1", (rel: (-0.7, 0)))
+  line("Z2", (rel: (-0.7, 0)))
+  line("X1", "Z1")
+  line("X2", "Z2")
+  line("X1", "Z2")
+  line("X2", "Z1")
+}), caption: [A convenient presentation for the ZX-calculus. These rules hold for all $alpha, beta in [0, 2pi)$, and due to (h) and (i2) all rules also hold with the colours interchanged. Remark: This rule set is incomplete for quantum mechanics@Witt2014.])
 
 === Quantum teleportation in ZX
 
-Quantum teleportation provides an excellent example of ZX calculus in action. The protocol transfers an unknown quantum state |ψ⟩ from Alice to Bob using a shared Bell pair and classical communication.
+The ZX-calculus representation of quantum teleportation is as follows:
 
 #figure(canvas({
   import draw: *
@@ -1593,9 +1665,38 @@ Quantum teleportation provides an excellent example of ZX calculus in action. Th
   line("X2", "C1")
   line("C2", "C1")
   line("C2", (rel: (1, 0)))
-}), caption: [Teleportation in ZX: The Bell pair is a "cup" (bent wire), Bell measurement involves spider fusion, and corrections are Z and X spiders. The entire network simplifies to an identity wire, demonstrating that the state is perfectly transferred.])
+}))
 
-The key insight is that ZX-calculus reveals the topological nature of teleportation: through spider fusion and the bialgebra laws, the complex quantum protocol reduces to a simple wire connection, up to classical corrections determined by measurement outcomes.
+#figure(canvas({
+  import draw: *
+  let s(it) = text(10pt, it)
+  circle((-1, 0), radius: 0.3, stroke: black, name: "psi")
+  content((-1, 0), s[$psi$])
+  zspider((2, 0), phase: s[$0$], name: "Z1")
+  xspider((2, -1), phase: s[$0$], name: "X1")
+  zspider((4, 0), phase: text(7pt)[$m_1 pi$], name: "M1")
+  xspider((4, -1), phase: text(7pt)[$m_2 pi$], name: "M2")
+  xspider((3, -2), phase: text(7pt)[$m_2 pi$], name: "C1")
+  zspider((4, -2), phase: text(7pt)[$m_1 pi$], name: "C2")
+  line("psi", "Z1")
+  line("Z1", "M1")
+  line("X1", "M2")
+  line("X1", "Z1")
+  line("C2", "C1")
+  line("X1", "C1")
+  line("C2", (rel: (1, 0)))
+}))
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(10pt, it)
+  circle((-1, 0), radius: 0.3, stroke: black, name: "psi")
+  content((-1, 0), s[$psi$])
+  circle((4, -2), radius: 0, name: "C2")
+  line("psi", "C2")
+  line("C2", (rel: (1, 0)))
+}))
+
 
 === Circuit simplification
 
