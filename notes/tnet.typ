@@ -843,103 +843,104 @@ julia> @assert ein"ia,ajb,bkc,cld,dm->ijklm"(L, M, M, M, R) ≈ uniform_state(5)
 
 == Automatic Differentiation
 
-```julia
-# autodiff
-cost_and_gradient(optcode, (tensors...,))
-```
+_Back propagation_ is one of the fundamental techniques in machine learning for computing gradients of a loss function $cal(L)$ with respect to model parameters. The core concept is the _backward rule_, which propagates adjoints through the computational graph. The adjoint of a variable $a$ is defined as $overline(a) = frac(partial cal(L), partial a)$, representing how the loss changes with respect to that variable.
 
+For a function $f: bb(R)^n arrow.r bb(R)^m$ with input $x$ and known adjoint of the output $overline(y)$, the backward rule computes the adjoint of the input as:
+$ overline(x) = frac(partial f, partial x)^T overline(y) $
+This process efficiently propagates gradient information backward through the network, enabling optimization of complex models.
 
+For matrix multiplication $C = A B$, the backward rule is given by:
+$ overline(A) = overline(C) B^T, quad overline(B) = A^T overline(C) $
+This rule plays a crucial role in machine learning optimization. The backward computation is remarkably efficient—it requires only matrix multiplications with time complexity $O(n^3)$, despite the fact that the full Jacobian matrix would have $O(n^4)$ elements. This computational efficiency is fundamental to the scalability of gradient-based optimization in many applications.
+Tensor network contraction generalizes matrix multiplication and inherits this computational efficiency. We can formally represent a tensor network as a triple $(Lambda, cal(T), sigma_Y)$, where:
+$
+  Y = "contract"(Lambda, cal(T), sigma_Y)
+$
+Here, $Lambda$ denotes the set of all tensor indices, $cal(T)$ represents the collection of tensors, and $sigma_Y subset Lambda$ specifies the indices of the output tensor.
 
-The differentiation rules for tensor network contraction can be represented as the contraction of the tensor network. Given a tensor network $X$ in @fig:tensor-network-differentiation(a), the Jacobian matrix of $X$ with respect to $U_2$ is given by @fig:tensor-network-differentiation(b), which is equivalent to cutting the tensor $U_2$ and then contracting the remaining tensor network. The backward-mode automatic differentiation of $X$ with respect to $U_2$ is given by @fig:tensor-network-differentiation(c).
+Given the output adjoint $overline(Y)$, the backward rule for computing the adjoint of an input tensor $X$ is:
+$
+overline(X) = "contract"(Lambda, (cal(T) \\ {X}) union {overline(Y)}, sigma_X)
+$
+where $cal(T) \\ {X}$ denotes the tensor set with input tensor $X$ removed, and $sigma_X$ represents the indices of tensor $X$.
+
+A naive implementation of this backward rule would incur computational overhead linear in the number of input tensors, as it requires contracting the network separately for each tensor's gradient. However, this inefficiency is avoided in practice through the use of binary contraction trees. With proper optimization, the overhead reduces to a constant factor, making gradient computation approximately twice as expensive as the forward pass—a remarkable efficiency considering that each binary contraction has two inputs and each backward computation maintains the same complexity as the forward pass.
+
+#exampleblock([
+*Example: Backward rule for tensor network contraction*
+
+Consider the tensor network contraction: `Y = ein"aij,jk,ki->a"(A, B, C)`, where $A, B, C$ are tensors labeled by $(a, i, j), (j, k), (k, i)$ respectively.
+Diagramatically, the forward contraction is given by:
+
 #figure(canvas({
   import draw: *
   let s(it) = text(11pt, it)
-  content((-3, 0), s[(a)])
-  content((-1, 0), s[$X = $])
-  tensor((0, 0), "A", s[$U_1$])
-  tensor((1.5, 0), "B", s[$U_2$])
-  tensor((3, 0), "C", s[$U_3$])
-  tensor((4.5, 0), "D", s[$A_4$])
-  labeledge("A", (rel: (0, 1.2)), s[$i$])
-  labeledge("B", (rel: (0, 1.2)), s[$j$])
-  labeledge("C", (rel: (0, 1.2)), s[$k$])
-  labeledge("D", (rel: (0, 1.2)), s[$l$])
+  let l = 0.9
+  for (loc, label, name) in (((-2, 0.5), [$Y$], "Y"), ((1, 1), [$A$], "A"), ((0, 0), [$B$], "B"), ((2, 0), [$C$], "C")) {
+    tensor(loc, name, s[#label])
+  }
+  line("A", "B")
+  line("B", "C")
+  line("A", "C")
+  line("A", (rel: (-l, 0)))
+  line("Y", (rel: (-l, 0)))
+  content((-1, 0.5), s[$=$])
+}))
 
-  labeledge("A", "B", s[$a$])
-  labeledge("B", "C", s[$b$])
-  labeledge("C", "D", s[$c$])
+The backward rule is given by:
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  let l = 0.9
+  for (loc, label, name) in (((-2, 0.5), [$overline(A)$], "Abar"), ((0, 1), [$overline(Y)$], "Ybar"), ((0, 0), [$B$], "B"), ((2, 0), [$C$], "C")) {
+    tensor(loc, name, s[#label])
+  }
+  circle((1, 1), radius: 0.3, name: "Ap", stroke: none)
+  line("Ap", "B")
+  line("B", "C")
+  line("Ap", "C")
+  line("Ap", "Ybar")
+  line("Abar", (rel: (-l, 0)))
+  content((-1, 0.5), s[$=$])
 
   set-origin((0, -2))
-  content((-3, 0), s[(b)])
-  content((-1, 0), s[$frac(partial X, partial U_2) = $])
-  tensor((0, 0), "A", s[$U_1$])
-  circle((1.5, 0), radius: 0.3, name: "B", stroke: none)
-  tensor((3, 0), "C", s[$U_3$])
-  tensor((4.5, 0), "D", s[$A_4$])
-  labeledge("A", (rel: (0, 1.2)), s[$i$])
-  labeledge("B", (rel: (0, 1.2)), s[$j$])
-  labeledge("C", (rel: (0, 1.2)), s[$k$])
-  labeledge("D", (rel: (0, 1.2)), s[$l$])
+  for (loc, label, name) in (((-2, 0.5), [$overline(B)$], "Bbar"), ((0, 1), [$overline(Y)$], "Ybar"), ((1, 1), [$A$], "A"), ((2, 0), [$C$], "C")) {
+    tensor(loc, name, s[#label])
+  }
+  circle((0, 0), radius: 0.3, name: "Bp", stroke: none)
+  line("A", "Bp")
+  line("Bp", "C")
+  line("A", "C")
+  line("A", "Ybar")
+  line("Bbar", (rel: (-l, 0)))
+  content((-1, 0.5), s[$=$])
 
-  labeledge("A", "B", s[$a$])
-  labeledge("B", "C", s[$b$])
-  labeledge("C", "D", s[$c$])
 
-  set-origin((0, -3))
-  content((-3, 0), s[(c)])
-  content((-1.5, 0), s[$overline(X)frac(partial X, partial U_2) = $])
-  tensor((0, 0), "A", s[$U_1$])
-  circle((1.5, 0), radius: 0.3, name: "B", stroke: none)
-  tensor((3, 0), "C", s[$U_3$])
-  tensor((4.5, 0), "D", s[$A_4$])
-  labeledge("A", (rel: (0, 1.2)), s[$i$])
-  labeledge("B", (rel: (0, 1.2)), s[$j$])
-  labeledge("C", (rel: (0, 1.2)), s[$k$])
-  labeledge("D", (rel: (0, 1.2)), s[$l$])
+  set-origin((0, -2))
+  for (loc, label, name) in (((-2, 0.5), [$overline(C)$], "Cbar"), ((0, 1), [$overline(Y)$], "Ybar"), ((1, 1), [$A$], "A"), ((0, 0), [$B$], "B")) {
+    tensor(loc, name, s[#label])
+  }
+  circle((2, 0), radius: 0.3, name: "Cp", stroke: none)
+  line("A", "B")
+  line("B", "Cp")
+  line("A", "Cp")
+  line("A", "Ybar")
+  line("Cbar", (rel: (-l, 0)))
+  content((-1, 0.5), s[$=$])
 
-  labeledge("A", "B", s[$a$])
-  labeledge("B", "C", s[$b$])
-  labeledge("C", "D", s[$c$])
-  rect((-0.5, 1.2), (5, 1.8))
-  content((2.25, 1.5), s[$overline(X)$])
-}), caption: [Differentiation-cutting correspondence. (a) A tensor network $X$. (b) The Jacobian matrix of $X$ with respect to $U_2$. (c) The backward-mode automatic differentiation of $X$ with respect to $U_2$, where $overline(X)$ is the adjoint of $X$, $overline(X)(partial X)/(partial U_2)$ corresponds to the adjoint of $U_2$.]) <fig:tensor-network-differentiation>
-
-Formally, we have the following definition:
-#definition([_(Tensor network differentiation)_:
-    Let $(Lambda, cal(T), emptyset)$ be a tensor network with scalar output. The gradient of the tensor network contraction with respect to $T_V in cal(T)$ is
-    $
-      frac(partial "contract"(Lambda, cal(T), emptyset), partial T_V) =
-      "contract"(Lambda, cal(T) \\ {T_V}, V).
-    $
-    That is, the gradient corresponds to the contraction of the tensor network
-    with the tensor $T_V$ removed and the output label set to $V$.
+}))
+*Quiz*: If the forward contraction specified with a binary contraction order: `Y = ein"(aij,jk),ki->a"(A, B, C)`, how are gradients computed in the backward propagation?
 ])
 
-#proof([
-Let $cal(L)$ be a loss function of interest, where its differential form is given by:
-$
-delta cal(L) = "contract"(V_a, {delta A_(V_a), overline(A)_(V_a)}, emptyset) + "contract"(V_b, {delta B_(V_b), overline(B)_(V_b)}, emptyset)
-$ <eq:diffeq>
+In `OMEinsum`, the backward rule of einsum has already been ported to `ChainRulesCore`, which can be directly used in `Zygote` and `Flux`.
+It also implements a 
 
-The goal is to find $overline(A)_(V_a)$ and $overline(B)_(V_b)$ given $overline(C)_(V_c)$.
-This can be achieved by using the differential form of tensor contraction, which states that
-$
-delta C = "contract"(Lambda, {delta A_(V_a), B_(V_b)}, V_c) + "contract"(Lambda, {A_(V_a), delta B_(V_b)}, V_c).
-$
-By inserting this result into @eq:diffeq, we obtain:
-$
-delta cal(L) = &"contract"(V_a, {delta A_(V_a), overline(A)_(V_a)}, emptyset) + "contract"(V_b, {delta B_(V_b), overline(B)_(V_b)}, emptyset)\
-= &"contract"(Lambda, {delta A_(V_a), B_(V_b), overline(C)_(V_c)}, emptyset) + "contract"(Lambda, {A_(V_a), delta B_(V_b), overline(C)_(V_c)}, emptyset).
-$
-Since $delta A_(V_a)$ and $delta B_(V_b)$ are arbitrary, the above equation immediately implies:
+```julia
+julia> gradients = cost_and_gradient(optcode, (tensors...,));
+```
 
-$
-overline(A)_(V_a) = "contract"(Lambda, {overline(C)_(V_c), B_(V_b)}, V_a)\
-overline(B)_(V_b) = "contract"(Lambda, {A_(V_a), overline(C)_(V_c)}, V_b)
-$
-])
-
-
+The returned `gradients` is a vector of arrays, each of which is an adjoint of an input tensor.
 
 = Quantum Circuit Simulation
 - initial state, product state
