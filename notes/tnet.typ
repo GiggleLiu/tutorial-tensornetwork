@@ -1,4 +1,4 @@
-#import "@preview/cetz:0.4.0": canvas, draw, tree
+#import "@preview/cetz:0.4.0": canvas, draw, tree, coordinate
 #import "@preview/cetz-plot:0.1.2": *
 #import "@preview/ctheorems:1.1.3": *
 #import "@preview/ouset:0.2.0": ouset
@@ -1420,25 +1420,38 @@ The two spiders are defined as follows:
 #let zspider(loc, phase: none, name: none) = {
   import draw: *
   let s(it) = text(11pt, it)
-  circle(loc, radius: 0.35, fill: rgb("#2ecc71"), stroke: black, name: name)
+  circle(loc, radius: 0.3, fill: rgb("#2ecc71").lighten(20%), stroke: black, name: name)
   if phase != none { content(loc, s[#phase]) }
 }
 #let xspider(loc, phase: none, name: none) = {
   import draw: *
   let s(it) = text(11pt, it)
-  circle(loc, radius: 0.35, fill: rgb("#e74c3c"), stroke: black, name: name)
+  circle(loc, radius: 0.3, fill: rgb("#e74c3c").lighten(20%), stroke: black, name: name)
   if phase != none { content(loc, s[#phase]) }
 }
-#let hbox(a, name: none) = {
-  import draw: *
+#let hbox(a, name: none, ang: 0deg) = {
+  import draw: rect, group, content, rotate
   let s(it) = text(11pt, it)
-  rect((a.at(0) - 0.3, a.at(1) - 0.3), (a.at(0) + 0.3, a.at(1) + 0.3), fill: rgb("#f1c40f"), stroke: black, name: name)
-  content(a, s[$H$])
+  group(name: name, {
+    rotate(ang, origin: a)
+    rect((rel: (-0.25, -0.25), to: a), (rel: (0.25, 0.25), to: a), fill: rgb("#f1c40f").lighten(20%), stroke: black)
+    content(a, s[$H$])
+  })
 }
+
 #let hline(a, b, name: none) = {
-  import draw: *
-  let s(it) = text(11pt, it)
-  line(a, b, name: "line")
+  import draw: line, get-ctx
+  import coordinate: resolve
+  get-ctx(ctx => {
+    let (ctx, pos1) = resolve(ctx, a)
+    let (ctx, pos2) = resolve(ctx, b)
+    let (x1, y1, z1) = pos1  // CeTZ uses 3D coordinates internally
+    let (x2, y2, z2) = pos2
+    let mid = ((x1 + x2)/2, (y1 + y2)/2)
+    let ang = calc.atan2(y2 - y1, x2 - x1)
+    line(a, b, name: "line")
+    hbox(mid, name: name, ang: ang)
+  })
 }
 
 #figure(canvas({
@@ -1471,7 +1484,7 @@ For convenience, we also define the Hadamard box as follows:
   content((-2.5, 0), s[Hadamard box])
   // Hadamard box
   hbox((0, 0), name: "H")
-  line((rel: (-0.7, 0)), "H")
+  line((rel: (-0.7, 0), to: "H"), "H")
   line("H", (rel: (0.7, 0)))
   set-origin((1.5, 0))
   content((0.0, 0), s[$~$])
@@ -1499,19 +1512,19 @@ We have the following simple observations:
   
   // Green Z-spider
   zspider((0, 0), phase: [$alpha$], name: "Z")
-  line("Z", (rel: (0, 1)))
-  line("Z", (rel: (1, 0.5)))
-  line("Z", (rel: (-1, 0.5)))
+  line("Z.north", (rel: (0, 0.5)))
+  line("Z.east", (rel: (0.5, 0)))
+  line("Z.west", (rel: (-0.5, 0)))
 
-  set-origin((2, 0))
+  set-origin((1.5, 0))
   content((0, 0), s[$=$])
 
   // Red X-spider
   set-origin((2, 0))
   xspider((0, 0), phase: [$alpha$], name: "X")
-  line("X", (rel: (0, 1)))
-  line("X", (rel: (1, 0.5)))
-  line("X", (rel: (-1, 0.5)))
+  hline("X.north", (rel: (0, 1)))
+  hline("X.east", (rel: (1, 0)))
+  hline("X.west", (rel: (-1, 0)))
 }))
 
 
@@ -1522,52 +1535,32 @@ The ZX-calculus is governed by several key rewrite rules:
 #figure(canvas({
   import draw: *
   let s(it) = text(10pt, it)
-  let zspider = (loc, phase: none, name: none) => {
-    circle(loc, radius: 0.25, fill: rgb("#2ecc71"), stroke: black, name: name)
-    if phase != none { content(loc, s[#phase]) }
-  }
-  let xspider = (loc, phase: none, name: none) => {
-    circle(loc, radius: 0.25, fill: rgb("#e74c3c"), stroke: black, name: name)  
-    if phase != none { content(loc, s[#phase]) }
-  }
-  
+ 
   // Spider fusion
-  zspider((0, 0.5), phase: "α", name: "Z1")
-  zspider((0, -0.5), phase: "β", name: "Z2")
+  zspider((0.5, 0), phase: s[$alpha$], name: "Z1")
+  zspider((-0.5, 0), phase: s[$beta$], name: "Z2")
   line("Z1", "Z2")
-  line("Z1", (rel: (0, 0.8)))
-  line("Z2", (rel: (0, -0.8)))
-  content((1, 0), s[$=$])
-  zspider((2, 0), phase: "α+β", name: "Z3")
-  line("Z3", (rel: (0, 0.8)))
-  line("Z3", (rel: (0, -0.8)))
-  content((1, -1.3), s[Spider fusion])
-  
-  // Color change
-  set-origin((0, -3))
-  zspider((0, 0), phase: "α", name: "Z4")
-  rect((0.6, -0.2), (1.0, 0.2), fill: rgb("#f1c40f"))
-  content((0.8, 0), s[H])
-  line("Z4", (0.6, 0))
-  line((1.0, 0), (1.6, 0))
-  content((2, 0), s[$=$])
-  xspider((3, 0), phase: "α", name: "X4")
-  line((2.4, 0), "X4")
-  line("X4", (3.6, 0))
-  content((2, -1.3), s[Color change])
+  line("Z1", (rel: (0.8, 0)))
+  line("Z2", (rel: (-0.8, 0)))
+  content((1.8, 0), s[$=$])
+  zspider((3, 0), phase: text(6pt)[$alpha + beta$], name: "Z3")
+  line("Z3", (rel: (0.8, 0)))
+  line("Z3", (rel: (-0.8, 0)))
+  content((1.5, -1), s[Spider fusion])
   
   // Bialgebra (copying)
-  set-origin((5, 0))
-  zspider((0, 0), phase: "0", name: "Z5")
+  set-origin((6, 0))
+  let O = (0, 0)
+  zspider(O, phase: "0", name: "Z5")
   line("Z5", (rel: (0, 0.8)))
   line("Z5", (rel: (0.6, 0.4)))
   line("Z5", (rel: (0.6, -0.4)))
   content((1.2, 0), s[$=$])
-  line((1.8, 0.8), (1.8, 0.4))
-  line((1.8, 0.4), (2.4, 0.4))
-  line((1.8, 0.4), (2.4, -0.4))
-  line((1.8, -0.8), (1.8, -0.4))
-  content((2, -1.3), s[Copying])
+  O = (1.8, 0)
+  line(O, (rel: (0, 0.8)))
+  line(O, (rel: (0.6, 0.4)))
+  line(O, (rel: (0.6, -0.4)))
+  content((1.3, -1), s[Copying])
 }), caption: [Key ZX rules: Spider fusion allows merging connected spiders of the same color (phases add). Color change via Hadamard boxes converts between Z and X spiders. Copying rules enable classical-like behavior for computational basis operations.])
 
 === Quantum teleportation in ZX
@@ -1577,46 +1570,29 @@ Quantum teleportation provides an excellent example of ZX calculus in action. Th
 #figure(canvas({
   import draw: *
   let s(it) = text(10pt, it)
-  let zspider = (loc, phase: none, name: none) => {
-    circle(loc, radius: 0.22, fill: rgb("#2ecc71"), stroke: black, name: name)
-    if phase != none { content(loc, text(8pt)[#phase]) }
-  }
-  let xspider = (loc, phase: none, name: none) => {
-    circle(loc, radius: 0.22, fill: rgb("#e74c3c"), stroke: black, name: name)
-    if phase != none { content(loc, text(8pt)[#phase]) }
-  }
-  
-  // Input state
-  content((0, 1), s[|ψ⟩])
-  line((0, 0.7), (1, 0.7))
-  
-  // Bell pair (cup)
-  arc((1.5, 0.2), start: 180deg, stop: 0deg, radius: 0.5)
-  
-  // Bell measurement  
-  zspider((1, 0.7), name: "meas1")
-  zspider((1, 0.2), name: "meas2") 
-  line("meas1", "meas2")
-  
-  // Correction operations (conceptual)
-  xspider((2.5, 0.7), phase: "m₂", name: "corr1")
-  zspider((3.2, 0.7), phase: "m₁", name: "corr2")
-  line("meas2", "corr1")
-  line("corr1", "corr2")
-  
-  // Output
-  line("corr2", (4, 0.7))
-  content((4.3, 1), s[|ψ⟩])
-  
-  // Arrow for simplification
-  content((5, 0.5), s[$⇒$])
-  
-  // Simplified version
-  set-origin((6, 0))
-  content((0, 1), s[|ψ⟩])
-  line((0, 0.7), (2, 0.7))
-  content((2.3, 1), s[|ψ⟩])
-  content((1, 0.3), s[Identity])
+  circle((-1, 0), radius: 0.3, stroke: black, name: "psi")
+  content((-1, 0), s[$psi$])
+  xspider((-1, -1), phase: s[$0$], name: "x1")
+  xspider((-1, -2), phase: s[$0$], name: "x2")
+  zspider((2, 0), phase: s[$0$], name: "Z1")
+  xspider((2, -1), phase: s[$0$], name: "X1")
+  zspider((1, -1), phase: s[$0$], name: "Z2")
+  xspider((1, -2), phase: s[$0$], name: "X2")
+  xspider((4, 0), phase: text(7pt)[$m_1 pi$], name: "M1")
+  xspider((4, -1), phase: text(7pt)[$m_2 pi$], name: "M2")
+  xspider((3, -2), phase: text(7pt)[$m_2 pi$], name: "C1")
+  zspider((4, -2), phase: text(7pt)[$m_1 pi$], name: "C2")
+  line("psi", "Z1")
+  hline("x1", "Z2")
+  line("x2", "X2")
+  line("X1", "Z2")
+  hline("Z1", "M1")
+  line("X1", "M2")
+  line("X1", "Z1")
+  line("X2", "Z2")
+  line("X2", "C1")
+  line("C2", "C1")
+  line("C2", (rel: (1, 0)))
 }), caption: [Teleportation in ZX: The Bell pair is a "cup" (bent wire), Bell measurement involves spider fusion, and corrections are Z and X spiders. The entire network simplifies to an identity wire, demonstrating that the state is perfectly transferred.])
 
 The key insight is that ZX-calculus reveals the topological nature of teleportation: through spider fusion and the bialgebra laws, the complex quantum protocol reduces to a simple wire connection, up to classical corrections determined by measurement outcomes.
