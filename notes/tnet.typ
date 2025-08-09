@@ -114,7 +114,7 @@ Let $A, B$ and $C$ be three square matrices with the same size. The trace permut
   labeledge("B", "C", "k")
   bezier("A.north", "C.north", (1, 3), (5, 3), name:"line")
   content("line.mid", "i", align: center, fill:white, frame:"rect", padding:0.1, stroke: none)
-}))
+}), numbering: none)
 From the diagram, we can see the representation of $tr(A B C)$, $tr(C A B)$ and $tr(B C A)$ are identical, indicating the same operation. The diagrammatic representation is less redundant than the algebraic representation.
 ])
 
@@ -231,7 +231,7 @@ Its diagrammatic representation is:
   line("a", "A")
   line("a", "B")
   line("a", "C")
-}))
+}), numbering: none)
 
 The einsum notation for the star contraction is `ai,aj,ak->ijk`. Its time complexity is $O(n^4)$ in big O notation.
 
@@ -251,7 +251,7 @@ Its diagrammatic representation is:
   labeledge("A", (rel: (0, 1.5)), "i")
   labeledge("B", (rel: (0, -1.5)), "l")
   labeledge("B", (rel: (0, 1.5)), "k")
-}))
+}), numbering: none)
 
 The einsum notation for the kronecker product is `ij,kl->ijkl`. Its time complexity is $O(n^4)$.
 ])
@@ -317,7 +317,7 @@ For example, the contraction `ein"ab,bc,cd->ad"` can be represented as the follo
     line(a, b)
   }
   content((0, -2), text(10pt)[`ein"(ab,cd),bc->ad"`])
-}))
+}), numbering: none)
 
 The left one is superior to the right one. The right one computes a kronecker product first and creates a large intermediate tensor of size $O(n^4)$, while the left one has a time complexity $O(n^3)$ and space complexity $O(n^2)$.
 
@@ -452,7 +452,7 @@ The tree decomposition in (c) consists of 6 bags, each containing at most 3 indi
   for (a, b) in (("C", "A"), ("C", "B"), ("A", "T_1"), ("A", "T_4"), ("B", "T_3"), ("B", "T_2")){
     line(a, b)
   }
-}))
+}), numbering: none)
 
 Finding the optimal contraction order is almost equivalent to finding the minimal-width tree decomposition of the line graph.
 The log time complexity for the bottleneck contraction corresponds to the largest bag size in the tree decomposition.
@@ -818,7 +818,7 @@ It represents a high dimensional tensor with a compact 1-dimensional tensor netw
     line("A"+str(i), "A"+str(i+1))
     line("B"+str(i), "B"+str(i+1))
   }
-}))
+}), numbering: none)
 
 2. Has polynomial time compression algorithm, which could be achieved through iterative application of the following two processes on different bonds:
  #figure(canvas({
@@ -855,7 +855,7 @@ It represents a high dimensional tensor with a compact 1-dimensional tensor netw
   circle("l2", radius: (1.5, 0.7), stroke: (dash: "dashed"))
   content((rel: (0, 1), to: "l2"), [SVD])
 
-}))
+}), numbering: none)
   The factorization is usually done by first reshaping the tensor into a matrix and then applying singular value decomposition. By eliminating small singular values, the bond dimension can be reduced.
   Easy to compress is a feature of all loopless tensor networks, including the tensor train. In the following example, we show a uniform state can be represented as a tensor train of rank 1.
 
@@ -958,7 +958,7 @@ The backward rule is given by:
   line("Cbar", (rel: (-l, 0)))
   content((-1, 0.5), s[$=$])
 
-}))
+}), numbering: none)
 *Quiz*: If the forward contraction specified with a binary contraction order: `Y = ein"(aij,jk),ki->a"(A, B, C)`, how are gradients computed in the backward propagation?
 ])
 
@@ -993,7 +993,7 @@ In quantum computing, a quantum state initialized to $|0 angle.r^(times.circle n
   content((0, -2), s[$dots.v$])
   tensor((0, -3), "init", s[$|0 angle.r$])
   line("init", (1, -3))
-}))
+}), numbering: none)
 where $|0 angle.r = mat(1; 0)$. A single-qubit gate $U$ can be represented as a rank-2 tensor. For example, if we want to apply a Hadamard gate $H$ to the first qubit, we can represent it as:
 
 #figure(canvas({
@@ -1010,7 +1010,7 @@ where $|0 angle.r = mat(1; 0)$. A single-qubit gate $U$ can be represented as a 
   content((0, -2), s[$dots.v$])
   tensor((0, -3), "init", s[$|0 angle.r$])
   line("init", (1, -3))
-}))
+}), numbering: none)
 
 It can be generalized to multiple qubits. Some quantum gates have more detailed structures, such as the CNOT gate:
 #figure(canvas({
@@ -1035,7 +1035,7 @@ It can be generalized to multiple qubits. Some quantum gates have more detailed 
   line((W - ddx, -dy), "H2")
   line((W + ddx + dx, -dy), "H3")
   line("H2", "H3")
-}))
+}), numbering: none)
 where we ignored the extra constant factor $sqrt(2)$ on the right side.
 
 === Useful rules
@@ -1050,7 +1050,7 @@ where we ignored the extra constant factor $sqrt(2)$ on the right side.
   content((3, 0), "=")
   tensor((4, 0), "id", s[$"id"$])
   line("id", (rel: (1, 0)))
-}))
+}), numbering: none)
 
 #figure(canvas({
   import draw: *
@@ -1066,7 +1066,7 @@ where we ignored the extra constant factor $sqrt(2)$ on the right side.
   tensor((5, 0), "X", s[$X$])
   line("X", (rel: (-1, 0)), name: "a")
   line("X", (rel: (1, 0)), name: "b")
-}))
+}), numbering: none)
 
 #figure(canvas({
   import draw: *
@@ -1085,7 +1085,7 @@ where we ignored the extra constant factor $sqrt(2)$ on the right side.
   tensor((W + dx/2, 0), "H1", [$H$])
   line("c.mid", "H1")
   line("d.mid", "H1")
-}))
+}), numbering: none)
 
 
 #exampleblock([
@@ -1127,7 +1127,7 @@ The corresponding tensor network diagram is:
   line("Hb", "l3.mid")
   line((rel: (1, 0), to: "H2b"), (6, -dy))
   line("H3b", (rel: (1, 0), to: "H3b"))
-}))
+}), numbering: none)
 
 which can be simplified to
 #figure(canvas({
@@ -1151,7 +1151,7 @@ which can be simplified to
   line((0, -dy), (1, -dy))
   line((0, -2*dy), (1, -2*dy))
   line((0, 0), (0, -2*dy))
-}))
+}), numbering: none)
 
 Question: How to compute $angle.l "GHZ"|O|"GHZ" angle.r$ and what is the complexity?
 ])
@@ -1247,7 +1247,7 @@ The corresponding tensor network representation is:
   line("psi", "U1")
   line("U1", "psi2")
 
-}))
+}), numbering: none)
 
 == Quantum teleportation
 
@@ -1322,7 +1322,7 @@ The circuit maps to a tensor network where the Bell pair is a rank-2 tensor, gat
   line("H12", (4 * dx, -2 * dy))
   line(q3, (rel: (1, 0)))
   line(q4, (rel: (1, 0)))
-}))
+}), numbering: none)
 
 
 #figure(canvas({
@@ -1372,7 +1372,7 @@ The circuit maps to a tensor network where the Bell pair is a rank-2 tensor, gat
   line("H12", (4 * dx, -2 * dy))
   line(q3, (rel: (1, 0)))
   line(q4, (rel: (1, 0)))
-}))
+}), numbering: none)
 
 #figure(canvas({
   import draw: *
@@ -1410,7 +1410,7 @@ The circuit maps to a tensor network where the Bell pair is a rank-2 tensor, gat
   line(p1, L, "H11")
   line(q3, (rel: (1, 0)))
   line(q4, (rel: (1, 0)))
-}))
+}), numbering: none)
 
 == ZX calculus
 
@@ -1474,7 +1474,7 @@ The two spiders are defined as follows:
   line("X", (rel: (-1, 0.5)))
   content((-2.5, 0), s[X-spider])
   content((2.7, 0), s[$=ket("+"dots "+") + e^(i beta)ket(dash dots dash)$])
-}))
+}), numbering: none)
 
 For convenience, we also define the Hadamard box as follows:
 
@@ -1497,7 +1497,7 @@ For convenience, we also define the Hadamard box as follows:
   line("X1", "Z2")
   line("Z1", (rel: (-0.8, 0)))
   line("Z2", (rel: (0.8, 0)))
-}))
+}), numbering: none)
 Here we use "$~$" to denote the equivalence of the two diagrams up to a constant.
 Since ZX-calculus is color exchange symmetric, the color exchanged Hadamard box is also a valid rule.
 
@@ -1665,7 +1665,7 @@ The ZX-calculus representation of quantum teleportation is as follows:
   line("X2", "C1")
   line("C2", "C1")
   line("C2", (rel: (1, 0)))
-}))
+}), numbering: none)
 
 #figure(canvas({
   import draw: *
@@ -1685,7 +1685,7 @@ The ZX-calculus representation of quantum teleportation is as follows:
   line("C2", "C1")
   line("X1", "C1")
   line("C2", (rel: (1, 0)))
-}))
+}), numbering: none)
 
 #figure(canvas({
   import draw: *
@@ -1695,7 +1695,7 @@ The ZX-calculus representation of quantum teleportation is as follows:
   circle((4, -2), radius: 0, name: "C2")
   line("psi", "C2")
   line("C2", (rel: (1, 0)))
-}))
+}), numbering: none)
 
 
 === Circuit simplification
