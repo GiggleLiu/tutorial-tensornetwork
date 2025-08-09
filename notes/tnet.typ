@@ -16,6 +16,7 @@
 #let definition = thmbox("definition", "Definition", inset: (x: 1.2em, top: 1em, bottom: 1em), base: none, stroke: black)
 #let theorem = thmbox("theorem", "Theorem", base: none, stroke: black)
 #let proof = thmproof("proof", "Proof")
+#let ket(it) = [$|#it angle.r$]
 
 
 #let exampleblock(it) = block(fill: rgb("#ffffff"), width:100%, inset: 1em, radius: 4pt, stroke: black, it)
@@ -254,6 +255,34 @@ Its diagrammatic representation is:
 
 The einsum notation for the kronecker product is `ij,kl->ijkl`. Its time complexity is $O(n^4)$.
 ])
+
+=== Tensor network contraction is \#P complete
+We show this by reducing another \#P complete problem, the counting of satisfying assignments of a 2-SAT formula, to it.
+
+#definition([2-SAT formula], [A 2-SAT formula is a boolean formula in conjunctive normal form (CNF) with at most two literals per clause.
+
+*Example:*
+$
+  (x_1 or x_2) and (x_2 or x_3) and (x_3 or x_4) and (x_4 or x_5) and (x_5 or x_1)
+$
+])
+
+Although finding one satisfying assignment to it is easy, counting the number of satisfying assignments is \#P complete, which is believed to be even harder than the NP-complete problems.
+
+This can be reduced to a tensor network contraction problem as follows:
+- For each clause, we create a tensor with 2 indices to store its truth table. For example, for the clause $(x_1 or not x_2)$, we create a tensor $T_(x_1 x_2)$ with the following content:
+$
+  T_(x_1 x_2) = mat(1, 0; 1, 1)
+$
+where the first row corresponds to $x_1 = 0$ and the second row to $x_1 = 1$. Similarly, the first column corresponds to $x_2 = 0$ and the second column to $x_2 = 1$. The entry $T_(0,1) = 0$ reflects that the clause $(x_1 or not x_2)$ is false when $x_1 = 0$ and $x_2 = 1$.
+
+- The tensor network contraction then becomes:
+$
+  "count" = sum_(x_1, x_2, dots, x_n) product_("clauses") T_("clause")
+$
+where the sum is over all possible boolean assignments to the variables, and the product is over all clause tensors. This contraction counts exactly the number of satisfying assignments to the 2-SAT formula.
+
+Since counting satisfying assignments for 2-SAT is \#P-complete, and we have shown a polynomial-time reduction from this problem to tensor network contraction, it follows that tensor network contraction is also \#P-complete.
 
 == Contraction order optimization and slicing
 
@@ -949,6 +978,7 @@ The returned `gradients` is a vector of arrays, each of which is an adjoint of a
 
 Quantum circuits provide a natural setting for tensor network representations, where quantum gates are represented as tensors and quantum states as vectors. This mapping allows us to efficiently simulate quantum circuits using tensor network contraction algorithms.
 
+
 == Basic quantum circuit simulation
 
 In quantum computing, a quantum state initialized to $|0 angle.r^(times.circle n)$ can be represented as a direct product of $n$ vectors:
@@ -1218,6 +1248,391 @@ The corresponding tensor network representation is:
   line("U1", "psi2")
 
 }))
+
+== Quantum teleportation
+
+Teleportation transmits an unknown state $|psi angle.r$ from Alice to Bob using a shared Bell pair and two classical bits. The steps are: (1) prepare a Bell pair on qubits 2–3, (2) perform a Bell-basis measurement on qubits 1–2, (3) apply Pauli corrections $Z^(m_1) X^(m_2)$ on qubit 3 according to outcomes $(m_1, m_2)$.
+
+=== Circuit
+
+#align(center, quantum-circuit(min-row-height: 20pt,
+  // Qubit 1 (Alice): |psi>, CNOT(1->2), H, M1
+  lstick($|psi angle.r$), 2, ctrl(1), $H$, meter(label: [$M_1$]), [\ ],
+  // Qubit 2 (Alice’s ancilla): H, CNOT(2->3), target from 1, M2
+  lstick($|0 angle.r$), $H$, ctrl(1), targ(), 1, meter(label: [$M_2$]), [\ ],
+  // Qubit 3 (Bob): target from 2, Pauli corrections Z^{m1}, X^{m2}
+  lstick($|0 angle.r$), 1, targ(), 1, 1, gate($X^(m_2)$), gate($Z^(m_1)$), 1
+))
+
+=== Tensor-network diagram and simplification
+
+The circuit maps to a tensor network where the Bell pair is a rank-2 tensor, gates are rank-4 tensors, and measurements are projectors. Up to Pauli frame corrections, the network reduces to an identity wire from Alice's input to Bob's output.
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  let dx = 2
+  let dy = 1.5
+  tensor((0, 0), "psi", s[$psi$])
+  tensor((0, -dy), "id1", s[0])
+  tensor((0, -2*dy), "id2", s[0])
+
+  tensor((0.5*dx, -dy), "H1", s[$H$])
+  tensor((dx, -1.5*dy), "H2", s[$H$])
+  tensor((0.5*dx, -2*dy), "H3", s[$H$])
+
+  tensor((1.5*dx, -1*dy), "H4", s[$H$])
+  tensor((1.5*dx, -2*dy), "H5", s[$H$])
+
+  tensor((2.5*dx, 0), "H6", s[$H$])
+  tensor((2*dx, -0.5*dy), "H7", s[$H$])
+  tensor((2.5*dx, -1*dy), "H8", s[$H$])
+
+  tensor((3*dx, -1.5*dy), "H9", s[$H$])
+  tensor((2.5*dx, -2*dy), "H10", s[$H$])
+  tensor((3.5*dx, -2*dy), "H11", s[$H$])
+
+  tensor((4*dx, -dy), "H12", s[$H$])
+
+  let p1 = (2*dx, -dy)
+  let p2 = (dx, -2*dy)
+  let p3 = (3*dx, -2*dy)
+  let q1 = (2*dx, 0)
+  let q2 = (dx, -dy)
+  let q3 = (3*dx, -dy)
+  line("id1", "H1")
+  line("id2", "H3")
+  line(p2, "H2")
+  line(q2, "H2")
+  line(p2, "H3")
+  line(p2, "H5")
+  line("H1", "H4")
+  line("H4", "H8")
+  line("psi", "H6")
+  line(p1, "H7")
+  line(q1, "H7")
+  line("H5", "H10")
+  line("H10", "H11")
+  line("H9", p3)
+  line("H9", q3)
+  line("H8", q3)
+  line("H11", (rel: (2, 0)))
+  let q4 = (4 * dx, 0)
+  line("H6", q4, "H12")
+  line("H12", (4 * dx, -2 * dy))
+  line(q3, (rel: (1, 0)))
+  line(q4, (rel: (1, 0)))
+}))
+
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  let dx = 2
+  let dy = 1.5
+  tensor((dx, 0), "psi", s[$psi$])
+
+  tensor((dx, -1.5*dy), "H2", s[$H$])
+
+  tensor((1.5*dx, -1*dy), "H4", s[$H$])
+  tensor((1.5*dx, -2*dy), "H5", s[$H$])
+
+  tensor((2.5*dx, 0), "H6", s[$H$])
+  tensor((2*dx, -0.5*dy), "H7", s[$H$])
+  tensor((2.5*dx, -1*dy), "H8", s[$H$])
+
+  tensor((3*dx, -1.5*dy), "H9", s[$H$])
+  tensor((2.5*dx, -2*dy), "H10", s[$H$])
+  tensor((3.5*dx, -2*dy), "H11", s[$H$])
+
+  tensor((4*dx, -dy), "H12", s[$H$])
+
+  let p1 = (2*dx, -dy)
+  let p2 = (dx, -2*dy)
+  let p3 = (3*dx, -2*dy)
+  let q1 = (2*dx, 0)
+  let q2 = (dx, -dy)
+  let q3 = (3*dx, -dy)
+  line(p2, "H2")
+  line(q2, "H2")
+  line(p2, "H5")
+  line((dx, -dy), "H4")
+  line("H4", "H8")
+  line("psi", "H6")
+  line(p1, "H7")
+  line(q1, "H7")
+  line("H5", "H10")
+  line("H10", "H11")
+  line("H9", p3)
+  line("H9", q3)
+  line("H8", q3)
+  line("H11", (rel: (2, 0)))
+  let q4 = (4 * dx, 0)
+  line("H6", q4, "H12")
+  line("H12", (4 * dx, -2 * dy))
+  line(q3, (rel: (1, 0)))
+  line(q4, (rel: (1, 0)))
+}))
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  let dx = 2
+  let dy = 1.5
+  tensor((dx, 0), "psi", s[$psi$])
+
+  tensor((2.5*dx, 0), "H6", s[$H$])
+  tensor((2*dx, -0.5*dy), "H7", s[$H$])
+  tensor((2.5*dx, -1*dy), "H8", s[$H$])
+
+  tensor((3*dx, -1.5*dy), "H9", s[$H$])
+  tensor((3.5*dx, -2*dy), "H11", s[$H$])
+
+  tensor((4*dx, -dy), "H12", s[$H$])
+
+  let p1 = (2*dx, -dy)
+  let p2 = (dx, -2*dy)
+  let p3 = (3*dx, -2*dy)
+  let q1 = (2*dx, 0)
+  let q2 = (dx, -dy)
+  let q3 = (3*dx, -dy)
+  let L = (2 * dx, -2 * dy)
+  line("psi", "H6")
+  line("H8", L, "H7")
+  line(q1, "H7")
+  line("H9", L)
+  line("H9", q3)
+  line("H8", q3)
+  line("H11", (rel: (2, 0)))
+  let q4 = (4 * dx, 0)
+  line("H6", q4, "H12")
+  line("H12", (4 * dx, -2 * dy))
+  line(p1, L, "H11")
+  line(q3, (rel: (1, 0)))
+  line(q4, (rel: (1, 0)))
+}))
+
+== ZX calculus
+
+The ZX-calculus is a graphical language for reasoning about quantum circuits and processes. It represents quantum operations as diagrams composed of nodes (spiders) and wires, governed by rewrite rules that preserve quantum mechanical equivalence. Unlike traditional tensor networks, ZX-calculus provides a complete graphical language—any equation that holds between quantum processes can be derived using ZX rules.
+
+The two spiders are defined as follows:
+#let zspider(loc, phase: none, name: none) = {
+  import draw: *
+  let s(it) = text(11pt, it)
+  circle(loc, radius: 0.35, fill: rgb("#2ecc71"), stroke: black, name: name)
+  if phase != none { content(loc, s[#phase]) }
+}
+#let xspider(loc, phase: none, name: none) = {
+  import draw: *
+  let s(it) = text(11pt, it)
+  circle(loc, radius: 0.35, fill: rgb("#e74c3c"), stroke: black, name: name)
+  if phase != none { content(loc, s[#phase]) }
+}
+#let hbox(a, name: none) = {
+  import draw: *
+  let s(it) = text(11pt, it)
+  rect((a.at(0) - 0.3, a.at(1) - 0.3), (a.at(0) + 0.3, a.at(1) + 0.3), fill: rgb("#f1c40f"), stroke: black, name: name)
+  content(a, s[$H$])
+}
+#let hline(a, b, name: none) = {
+  import draw: *
+  let s(it) = text(11pt, it)
+  line(a, b, name: "line")
+}
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  
+  // Green Z-spider
+  zspider((0, 0), phase: [$alpha$], name: "Z")
+  line("Z", (rel: (0, 1)))
+  line("Z", (rel: (1, 0.5)))
+  line("Z", (rel: (-1, 0.5)))
+  content((-2.5, 0), s[Z-spider])
+  content((2.7, 0), s[$=ket(0dots 0) + e^(i alpha)ket(1dots 1)$])
+
+  // Red X-spider
+  set-origin((0, -2))
+  xspider((0, 0), phase: [$beta$], name: "X")
+  line("X", (rel: (0, 1)))
+  line("X", (rel: (1, 0.5)))
+  line("X", (rel: (-1, 0.5)))
+  content((-2.5, 0), s[X-spider])
+  content((2.7, 0), s[$=ket("+"dots "+") + e^(i beta)ket(dash dots dash)$])
+}))
+
+For convenience, we also define the Hadamard box as follows:
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  content((-2.5, 0), s[Hadamard box])
+  // Hadamard box
+  hbox((0, 0), name: "H")
+  line((rel: (-0.7, 0)), "H")
+  line("H", (rel: (0.7, 0)))
+  set-origin((1.5, 0))
+  content((0.0, 0), s[$~$])
+
+  set-origin((1.5, 0))
+  zspider((0, 0), phase: [$pi/2$], name: "Z1")
+  xspider((1, 0), phase: [$pi/2$], name: "X1")
+  zspider((2, 0), phase: [$pi/2$], name: "Z2")
+  line("Z1", "X1")
+  line("X1", "Z2")
+  line("Z1", (rel: (-0.8, 0)))
+  line("Z2", (rel: (0.8, 0)))
+}))
+Here we use "$~$" to denote the equivalence of the two diagrams up to a constant.
+
+We have the following simple observations:
+- The 1st order Z-spider with phase $0$/$pi$ is the $ket("+")$/$ket(dash)$ state.
+- The 1st order X-spider with phase $0$/$pi$ is the $ket(0)$/$ket(1)$ state.
+- The 2nd order Z-spider with phase $0$/$pi$ is the identity/Pauli-Z gate.
+- The 2nd order X-spider with phase $0$/$pi$ is the identity/Pauli-X gate.
+- Z-spiders and X-spiders can be converted to each other by a Hadamard box.
+  #figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  
+  // Green Z-spider
+  zspider((0, 0), phase: [$alpha$], name: "Z")
+  line("Z", (rel: (0, 1)))
+  line("Z", (rel: (1, 0.5)))
+  line("Z", (rel: (-1, 0.5)))
+
+  set-origin((2, 0))
+  content((0, 0), s[$=$])
+
+  // Red X-spider
+  set-origin((2, 0))
+  xspider((0, 0), phase: [$alpha$], name: "X")
+  line("X", (rel: (0, 1)))
+  line("X", (rel: (1, 0.5)))
+  line("X", (rel: (-1, 0.5)))
+}))
+
+
+=== Core rewrite rules
+
+The ZX-calculus is governed by several key rewrite rules:
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(10pt, it)
+  let zspider = (loc, phase: none, name: none) => {
+    circle(loc, radius: 0.25, fill: rgb("#2ecc71"), stroke: black, name: name)
+    if phase != none { content(loc, s[#phase]) }
+  }
+  let xspider = (loc, phase: none, name: none) => {
+    circle(loc, radius: 0.25, fill: rgb("#e74c3c"), stroke: black, name: name)  
+    if phase != none { content(loc, s[#phase]) }
+  }
+  
+  // Spider fusion
+  zspider((0, 0.5), phase: "α", name: "Z1")
+  zspider((0, -0.5), phase: "β", name: "Z2")
+  line("Z1", "Z2")
+  line("Z1", (rel: (0, 0.8)))
+  line("Z2", (rel: (0, -0.8)))
+  content((1, 0), s[$=$])
+  zspider((2, 0), phase: "α+β", name: "Z3")
+  line("Z3", (rel: (0, 0.8)))
+  line("Z3", (rel: (0, -0.8)))
+  content((1, -1.3), s[Spider fusion])
+  
+  // Color change
+  set-origin((0, -3))
+  zspider((0, 0), phase: "α", name: "Z4")
+  rect((0.6, -0.2), (1.0, 0.2), fill: rgb("#f1c40f"))
+  content((0.8, 0), s[H])
+  line("Z4", (0.6, 0))
+  line((1.0, 0), (1.6, 0))
+  content((2, 0), s[$=$])
+  xspider((3, 0), phase: "α", name: "X4")
+  line((2.4, 0), "X4")
+  line("X4", (3.6, 0))
+  content((2, -1.3), s[Color change])
+  
+  // Bialgebra (copying)
+  set-origin((5, 0))
+  zspider((0, 0), phase: "0", name: "Z5")
+  line("Z5", (rel: (0, 0.8)))
+  line("Z5", (rel: (0.6, 0.4)))
+  line("Z5", (rel: (0.6, -0.4)))
+  content((1.2, 0), s[$=$])
+  line((1.8, 0.8), (1.8, 0.4))
+  line((1.8, 0.4), (2.4, 0.4))
+  line((1.8, 0.4), (2.4, -0.4))
+  line((1.8, -0.8), (1.8, -0.4))
+  content((2, -1.3), s[Copying])
+}), caption: [Key ZX rules: Spider fusion allows merging connected spiders of the same color (phases add). Color change via Hadamard boxes converts between Z and X spiders. Copying rules enable classical-like behavior for computational basis operations.])
+
+=== Quantum teleportation in ZX
+
+Quantum teleportation provides an excellent example of ZX calculus in action. The protocol transfers an unknown quantum state |ψ⟩ from Alice to Bob using a shared Bell pair and classical communication.
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(10pt, it)
+  let zspider = (loc, phase: none, name: none) => {
+    circle(loc, radius: 0.22, fill: rgb("#2ecc71"), stroke: black, name: name)
+    if phase != none { content(loc, text(8pt)[#phase]) }
+  }
+  let xspider = (loc, phase: none, name: none) => {
+    circle(loc, radius: 0.22, fill: rgb("#e74c3c"), stroke: black, name: name)
+    if phase != none { content(loc, text(8pt)[#phase]) }
+  }
+  
+  // Input state
+  content((0, 1), s[|ψ⟩])
+  line((0, 0.7), (1, 0.7))
+  
+  // Bell pair (cup)
+  arc((1.5, 0.2), start: 180deg, stop: 0deg, radius: 0.5)
+  
+  // Bell measurement  
+  zspider((1, 0.7), name: "meas1")
+  zspider((1, 0.2), name: "meas2") 
+  line("meas1", "meas2")
+  
+  // Correction operations (conceptual)
+  xspider((2.5, 0.7), phase: "m₂", name: "corr1")
+  zspider((3.2, 0.7), phase: "m₁", name: "corr2")
+  line("meas2", "corr1")
+  line("corr1", "corr2")
+  
+  // Output
+  line("corr2", (4, 0.7))
+  content((4.3, 1), s[|ψ⟩])
+  
+  // Arrow for simplification
+  content((5, 0.5), s[$⇒$])
+  
+  // Simplified version
+  set-origin((6, 0))
+  content((0, 1), s[|ψ⟩])
+  line((0, 0.7), (2, 0.7))
+  content((2.3, 1), s[|ψ⟩])
+  content((1, 0.3), s[Identity])
+}), caption: [Teleportation in ZX: The Bell pair is a "cup" (bent wire), Bell measurement involves spider fusion, and corrections are Z and X spiders. The entire network simplifies to an identity wire, demonstrating that the state is perfectly transferred.])
+
+The key insight is that ZX-calculus reveals the topological nature of teleportation: through spider fusion and the bialgebra laws, the complex quantum protocol reduces to a simple wire connection, up to classical corrections determined by measurement outcomes.
+
+=== Circuit simplification
+
+One major application of ZX-calculus is quantum circuit optimization. Complex circuits can be converted to ZX diagrams, simplified using rewrite rules, and converted back to optimized circuits.
+
+#exampleblock([
+*Example: T-gate optimization*
+
+ZX-calculus has achieved state-of-the-art results in reducing T-gate counts in quantum circuits—crucial for fault-tolerant quantum computation. The key insight is that T-gates correspond to Z-spiders with phase π/4, and these can be fused and manipulated using ZX rules to reduce the total count while preserving circuit functionality.
+
+Phase gadgets (spiders connected to multiple qubits) can be decomposed using "spider nest identities," allowing for further optimization that outperforms classical optimization techniques.
+])
+
 
 === Expectation values
 
