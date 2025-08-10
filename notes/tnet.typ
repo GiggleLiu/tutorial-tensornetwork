@@ -987,11 +987,11 @@ In quantum computing, a quantum state initialized to $|0 angle.r^(times.circle n
   let s(it) = text(11pt, it)
   let n = 2
   for j in range(n){
-    tensor((0, -j), "init", s[$|0 angle.r$])
+    tensor((0, -j), "init", s[$0$])
     line("init", (1, -j))
   }
   content((0, -2), s[$dots.v$])
-  tensor((0, -3), "init", s[$|0 angle.r$])
+  tensor((0, -3), "init", s[$0$])
   line("init", (1, -3))
 }), numbering: none)
 where $|0 angle.r = mat(1; 0)$. A single-qubit gate $U$ can be represented as a rank-2 tensor. For example, if we want to apply a Hadamard gate $H$ to the first qubit, we can represent it as:
@@ -999,16 +999,16 @@ where $|0 angle.r = mat(1; 0)$. A single-qubit gate $U$ can be represented as a 
 #figure(canvas({
   import draw: *
   let s(it) = text(11pt, it)
-  tensor((0, 0), "init", s[$|0 angle.r$])
+  tensor((0, 0), "init", s[$0$])
   tensor((1, 0.0), "H", s[$H$])
   line("init", "H")
   line("H", (2, 0))
 
-  tensor((0, -1), "init", s[$|0 angle.r$])
+  tensor((0, -1), "init", s[$0$])
   line("init", (1, -1))
 
   content((0, -2), s[$dots.v$])
-  tensor((0, -3), "init", s[$|0 angle.r$])
+  tensor((0, -3), "init", s[$0$])
   line("init", (1, -3))
 }), numbering: none)
 
@@ -1043,7 +1043,7 @@ where we ignored the extra constant factor $sqrt(2)$ on the right side.
 #figure(canvas({
   import draw: *
   let s(it) = text(11pt, it)
-  tensor((0, 0), "init", s[$|0 angle.r$])
+  tensor((0, 0), "init", s[$0$])
   tensor((1, 0), "H", s[$H$])
   line("init", "H")
   line("H", (rel: (1, 0)))
@@ -1087,6 +1087,42 @@ where we ignored the extra constant factor $sqrt(2)$ on the right side.
   line("d.mid", "H1")
 }), numbering: none)
 
+
+=== Expectation values
+
+The expectation value of an observable $O$ is given by
+#figure(canvas({
+  import draw: *
+  let dx = 0.6
+  let dy = 1.0
+  let s(it) = text(11pt, it)
+  rect((-dx, -dy), (dx, dy), name: "U1")
+  content((0, 0), s[$U$])
+  let gap = 1.5
+  let g = 0.3
+  let y1 = dy - 1.5 * g
+  let y2 = -dy + 1.5 * g
+  rect((gap - g, y1 - g), (gap + g, y1 + g), name: "O")
+  content((gap, y1), s[$O$])
+  rect((2 * gap - dx, -dy), (2 * gap + dx, dy), name: "U2")
+  line((dx, y1), "O")
+  line((2 * gap - dx, y1), "O")
+  line((dx, y2), (2 * gap - dx, y2))
+  content((2*gap, 0), s[$U^dagger$])
+
+  // input states
+  tensor((-gap, y1), "init1", s[$0$])
+  tensor((-gap, y2), "init2", s[$0$])
+
+  tensor((3 * gap, y1), "fin1", s[$0$])
+  tensor((3 * gap, y2), "fin2", s[$0$])
+  line("init1", (-dx, y1))
+  line("init2", (-dx, y2))
+  line((2 * gap + dx, y1), "fin1")
+  line((2 * gap + dx, y2), "fin2")
+}), numbering: none)
+
+where $U$ is the quantum circuit and $O$ is the observable.
 
 #exampleblock([
 *Example: GHZ state preparation circuit*
@@ -1697,126 +1733,147 @@ The ZX-calculus representation of quantum teleportation is as follows:
   line("C2", (rel: (1, 0)))
 }), numbering: none)
 
-
-=== Circuit simplification
-
-One major application of ZX-calculus is quantum circuit optimization. Complex circuits can be converted to ZX diagrams, simplified using rewrite rules, and converted back to optimized circuits.
-
-#exampleblock([
-*Example: T-gate optimization*
-
-ZX-calculus has achieved state-of-the-art results in reducing T-gate counts in quantum circuits—crucial for fault-tolerant quantum computation. The key insight is that T-gates correspond to Z-spiders with phase π/4, and these can be fused and manipulated using ZX rules to reduce the total count while preserving circuit functionality.
-
-Phase gadgets (spiders connected to multiple qubits) can be decomposed using "spider nest identities," allowing for further optimization that outperforms classical optimization techniques.
-])
-
-
-=== Expectation values
-
 *Yao implementation*:
 
 #raw(read("../examples/basic/hadamardtest.jl"), lang: "julia", block: true)
 
-This implementation demonstrates how the Hadamard test can be used to estimate expectation values of unitary operators, which is fundamental for variational quantum algorithms and quantum machine learning.
+= Quantum channel simulation
 
-=== Implementation example
+Quantum channels represent the evolution of open quantum systems, capturing both unitary evolution and decoherence effects. In tensor network simulations, these are implemented through the Kraus operator formalism and density matrix evolution.
 
-Here's a Julia implementation using `Yao` for the quantum circuit simulation:
+== Kraus operators
 
-This example demonstrates how to prepare a GHZ state using both quill for quantum circuit visualization and Yao for quantum circuit simulation. The resulting state exhibits perfect three-qubit entanglement, with equal probabilities for |000⟩ and |111⟩ states and zero probability for all other computational basis states.
+A quantum channel $cal(E)$ can be represented using Kraus operators ${K_i}$ such that for any density matrix $rho$:
 
+$ cal(E)(rho) = sum_i K_i rho K_i^dagger $
 
-== Quantum channel simulation
+where the Kraus operators satisfy the completeness relation:
+
+$ sum_i K_i^dagger K_i = I $
+
+This formalism allows us to describe various noise processes:
+
+=== Amplitude damping
+Models energy loss processes with Kraus operators:
+$ K_0 = mat(1, 0; 0, sqrt(1-gamma)), quad K_1 = mat(0, sqrt(gamma); 0, 0) $
+
+=== Phase damping  
+Models pure dephasing with:
+$ K_0 = sqrt(1-gamma/2) I, quad K_1 = sqrt(gamma/2) Z $
+
+=== Depolarizing channel
+The most commonly used noise model, with Kraus operators:
+$ K_0 = sqrt(1-3p/4) I, quad K_1 = sqrt(p/4) X, quad K_2 = sqrt(p/4) Y, quad K_3 = sqrt(p/4) Z $
 
 == Pauli basis and depolarizing error
 
+=== Pauli transfer matrix formulation
+
+The PTM formalism provides a powerful framework for classical simulation of noisy quantum circuits. In this representation, the normalized Pauli basis $bb(P) = {I, X, Y, Z}/sqrt(2)$ forms an orthonormal basis for the operator space, where single-qubit quantum states become vectors $|rho angle.r.double$ with components:
+
+$ [|rho angle.r.double]_i = tr(rho P_i), quad P_i in bb(P) $
+
+Any single-qubit density matrix expands as $rho = 1/2(I + r_x X + r_y Y + r_z Z)$ where $(r_x, r_y, r_z)$ is the Bloch vector. A quantum channel $cal(E)$
+ becomes a matrix $bold(E) in bb(R)^(4 times 4)$ with elements:
+
+$ [bold(E)]_(i j) = angle.l.double P_i|bold(E)|P_j angle.r.double = tr(P_i cal(E)[P_j]) $
+
+It can be generalized to multi-qubit systems, where the $P_i in bb(P)^(times.circle n)$ and $bold(E) in bb(R)^(4^n times 4^n)$.
+
+For the depolarizing channel, the PTM is $R = "diag"(1, 1-p, 1-p, 1-p)$, enabling efficient multi-qubit simulation via tensor decomposition:
+$
+  R = (1-p)I + p|0angle.r.double angle.l.double 0|
+$
+
+In the path-integral point of view, we either pick the first term or the second term in a single path. The first term has the power of damping the amplitude of states, while the second term has rank 1, and can be used to truncate the tensor network. As a consequence, quantum circuits with finite depolarizing noise can be simulated in polynomial time@Gao2018@Fontana2023.
+
+=== Implementation in Yao
+
+The following code shows how to add depolarizing noise to quantum circuits:
+
+```julia
+using Yao
+
+# Add depolarizing noise after each gate
+function add_depolarizing_noise(c::AbstractBlock, p)
+    Optimise.replace_block(c) do blk
+        if blk isa PutBlock || blk isa ControlBlock
+            rep = chain(blk)
+            for loc in occupied_locs(blk)
+                push!(rep, put(nqubits(blk), loc=>DepolarizingChannel(1, p)))
+            end
+            return rep
+        else
+            return blk
+        end
+    end
+end
+
+# Example: Add noise to a circuit and compute expectation values
+original_circuit = chain(3, put(1=>H), put((1,2)=>CNOT), put((2,3)=>CNOT))
+noisy_circuit = add_depolarizing_noise(original_circuit, 0.01)
+
+# Convert to tensor network for efficient simulation
+initial_state = Dict(zip(1:3, zeros(Int, 3)))
+observable = kron(3, 1=>X, 2=>X)  # Measure ⟨X₁X₂⟩
+net = yao2einsum(noisy_circuit; initial_state, observable, 
+                 mode=DensityMatrixMode())
+expectation_value = contract(net)
+```
+
+=== Tensor network representation
+
+When simulating noisy circuits, the tensor network must track the full density matrix rather than just state vectors. This leads to:
+
+- *Doubled bond dimension*: Physical indices are paired with auxiliary indices
+- *Increased complexity*: Space complexity scales as $chi^2$ instead of $chi$  
+- *Efficient contractions*: Specialized algorithms for mixed-state tensor networks
+
+The density matrix mode in `yao2einsum` automatically handles these transformations, allowing efficient simulation of moderately-sized noisy quantum circuits.
+
+== Channel capacity and error thresholds
+
+For quantum error correction, the key question is whether the noise rate is below the *error threshold*. The depolarizing channel has threshold:
+
+- *Surface code*: $p_"th" approx 0.11$ (per gate)
+- *Steane code*: $p_"th" approx 0.014$ (per gate) 
+- *Shor code*: $p_"th" approx 0.0034$ (per gate)
+
+Above threshold, increasing code distance increases logical error rate. Below threshold, exponential error suppression is possible.
+
+*Implementation example*:
+```julia
+# Test error threshold for surface code
+using TensorQEC
+
+function test_threshold(d, p_values)
+    tanner = CSSTannerGraph(SurfaceCode(d, d))
+    ct = compile(TNMAP(optimizer=TreeSA()), tanner)
+    
+    results = []
+    for p in p_values
+        # Generate random errors
+        em = iid_error(p, p, p, d*d)
+        ep = random_error_qubits(em)
+        syn = syndrome_extraction(ep, tanner)
+        
+        # Attempt decoding
+        res = decode(ct, syn)
+        success = syndrome_extraction(res.error_qubits, tanner) == syn
+        push!(results, (p, success))
+    end
+    return results
+end
+```
+
 = Quantum Error Correction
 
-== Probabilistic modeling
-=== Hidden Markov model
-
-A Hidden Markov Model (HMM)@Bishop2006 is a simple probabilistic graphical model that describes a Markov process with unobserved (hidden) states. The model consists of:
-
-- A sequence of hidden states $z_t$ following a Markov chain with transition probability $P(z_(t+1)|z_t)$
-- A sequence of observations $x_t$ that depend only on the current hidden state through emission probability $P(x_t|z_t)$
-
-The joint probability of a sequence of $T+1$ hidden states and $T$ observations can be written as:
-
-$
-P(bold(z), bold(x)) = P(z_0) product_(t=1)^T P(z_(t)|z_(t-1))P(x_t|z_t).
-$
-Note that the conditional probability $P(z_(t)|z_(t-1))$ can be represented as a tensor with two indices. The joint probability $P(bold(z), bold(x))$ can be represented as a tensor network diagram:
-
-#let hmm(n) = {
-  import draw: *
-  let s(it) = text(11pt, it)
-  
-  // Draw transition matrices
-  let dx = 2.0
-  tensor((0, 0), "A0", []) 
-  for i in range(1, n){
-    tensor((dx*i, 0), "A" + str(i), []) 
-  }
-  for i in range(n - 1){
-   labeledge("A" + str(i), "A" + str(i+1), s[$z_#(i+1)$], name: "z" + str(i))
-  }
-  labeledge("A" + str(n - 1), (rel: (1.6, 0), to:"A" + str(n - 1)), s[$z_#(n)$], name: "z" + str(n - 1))
-
-  for i in range(n){
-    tensor((rel: (0, -1), to: "z" + str(i)), "B" + str(i), [])
-    line("z" + str(i), "B" + str(i))
-    labeledge("B" + str(i), (rel: (0, -1.2)), s[$x_#(i+1)$])
-  }
-}
-
-#figure(canvas({
-  import draw: *
-  hmm(5)
-}),
-caption: [The tensor network representation of a Hidden Markov Model (HMM) with observed variables $x_1, x_2, dots, x_T$ and hidden states $z_0, z_1, dots, z_T$. The circles are conditional probabilities $P(z_t|z_(t-1))$ and $P(x_t|z_t)$.]
-)
-
-=== Likelihood
-The likelihood of the observed sequence:
-$
-P(bold(x)|theta) = sum_(bold(z)) P(bold(x), bold(z)|theta)
-$
-
-#figure(canvas({
-  import draw: *
-  hmm(5)
-  let s(it) = text(11pt, it)
-  for i in range(5){
-    tensor((rel: (0, -1.6), to: "B" + str(i)), "p" + str(i), s[$x_#(i+1)$])
-  }
-  tensor((rel: (2, 0), to: "A4"), "e", [id])
-}))
-where nodes with $x_t$ are observed variables, which are represented as projection tensors.
-
-=== Decoding
-This is the _decoding problem_ of HMM: Given a sequence of observations $bold(x) = (x_1, x_2, ..., x_T)$, how to find the most likely sequence of hidden states $bold(z)$? The equivalent mathematical formulation is:
-$
-  arg max_(bold(z)) P(z_0) product_(t=1)^T P(z_(t)|z_(t-1))P(overshell(x)_t|z_t),
-$ <eq:decoding>
-where $overshell(x)_t$ denotes an observed variable $x_t$ with a fixed value. It is equivalent to contracting the following tensor network:
-$
-  cases(Lambda = {z_0, z_1, dots, z_T},
-  cal(T) = {P(z_0), P(z_1|z_0), dots, P(z_T|z_(T-1)), P(overshell(x)_1|z_1), P(overshell(x)_2|z_2), dots, P(overshell(x)_T|z_T)},
-  V_0 = emptyset
-  )
-$ <eq:decoding-tensor>
-Since $overshell(x)_1, overshell(x)_2, dots, overshell(x)_T$ are fixed and not involved in the contraction, $P(overshell(x)_t|z_t)$ is a vector indexed by $z_t$ rather than a matrix.
-To solve @eq:decoding, we first convert @eq:decoding-tensor into a tropical tensor network $(Lambda, {log(t) | t in cal(T)}, V_0)$, where $log(t)$ is obtained by taking the logarithm of each element in $t$. Then the contraction of this tropical tensor network is equivalent to
-$
-  arg max_(bold(z)) sum_(bold(z)) log P(z_0) + sum_(t=1)^T log P(z_t|z_(t-1)) + sum_(t=1)^T log P(overshell(x)_t|z_t),
-$
-which solves the decoding problem.
-Since this tensor network has a chain structure, its contraction is computationally efficient.
-This algorithm is equivalent to the Viterbi algorithm.
+== Surface code
 
 == Tanner graph
-=== Surface code
 
-== Practice: Circuit level decoding
+== Decoding problem
+
+== Circuit level decoding
 
 #bibliography("refs.bib")
