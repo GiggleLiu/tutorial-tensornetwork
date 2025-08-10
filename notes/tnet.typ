@@ -1751,6 +1751,8 @@ where the Kraus operators satisfy the completeness relation:
 
 $ sum_i K_i^dagger K_i = I $
 
+Kraus operators are a *completely positive (CP) and trace preserving (TP) map* on the density matrix space, which is a linear map that preserves the positivity and the probability of the density matrix.
+
 This formalism allows us to describe various noise processes:
 
 === Amplitude damping
@@ -1819,51 +1821,6 @@ observable = kron(3, 1=>X, 2=>X)  # Measure ⟨X₁X₂⟩
 net = yao2einsum(noisy_circuit; initial_state, observable, 
                  mode=DensityMatrixMode())
 expectation_value = contract(net)
-```
-
-=== Tensor network representation
-
-When simulating noisy circuits, the tensor network must track the full density matrix rather than just state vectors. This leads to:
-
-- *Doubled bond dimension*: Physical indices are paired with auxiliary indices
-- *Increased complexity*: Space complexity scales as $chi^2$ instead of $chi$  
-- *Efficient contractions*: Specialized algorithms for mixed-state tensor networks
-
-The density matrix mode in `yao2einsum` automatically handles these transformations, allowing efficient simulation of moderately-sized noisy quantum circuits.
-
-== Channel capacity and error thresholds
-
-For quantum error correction, the key question is whether the noise rate is below the *error threshold*. The depolarizing channel has threshold:
-
-- *Surface code*: $p_"th" approx 0.11$ (per gate)
-- *Steane code*: $p_"th" approx 0.014$ (per gate) 
-- *Shor code*: $p_"th" approx 0.0034$ (per gate)
-
-Above threshold, increasing code distance increases logical error rate. Below threshold, exponential error suppression is possible.
-
-*Implementation example*:
-```julia
-# Test error threshold for surface code
-using TensorQEC
-
-function test_threshold(d, p_values)
-    tanner = CSSTannerGraph(SurfaceCode(d, d))
-    ct = compile(TNMAP(optimizer=TreeSA()), tanner)
-    
-    results = []
-    for p in p_values
-        # Generate random errors
-        em = iid_error(p, p, p, d*d)
-        ep = random_error_qubits(em)
-        syn = syndrome_extraction(ep, tanner)
-        
-        # Attempt decoding
-        res = decode(ct, syn)
-        success = syndrome_extraction(res.error_qubits, tanner) == syn
-        push!(results, (p, success))
-    end
-    return results
-end
 ```
 
 = Quantum Error Correction
