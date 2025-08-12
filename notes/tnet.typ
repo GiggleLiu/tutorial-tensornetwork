@@ -971,6 +971,64 @@ julia> gradients = cost_and_gradient(optcode, (tensors...,));
 
 The returned `gradients` is a vector of arrays, each of which is an adjoint of an input tensor.
 
+
+== Complex numbers, a tensor network perspective
+
+Complex conjugate is a linear operator. Let us define a special tensor $cal(C)$ as:
+$
+cal(C) = vec(mat(1, 0; 0, -1), mat(0, 1; 1, 0))
+$
+
+Given a matrix multiplication $C = A B$, let us stack the real part of $A$ as a 3D tensor $T_A$, and $B$ as a 3D tensor $T_B$. We can redefine the matrix multiplication as tensor contraction:
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((-3, 0), "C", s[$T_C$])
+  line("C", (rel: (-1, 0)))
+  line("C", (rel: (1, 0)))
+  line("C", (rel: (0, -1)), stroke: aqua)
+  content((-1.5, 0), s[$=$])
+  tensor((0, 0), "A", s[$T_A$])
+  tensor((2, 0), "B", s[$T_B$])
+  tensor((1, -1), "c", s[$cal(C)$])
+  line("A", "B")
+  line("A", (rel: (-1, 0)))
+  line("B", (rel: (1, 0)))
+  line("A", (rel: (0, -1)), "c", stroke: aqua)
+  line("B", (rel: (0, -1)), "c", stroke: aqua)
+  line("c", (rel: (0, -0.7)), stroke: aqua)
+}))
+where the aqua color indicates the extra dimension of size 2 for representing the complex numbers.
+
+```julia
+using OMEinsum
+
+n = 10
+m = randn(ComplexF64, n, n)
+n = randn(ComplexF64, n, n)
+s = cat(real(m), imag(m), dims=3)
+t = cat(real(n), imag(n), dims=3)
+c = zeros(2, 2, 2)
+c[:, :, 1] = [1 0; 0 -1]
+c[:, :, 2] = [0 1; 1 0]
+
+res1 = m * n; res1 = cat(real(res1), imag(res1), dims=3)
+res2 = ein"ija,jkb,abc->ikc"(s, t, c)
+@assert res1 ≈ res2
+```
+
+The norm square of a vector is even more straight forward, it is just sum of the norm of the real and imaginary parts. Diagramatically, it can be represented as:
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((0, 0), "A", s[$T_w$])
+  tensor((2, 0), "B", s[$T_v$])
+  line("A", "B")
+  line("A", (rel: (-1, 0)), (rel: (0, -1)), (rel: (1, -1), to: "B"), (rel: (0, 1)), "B", stroke: aqua)
+}))
+
+
 = Quantum Circuit Simulation
 - initial state, product state
 - single-qubit gate, two-qubit gate, diagonal gate and CNOT gates.
