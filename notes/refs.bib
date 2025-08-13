@@ -86,14 +86,6 @@
       primaryClass={quant-ph}
 }
 
-@article{Roa2024,
-  title={Probabilistic Inference in the Era of Tensor Networks and Differential Programming},
-  author={Roa-Villescas, Martin and Gao, Xuanzhao and Stuijk, Sander and Corporaal, Henk and Liu, Jin-Guo},
-  journal={arXiv preprint arXiv:2405.14060},
-  year={2024},
-  url={https://arxiv.org/abs/2405.14060}
-}
-
 @book{Strang2022,
   title={Introduction to linear algebra},
   author={Strang, Gilbert},
@@ -424,4 +416,52 @@
   archiveprefix = {arXiv},
   keywords = {Quantum Physics},
   file = {/home/leo/snap/zotero-snap/common/Zotero/storage/H5YEZFJA/Gao_Duan_2018_Efficient classical simulation of noisy quantum computation.pdf;/home/leo/snap/zotero-snap/common/Zotero/storage/ZIE2KCLH/1810.html}
+}
+
+@article{Kourtis2018,
+  title = {Fast Counting with Tensor Networks},
+  author = {Kourtis, Stefanos and Chamon, Claudio and Mucciolo, Eduardo R. and Ruckenstein, Andrei E.},
+  year = {2018},
+  eprint = {1805.00475},
+  abstract = {We introduce tensor network contraction algorithms for the counting of satisfying assignments in constraint satisfaction problems ({\textbackslash}\#CSP). We represent each arbitrary {\textbackslash}\#CSP instance as a tensor network whose full contraction yields the number of satisfying assignments for that instance. We then use methods of graph theory and computational complexity theory to develop fast tensor contraction protocols. In particular, we employ the tools of multilevel graph partitioning and community structure detection to determine favorable orders of contraction of arbitrary tensor networks. We first prove analytically that full tensor contraction can be performed in subexponential time for {\textbackslash}\#CSP instances defined on graphs with sublinear separators. We then implement numerical heuristics for the solution of general {\textbackslash}\#P-hard counting boolean satisfiability ({\textbackslash}\#SAT) problems, focusing on random instances of {\textbackslash}\#{\textbackslash}textsc\{Cubic-Vertex-Cover\} as a concrete example, and show that they outperform state-of-the-art {\textbackslash}\#SAT solvers by a significant margin. Our results promote tensor network contraction algorithms as a powerful practical tool for fast solution of some {\textbackslash}\#CSPs.},
+  archiveprefix = {arXiv},
+  file = {/Users/liujinguo/Zotero/storage/F5QSIPMX/Kourtis et al_2018_Fast counting with tensor networks.pdf}
+}
+
+@article{Schollwock2011,
+  title = {The Density-Matrix Renormalization Group in the Age of Matrix Product States},
+  author = {Schollw{\"o}ck, Ulrich},
+  year = {2011},
+  journal = {Annals of Physics},
+  volume = {326},
+  number = {1},
+  eprint = {1008.3477},
+  pages = {96--192},
+  issn = {00034916},
+  doi = {10.1016/j.aop.2010.09.012},
+  abstract = {The density-matrix renormalization group method (DMRG) has established itself over the last decade as the leading method for the simulation of the statics and dynamics of one-dimensional strongly correlated quantum lattice systems. In the further development of the method, the realization that DMRG operates on a highly interesting class of quantum states, so-called matrix product states (MPS), has allowed a much deeper understanding of the inner structure of the DMRG method, its further potential and its limitations. In this paper, I want to give a detailed exposition of current DMRG thinking in the MPS language in order to make the advisable implementation of the family of DMRG algorithms in exclusively MPS terms transparent. I then move on to discuss some directions of potentially fruitful further algorithmic development: while DMRG is a very mature method by now, I still see potential for further improvements, as exemplified by a number of recently introduced algorithms. ?? 2010.},
+  archiveprefix = {arXiv},
+  isbn = {0003-4916},
+  pmid = {15904055},
+  file = {/Users/liujinguo/Zotero/storage/A67A5FDH/Schollwöck - 2011 - Schollwöck, U. (2011). The density-matrix renormal.pdf}
+}
+
+@article{Roa2024,
+  title = {Probabilistic {{Inference}} in the {{Era}} of {{Tensor Networks}} and {{Differential Programming}}},
+  author = {{Roa-Villescas}, Martin and Gao, Xuanzhao and Stuijk, Sander and Corporaal, Henk and Liu, Jin-Guo},
+  year = {2024},
+  month = sep,
+  journal = {Physical Review Research},
+  volume = {6},
+  number = {3},
+  eprint = {2405.14060},
+  primaryclass = {cs},
+  pages = {033261},
+  issn = {2643-1564},
+  doi = {10.1103/PhysRevResearch.6.033261},
+  urldate = {2025-05-20},
+  abstract = {Probabilistic inference is a fundamental task in modern machine learning. Recent advances in tensor network (TN) contraction algorithms have enabled the development of better exact inference methods. However, many common inference tasks in probabilistic graphical models (PGMs) still lack corresponding TN-based adaptations. In this work, we advance the connection between PGMs and TNs by formulating and implementing tensor-based solutions for the following inference tasks: (i) computing the partition function, (ii) computing the marginal probability of sets of variables in the model, (iii) determining the most likely assignment to a set of variables, and (iv) the same as (iii) but after having marginalized a different set of variables. We also present a generalized method for generating samples from a learned probability distribution. Our work is motivated by recent technical advances in the fields of quantum circuit simulation, quantum many-body physics, and statistical physics. Through an experimental evaluation, we demonstrate that the integration of these quantum technologies with a series of algorithms introduced in this study significantly improves the effectiveness of existing methods for solving probabilistic inference tasks.},
+  archiveprefix = {arXiv},
+  keywords = {Computer Science - Machine Learning,Physics - Computational Physics},
+  file = {/Users/liujinguo/Zotero/storage/77YQRG2N/Roa-Villescas et al. - 2024 - Probabilistic Inference in the Era of Tensor Networks and Differential Programming.pdf;/Users/liujinguo/Zotero/storage/SSFPMNF7/2405.html}
 }
