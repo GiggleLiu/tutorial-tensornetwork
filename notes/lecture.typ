@@ -1,6 +1,6 @@
 = Part 1
 
-== Definition (10min)
+== Definition (5min)
 
 - Definition: multi-linear algebra
   - Linear: $f(alpha x + beta y) = alpha f(x) + beta f(y)$
@@ -12,17 +12,11 @@
 
 == Why tensor network? (4min)
 - Lei Wang: "Linear algebra for 21st century"
-  - Machine learning
-    - Compressing Neural Network by Tensor Network with Exponentially Fewer Variational Parameters, arXiv:2305.06058 (Yong Qing et al.)
+  - Machine learning (arXiv:2305.06058)
+  - Quantum physics (arXiv:1306.2164)
+  - Combinatorial optimization (arXiv:2008.06888)
+  - Probabilistic modeling (arXiv:2405.14060)
   - Quantum computation
-    - Simulating Quantum Computation by Contracting Tensor Networks, SIAM Journal on Computing, 2008 (Markov and Shi)
-  - Quantum physics
-    - The Density-Matrix Renormalization Group in the Age of Matrix Product States, (Schollwock, 2011)
-  - Combinatorial optimization
-    - Fast counting with tensor networks, Physical Review Letters, 2018 (Kourtis et al.)
-    - Tropical Tensor Network for Ground States of Spin Glasses, Physical Review Letters, 2021 (Liu et al.)
-  - Probabilistic modeling
-    - Probabilistic Inference in the Era of Tensor Networks and Differential Programming, Physical Review Research, 2024 (Roa et al.)
 
 == Diagramatic langauge (10min)
 
@@ -55,8 +49,18 @@
 
 = Part 2
 == Noisy simulation (10min)
+- Density matrix
+- Quantum channel
+  - Kraus representation and Superoperator
+  - e.g.1 Depolarizing channel
+  - e.g.2 Thermal relaxation channel
+- Efficient simulation of quantum channels (arXiv:1810.03176)
 
 == Quantum error correction (10min)
+- QEC basics
+- Surface code and Tanner graph
+- Probability graph
+- QEC with tensor network (Ref needed)
 
 == Tensor network contraction (10min)
 - complexity, big-O notation
@@ -68,13 +72,18 @@
 
 == Treewidth (10min)
 - definition
-- the treewidth of low dimensional topology
-- the tree SA algorithm.
+- the treewidth of low dimensional topology (arXiv:quant-ph/0511069)
+- the tree SA algorithm (arXiv:2108.05665).
+
+== Slicing and compression (10min)
+- data compression (arXiv:1403.2048)
 - slicing
 
-== Autodiff (3min)
+== Optinal
+- Autodiff (3min)
+- Complex numbers, a tensor network perspective(3min)
 
 = Part 3
-== Hands on 1: OMEinsum package
+== Hands on 1: OMEinsum
 == Hands on 2: YaoToEinsum
 == Hands on 3: TensorQEC
