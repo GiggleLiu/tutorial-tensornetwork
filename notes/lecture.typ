@@ -4,7 +4,7 @@
 
 - Definition: multi-linear algebra
   - Linear: $f(alpha x + beta y) = alpha f(x) + beta f(y)$
-  - Multilinear: having multiple linear arguments
+  - Multilinear: $f$ is linear in multiple arguments
   - e.g.1 product: $f(x, y, z) = x y z$
   - e.g.2 trace multiplication of a sequence of matrices: $f(A, B, C) = tr(A B C)$
   - e.g.3 kronecker product: $f(X, Y, Z) = X times.circle Y times.circle Z$
