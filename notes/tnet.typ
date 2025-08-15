@@ -1866,10 +1866,6 @@ The ZX-calculus representation of quantum teleportation is as follows:
   line("C2", (rel: (1, 0)))
 }), numbering: none)
 
-*Yao implementation*:
-
-#raw(read("../examples/basic/hadamardtest.jl"), lang: "julia", block: true)
-
 = Quantum channel simulation
 
 Quantum channels represent the evolution of open quantum systems, capturing both unitary evolution and decoherence effects. In tensor network simulations, these are implemented through the Kraus operator formalism and density matrix evolution.
