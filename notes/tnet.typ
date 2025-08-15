@@ -867,8 +867,83 @@ julia> L, M, R = fill(sqrt(0.5), 2, 1), fill(sqrt(0.5), 1, 2, 1), fill(sqrt(0.5)
 julia> @assert ein"ia,ajb,bkc,cld,dm->ijklm"(L, M, M, M, R) ≈ uniform_state(5)
 ```
 
-#raw(read("../examples/basic/mps.jl"), lang: "julia", block: true)
+#exampleblock([
+=== Example: Compress a high dimensional tensor
+In this example, we show how to compress a high dimensional tensor with tensor train. We start from defining the data structure.
+```julia
+using OMEinsum, LinearAlgebra
 
+struct MPS{T}
+    tensors::Vector{Array{T, 3}}
+end
+```
+
+The main algorithm is implemented as follows:
+```julia
+# Function to compress a tensor using Tensor Train (TT) decomposition
+function tensor_train_decomposition(tensor::AbstractArray, largest_rank::Int; atol=1e-6)
+    dims = size(tensor)
+    n = length(dims)
+    tensors = Array{Float64, 3}[]
+    rpre = 1  # virtual bond dimension size
+    current_tensor = reshape(tensor, dims[1], :)
+    for i in 1:(n-1)
+        # Perform SVD
+        U_truncated, S_truncated, V_truncated, r = truncated_svd(current_tensor, largest_rank, atol)
+        push!(tensors, reshape(U_truncated, (rpre, dims[i], r)))
+        
+        # Prepare the tensor for the next iteration
+        current_tensor = reshape(S_truncated * V_truncated', r * dims[i+1], :)
+        rpre = r
+    end
+    push!(tensors, reshape(current_tensor, (rpre, dims[n], 1)))
+    return MPS(tensors)
+end
+```
+
+We basically iteratively call the truncated singular value decomposition (SVD) to reduce the virtual bond dimension.
+
+```julia
+function truncated_svd(current_tensor::AbstractArray, largest_rank::Int, atol)
+    U, S, V = svd(current_tensor)
+    r = min(largest_rank, sum(S .> atol))  # error estimation
+    S_truncated = Diagonal(S[1:r])
+    U_truncated = U[:, 1:r]
+    V_truncated = V[:, 1:r]
+    return U_truncated, S_truncated, V_truncated, r
+end
+```
+
+To recover the tensor, we construct the matrix product state, we construct the tensor network topology and 
+
+```julia
+# Function to contract the TT cores to reconstruct the tensor
+function contract(mps::MPS)
+    n = length(mps.tensors)
+    code = EinCode([[2i-1, 2i, 2i+1] for i in 1:n], Int[2i for i in 1:n])
+    size_dict = OMEinsum.get_size_dict(code.ixs, mps.tensors)
+    optcode = optimize_code(code, size_dict, GreedyMethod())
+    return optcode(mps.tensors...)
+end
+```
+
+As an example, we compress a uniform tensor of size 2^20.
+```julia
+tensor = ones(Float64, fill(2, 20)...);
+mps = tensor_train_decomposition(tensor, 5)
+reconstructed_tensor = contract(mps);
+
+relative_error = norm(tensor - reconstructed_tensor) / norm(tensor)
+# output: 5.114071183432393e-12
+
+original_size = prod(size(tensor))
+compressed_size = sum([prod(size(core)) for core in mps.tensors])
+compression_ratio = original_size / compressed_size
+# output: 26214.4
+```
+
+The virtual bond dimension has size $chi = 1$, which means each tensor has only $chi^2 d = 2$ elements.
+])
 
 == Automatic Differentiation
 
