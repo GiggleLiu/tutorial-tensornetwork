@@ -43,11 +43,6 @@ This will automatically:
 
 ### 3. Launch Jupyter Notebooks
 
-For **basic tensor network contraction**:
-```bash
-case=basic make notebook
-```
-
 For **shallow circuit simulation**:
 ```bash
 case=simulation make notebook
