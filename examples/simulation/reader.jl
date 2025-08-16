@@ -1,4 +1,4 @@
-module YaoQASMReader
+module YaoCircuitReader
 using Yao
 using Yao.EasyBuild: FSimGate
 const GATE_TENSORS = Dict{Symbol, AbstractBlock}()
@@ -26,18 +26,18 @@ rz(theta) = Rz(theta)
 fsim(theta, phi) = FSimGate(theta, phi)
 
 """
-    yaocircuit_from_qasm(qasm_str::String)
+    yaocircuit_from_file(filename::String)
 
-Function to create the yao circuit described in the given qasm file.
+Function to create the yao circuit described in the given circuit file.
 """
-function yaocircuit_from_qasm(qasm_file::String)
-    qasm_string = open(f -> read(f, String), qasm_file)
-    qasm_lines = split(qasm_string, "\n")
-    num_qubits = parse(Int, qasm_lines[1])
+function yaocircuit_from_file(filename::String)
+    string = open(f -> read(f, String), filename)
+    lines = split(string, "\n")
+    num_qubits = parse(Int, lines[1])
     qubit_map = Dict{Int, Int}(-1 => 0)
     c = chain(num_qubits)
 
-    for line in qasm_lines[2:end]
+    for line in lines[2:end]
         words = filter(x->length(x)>0, split(line, ['(', ')', ' ', ',']))
         if length(words) > 0
             targets, tensor = parse_words(words, qubit_map)
