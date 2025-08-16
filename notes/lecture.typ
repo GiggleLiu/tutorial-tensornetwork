@@ -45,18 +45,11 @@ Objectives:
   - e.g.10 tree tensor network (TTN)
   - e.g.11 projected entangled pair of states (PEPS), maybe the toric code state?
 
-== Einsum notation (2min)
-
-- definition
-- the above example
-
 == Quantum circuit and tensor networks (10min)
 - Quantum states: zero state, GHZ state.
-- Gates: Hadamard gate, CNOT gate, etc.
-- ZX-calculus
+- Gates: Hadamard gate, CZ gate and CNOT gate, etc.
 - Example 1: Bell state preparation, extend to GHZ state.
-- Example 2: Hadamard test
-- Example 3: Quantum teleportation
+- Example 2: Quantum teleportation
 
 = Part 2
 == Noisy simulation (10min)
@@ -72,6 +65,11 @@ Objectives:
 - Surface code and Tanner graph
 - Probability graph
 - QEC with tensor network (Ref needed)
+
+== Einsum notation (2min)
+
+- definition
+- the above example
 
 == Tensor network contraction (10min)
 - complexity, big-O notation

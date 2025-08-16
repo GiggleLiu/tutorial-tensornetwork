@@ -263,18 +263,34 @@ We show this by reducing another \#P complete problem, the counting of satisfyin
 
 *Example:*
 $
-  (x_1 or x_2) and (x_2 or x_3) and (x_3 or x_4) and (x_4 or x_5) and (x_5 or x_1)
+  (x_1 or x_2) and (x_2 or x_3) and (x_3 or x_4) and (x_4 or x_5) and (x_5 or x_1) and (x_3 or not x_5)
 $
+The tensor network diagram is as follows
+#figure(canvas({
+  import draw: *
+  let s(it) = text(10pt)[#it]
+  let v0 = (0, 2)
+  for (i, label) in ("++", "++", "++", "++", "++").enumerate() {
+    rotate(72deg)
+    tensor(v0, "T"+str(i), s[$T_(#label)$])
+  }
+  tensor((0, 0), "T5", s[$T_(+-)$])
+  for (i, (a, b)) in (("T0", "T1"), ("T1", "T2"), ("T2", "T3"), ("T3", "T4"), ("T4", "T0")).enumerate() {
+    labeledge(a, b, s[$x_#(i+1)$], name: "x"+str(i+1))
+  }
+  line("T5", "x3")
+  line("T5", "x5")
+}))
 ])
 
 Although finding one satisfying assignment to it is easy, counting the number of satisfying assignments is \#P complete, which is believed to be even harder than the NP-complete problems.
 
 This can be reduced to a tensor network contraction problem as follows:
-- For each clause, we create a tensor with 2 indices to store its truth table. For example, for the clause $(x_1 or not x_2)$, we create a tensor $T_(x_1 x_2)$ with the following content:
+- For each clause, we create a tensor with 2 indices to store its truth table. For example, for the clause $(x_3 or not x_5)$, we create a tensor $T_(++)$ with the following content:
 $
-  T_(x_1 x_2) = mat(1, 0; 1, 1)
+  T_(++) = mat(1, 0; 1, 1)
 $
-where the first row corresponds to $x_1 = 0$ and the second row to $x_1 = 1$. Similarly, the first column corresponds to $x_2 = 0$ and the second column to $x_2 = 1$. The entry $T_(0,1) = 0$ reflects that the clause $(x_1 or not x_2)$ is false when $x_1 = 0$ and $x_2 = 1$.
+where the first row corresponds to $x_3 = 0$ and the second row to $x_3 = 1$. Similarly, the first column corresponds to $x_5 = 0$ and the second column to $x_5 = 1$. The entry $T_(0,1) = 0$ reflects that the clause $(x_3 or not x_5)$ is false when $x_3 = 0$ and $x_5 = 1$.
 
 - The tensor network contraction then becomes:
 $
