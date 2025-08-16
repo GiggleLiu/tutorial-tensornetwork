@@ -1581,6 +1581,45 @@ The circuit maps to a tensor network where the Bell pair is a rank-2 tensor, gat
   line(q4, (rel: (1, 0)))
 }), numbering: none)
 
+Here, we use the following identity:
+
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((0, 0), "H1", s[$H$])
+  tensor((0, -1), "H2", s[$H$])
+  line("H1", (rel: (-1, 0)), (rel: (0, -1)), "H2", name: "a")
+  line("H1", (rel: (1, 0)), (rel: (0, -1)), "H2", name: "b")
+  line("a.mid", (rel: (-0.5, 0)))
+  line("b.mid", (rel: (0.5, 0)))
+  content((2, -0.5), s[$=$])
+  tensor((3.5, -0.5), "id1", [id])
+  tensor((4.5, -0.5), "id2", [id])
+  line("id1", (rel: (-1, 0)))
+  line("id2", (rel: (1, 0)))
+}), numbering: none)
+
+Then we have
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  let dx = 2
+  let dy = 1.5
+  tensor((dx, 0), "psi", s[$psi$])
+
+  let p1 = (2*dx, -dy)
+  let p2 = (dx, -2*dy)
+  let p3 = (3*dx, -2*dy)
+  let q1 = (2*dx, 0)
+  let q2 = (dx, -dy)
+  let q3 = (4*dx, -dy)
+  let L = (2 * dx, -2 * dy)
+  line("psi", (rel: (2,0), to: "psi"), (rel: (2, -2 * dy)), (rel: (3, 0)))
+  let q4 = (4 * dx, 0)
+  tensor(q3, "id1", [id])
+  tensor(q4, "id2", [id])
+}), numbering: none)
+
 == ZX calculus
 
 The ZX-calculus@Duncan2019 is a graphical language for reasoning about quantum circuits and processes. It represents quantum operations as diagrams composed of nodes (spiders) and wires, governed by rewrite rules that preserve quantum mechanical equivalence. Unlike traditional tensor networks, ZX-calculus provides a complete graphical language—any equation that holds between quantum processes can be derived using ZX rules.
