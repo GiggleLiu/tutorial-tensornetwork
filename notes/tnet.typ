@@ -1967,7 +1967,7 @@ Consider applying a Kraus channel $cal(E)$ to a density matrix $rho$. The result
   import draw: *
   let s(it) = text(10pt, it)
   tensor((0, 0), "rho", [$rho$])
-  tensor((1, 0), "KR", [$cal(K)$])
+  tensor((1, 0), "KR", [$cal(K)^*$])
   tensor((-1, 0), "KL", [$cal(K)$])
   line("rho", "KL")
   line("rho", "KR")
@@ -1992,7 +1992,7 @@ Sometimes, we use the superoperator representation, which corresponds to
 
   set-origin((2.5, 0.5))
   tensor((0, 0.7), "KR", [$cal(K)$])
-  tensor((0, -0.7), "KL", [$cal(K)$])
+  tensor((0, -0.7), "KL", [$cal(K)^*$])
   line("KL", (rel: (-0.7, 0)))
   line("KL", (rel: (0.7, 0)))
   line("KR", (rel: (-0.7, 0)))
@@ -2000,6 +2000,23 @@ Sometimes, we use the superoperator representation, which corresponds to
   labeledge("KR", "KL", [$k$])
 
 }))
+
+For example, the superoperator representation of the depolarizing channel is
+```julia
+julia> using OMEinsum, Yao, SymEngine
+
+julia> p = Basic(:p)  # define a symbolic variables
+p
+
+julia> K = cat(sqrt(1-3p/4) * Matrix{Basic}(I2), sqrt(p/4) * Matrix{Basic}(X), sqrt(p/4) * Matrix{Basic}(Y), sqrt(p/4) * Matrix{Basic}(Z); dims=3);
+
+julia> superop_dep = reshape(ein"abk,cdk->acbd"(K, conj(K)), 4, 4)
+4×4 Matrix{Basic}:
+ 1 + (-1/2)*p      0      0       (1/2)*p
+            0  1 - p      0             0
+            0      0  1 - p             0
+      (1/2)*p      0      0  1 + (-1/2)*p
+```
 
 === Pauli transfer matrix formulation
 
@@ -2064,47 +2081,55 @@ Diagramatically, this transformation is
   line("U2", (rel: (-0.5, 0.5)))
 }), numbering: none)
 
-For the depolarizing channel, the Pauli basis representation is $R = "diag"(1, 1-p, 1-p, 1-p)$, enabling efficient multi-qubit simulation via tensor decomposition:
+For the depolarizing channel, the Pauli basis representation can be obtained by:
+```julia
+julia> U = Basic[1 0 0 1; 0 1 -im 0; 0 1 im 0; 1 0 0 -1] / sqrt(Basic(2));
+
+julia> pauli_dep = SymEngine.expand.(U * superop_dep * U')
+4×4 Matrix{Basic}:
+ 1      0      0      0
+ 0  1 - p      0      0
+ 0      0  1 - p      0
+ 0      0      0  1 - p
+```
+It is a diagonal matrix $cal(D)_P = "diag"(1, 1-p, 1-p, 1-p)$, enabling efficient multi-qubit simulation via tensor decomposition:
 $
-  R = (1-p)I + p|0angle.r.double angle.l.double 0|
+  cal(D)_P = (1-p)I + p|0angle.r.double angle.l.double 0|
 $
+Or diagramatically,
+#figure(canvas({
+    import draw: *
+    let s(it) = text(10pt, it)
+    tensor((0, 0.0), "D", [$cal(D)_P$])
+    line("D", (rel: (-0.5, 0.5)))
+    line("D", (rel: (0.5, 0.5)))
+    line("D", (rel: (-0.5, -0.5)))
+    line("D", (rel: (0.5, -0.5)))
+    content((1, 0.0), s[$=$])
+    set-origin((2.5, 0))
+    line((-0.5, 0.5), (0.5, 0.5))
+    line((-0.5, -0.5), (0.5, -0.5))
+
+    content((1, 0), [$+$])
+    circle((2, -0.5), radius:0.2, name: "a")
+    content((2, -0.5), s[$0$])
+    line("a", (rel: (-0.5, 0)))
+    circle((2, 0.5), radius:0.2, name: "b")
+    content((2, 0.5), s[$0$])
+    line("b", (rel: (-0.5, 0)))
+
+    circle((2.5, -0.5), radius:0.2, name: "c")
+    content((2.5, -0.5), s[$0$])
+    line("c", (rel: (0.5, 0)))
+
+    circle((2.5, 0.5), radius:0.2, name: "d")
+    content((2.5, 0.5), s[$0$])
+    line("d", (rel: (0.5, 0)))
+}))
 
 In the path-integral point of view, we either pick the first term or the second term in a single path. The first term has the power of damping the amplitude of states, while the second term has rank 1, and can be used to truncate the tensor network. As a consequence, quantum circuits with finite depolarizing noise can be simulated in polynomial time@Gao2018@Fontana2023.
 
-=== Implementation in Yao
-
-The following code shows how to add depolarizing noise to quantum circuits:
-
-```julia
-using Yao
-
-# Add depolarizing noise after each gate
-function add_depolarizing_noise(c::AbstractBlock, p)
-    Optimise.replace_block(c) do blk
-        if blk isa PutBlock || blk isa ControlBlock
-            rep = chain(blk)
-            for loc in occupied_locs(blk)
-                push!(rep, put(nqubits(blk), loc=>DepolarizingChannel(1, p)))
-            end
-            return rep
-        else
-            return blk
-        end
-    end
-end
-
-# Example: Add noise to a circuit and compute expectation values
-original_circuit = chain(3, put(1=>H), put((1,2)=>CNOT), put((2,3)=>CNOT))
-noisy_circuit = add_depolarizing_noise(original_circuit, 0.01)
-
-# Convert to tensor network for efficient simulation
-initial_state = Dict(zip(1:3, zeros(Int, 3)))
-observable = kron(3, 1=>X, 2=>X)  # Measure ⟨X₁X₂⟩
-net = yao2einsum(noisy_circuit; initial_state, observable, 
-                 mode=DensityMatrixMode())
-expectation_value = contract(net)
-```
-
+  
 = Quantum Error Correction
 
 == Surface code
