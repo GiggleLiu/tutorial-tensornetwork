@@ -19,7 +19,7 @@ Objectives:
 == Why tensor network? (4min)
 - Lei Wang: "Linear algebra for 21st century"
   - Machine learning (arXiv:2305.06058)
-  - Quantum physics (arXiv:1306.2164)
+  - Quantum many-body physics (arXiv:1306.2164)
   - Combinatorial optimization (arXiv:2008.06888)
   - Probabilistic modeling (arXiv:2405.14060)
   - Quantum computation
@@ -64,7 +64,7 @@ Objectives:
 - QEC basics
 - Surface code and Tanner graph
 - Probability graph
-- QEC with tensor network (Ref needed)
+- QEC with tensor network (arXiv:2310.10722)
 
 == Einsum notation (2min)
 
