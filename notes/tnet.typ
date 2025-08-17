@@ -63,7 +63,7 @@ Advanced Materials Thrust, Function Hub, HKUST(GZ)])
 
 = Tensor Networks
 _Tensor network_ is an important concept in quantum physics and quantum information, it is similar to  _einsum_@Harris2020, _unweighted probability graph_@Bishop2006, _sum product network_ and _junction tree_@Villescas2023 in other fields.
-It has been widely used to simulate quantum circuits@Markov2008, decode quantum error correction codes (which reference?), compress neural networks@Qing2024, and simulate the dynamics of a quantum system@Haegeman2016.
+It has been widely used to simulate quantum circuits@Markov2008, decode quantum error correction codes@Piveteau2024, compress neural networks@Qing2024, and simulate the dynamics of a quantum system@Haegeman2016.
 
 == Definition
 In short, _Tensor network_ is a diagrammatic representation of _multilinear algebra_. Consider multiplying a sequence a matrices:
@@ -267,8 +267,23 @@ We show this by reducing another \#P complete problem, the counting of satisfyin
 *Example:*
 $
   (x_1 or x_2) and (x_2 or x_3) and (x_3 or x_4) and (x_4 or x_5) and (x_5 or x_1) and (x_3 or not x_5)
+$ <eq:2sat>
+])
+
+Although finding one satisfying assignment to it is easy, counting the number of satisfying assignments is \#P complete, which is believed to be even harder than the NP-complete problems.
+
+This can be reduced to a tensor network contraction problem as follows:
+- For each clause, we create a tensor with 2 indices to store its truth table. For example, for the clause $(x_3 or not x_5)$, we create a tensor $T_(++)$ with the following content:
 $
-The tensor network diagram is as follows
+  T_(+-) = mat(1, 0; 1, 1)
+$
+where the first row corresponds to $x_3 = 0$ and the second row to $x_3 = 1$. Similarly, the first column corresponds to $x_5 = 0$ and the second column to $x_5 = 1$. The entry $(T_(+-))_(0,1) = 0$ reflects that the clause $(x_3 or not x_5)$ is false when $x_3 = 0$ and $x_5 = 1$. For other cases, we can define $T_(++)$, $T_(--)$ and $T_(-+)$ similarly.
+
+- The tensor network contraction then becomes:
+$
+  "count" = sum_(x_1, x_2, dots, x_n) product_("clauses") T_("clause")
+$
+where the sum is over all possible boolean assignments to the variables, and the product is over all clause tensors. This contraction counts exactly the number of satisfying assignments to the 2-SAT formula. For example, the number of satisfying assignment for the logical expression in @eq:2sat corresponds to the following tensor network contraction
 #figure(canvas({
   import draw: *
   let s(it) = text(10pt)[#it]
@@ -284,22 +299,7 @@ The tensor network diagram is as follows
   line("T5", "x3")
   line("T5", "x5")
 }))
-])
 
-Although finding one satisfying assignment to it is easy, counting the number of satisfying assignments is \#P complete, which is believed to be even harder than the NP-complete problems.
-
-This can be reduced to a tensor network contraction problem as follows:
-- For each clause, we create a tensor with 2 indices to store its truth table. For example, for the clause $(x_3 or not x_5)$, we create a tensor $T_(++)$ with the following content:
-$
-  T_(++) = mat(1, 0; 1, 1)
-$
-where the first row corresponds to $x_3 = 0$ and the second row to $x_3 = 1$. Similarly, the first column corresponds to $x_5 = 0$ and the second column to $x_5 = 1$. The entry $T_(0,1) = 0$ reflects that the clause $(x_3 or not x_5)$ is false when $x_3 = 0$ and $x_5 = 1$.
-
-- The tensor network contraction then becomes:
-$
-  "count" = sum_(x_1, x_2, dots, x_n) product_("clauses") T_("clause")
-$
-where the sum is over all possible boolean assignments to the variables, and the product is over all clause tensors. This contraction counts exactly the number of satisfying assignments to the 2-SAT formula.
 
 Since counting satisfying assignments for 2-SAT is \#P-complete, and we have shown a polynomial-time reduction from this problem to tensor network contraction, it follows that tensor network contraction is also \#P-complete.
 
@@ -701,7 +701,27 @@ Let us define a complex matrix $A in CC^(m times n)$, and let its singular value
 $
 A = U S V^dagger
 $
-where $U$ and $V$ are unitary matrices and $S$ is a diagonal matrix with non-negative real numbers on the diagonal.
+where $U$ and $V$ are unitary matrices and $S$ is a diagonal matrix with non-negative real numbers on the diagonal. Let $s$ be the diagonal part of $S$, the diagramatic representation of SVD decomposition is
+#align(center, text(10pt, canvas({
+  import draw: *
+  tensor((-5.5, 0), "A", [$A$])
+  labeledge("A", (rel: (-1.2, 0)), [$i$])
+  labeledge("A", (rel: (1.2, 0)), [$j$])
+
+  content((-3.5, 0), [$=$])
+
+  tensor((-1.0, 0), "A", [$U$])
+  tensor((1.0, 0), "B", [$V^dagger$])
+  tensor((0, 1), "L", [$s$])
+  labeledge("A", (rel: (-1.2, 0)), [$i$])
+  labeledge("B", (rel: (1.2, 0)), [$j$])
+  labelnode((0, 0), [$k$], name: "k")
+  line("k", "B")
+  line("k", "A")
+  line("k", "L")
+})))
+
+For data compression, we reqire $dim(k) < min(dim(i), dim(j))$, the compression ratio can be computed as: $(dim(i) dim(j))/(dim(k) (dim(i) + dim(j)))$.
 
 === CP-decomposition
 
