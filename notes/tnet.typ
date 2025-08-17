@@ -18,6 +18,9 @@
 #let proof = thmproof("proof", "Proof")
 #let ket(it) = [$|#it angle.r$]
 
+// hide contents under development
+#let hide-dev = true
+#let dev(it) = if not hide-dev {it}
 
 #let exampleblock(it) = block(fill: rgb("#ffffff"), width:100%, inset: 1em, radius: 4pt, stroke: black, it)
 #let tensor(location, name, label) = {
@@ -1063,6 +1066,8 @@ julia> gradients = cost_and_gradient(optcode, (tensors...,));
 The returned `gradients` is a vector of arrays, each of which is an adjoint of an input tensor.
 
 
+#dev(
+[
 == Complex numbers, a tensor network perspective
 
 Complex conjugate is a linear operator. Let us define a special tensor $cal(C)$ as:
@@ -1126,7 +1131,7 @@ The norm square of a vector is even more straight forward, it is just sum of the
 - expectation values
 
 Quantum circuits provide a natural setting for tensor network representations, where quantum gates are represented as tensors and quantum states as vectors. This mapping allows us to efficiently simulate quantum circuits using tensor network contraction algorithms.
-
+])
 
 == Basic quantum circuit simulation
 
@@ -1636,6 +1641,7 @@ Then we have
   tensor(q4, "id2", [id])
 }), numbering: none)
 
+#dev([
 == ZX calculus
 
 The ZX-calculus@Duncan2019 is a graphical language for reasoning about quantum circuits and processes. It represents quantum operations as diagrams composed of nodes (spiders) and wires, governed by rewrite rules that preserve quantum mechanical equivalence. Unlike traditional tensor networks, ZX-calculus provides a complete graphical language—any equation that holds between quantum processes can be derived using ZX rules.
@@ -1920,6 +1926,7 @@ The ZX-calculus representation of quantum teleportation is as follows:
   line("psi", "C2")
   line("C2", (rel: (1, 0)))
 }), numbering: none)
+])
 
 = Quantum channel simulation
 
@@ -1937,6 +1944,7 @@ $ sum_i K_i^dagger K_i = I $
 
 Kraus operators are a *completely positive (CP) and trace preserving (TP) map* on the density matrix space, which is a linear map that preserves the positivity and the probability of the density matrix.
 
+#exampleblock([
 This formalism allows us to describe various noise processes:
 
 === Amplitude damping
@@ -1950,23 +1958,113 @@ $ K_0 = sqrt(1-gamma/2) I, quad K_1 = sqrt(gamma/2) Z $
 === Depolarizing channel
 The most commonly used noise model, with Kraus operators:
 $ K_0 = sqrt(1-3p/4) I, quad K_1 = sqrt(p/4) X, quad K_2 = sqrt(p/4) Y, quad K_3 = sqrt(p/4) Z $
+])
 
-== Pauli basis and depolarizing error
+== Tensor network representation of channels
+
+Consider applying a Kraus channel $cal(E)$ to a density matrix $rho$. The result can be diagramatically represented as
+#figure(canvas({
+  import draw: *
+  let s(it) = text(10pt, it)
+  tensor((0, 0), "rho", [$rho$])
+  tensor((1, 0), "KR", [$cal(K)$])
+  tensor((-1, 0), "KL", [$cal(K)$])
+  line("rho", "KL")
+  line("rho", "KR")
+  line("KL", (rel: (-1, 0)))
+  line("KR", (rel: (1, 0)))
+  line("KL", (rel: (0, 1)), (rel: (0, 1), to: "KR"), "KR", name: "line")
+  labelnode("line.mid", [$k$])
+}), numbering: none)
+
+Sometimes, we use the superoperator representation, which corresponds to
+#figure(canvas({
+  import draw: *
+  let s(it) = text(10pt, it)
+  tensor((0, 0.5), "E", [$cal(E)$])
+  line("E", (rel: (-0.5, 0.5)))
+  line("E", (rel: (0.5, 0.5)))
+  line("E", (rel: (-0.5, -0.5)))
+  line("E", (rel: (0.5, -0.5)))
+  line((-0.5, -0.5), (0.5, -0.5), mark: (end: "straight"))
+  content((0, -0.9), s[apply from left to right])
+  content((1, 0.5), s[$=$])
+
+  set-origin((2.5, 0.5))
+  tensor((0, 0.7), "KR", [$cal(K)$])
+  tensor((0, -0.7), "KL", [$cal(K)$])
+  line("KL", (rel: (-0.7, 0)))
+  line("KL", (rel: (0.7, 0)))
+  line("KR", (rel: (-0.7, 0)))
+  line("KR", (rel: (0.7, 0)))
+  labeledge("KR", "KL", [$k$])
+
+}))
 
 === Pauli transfer matrix formulation
 
-The PTM formalism provides a powerful framework for classical simulation of noisy quantum circuits. In this representation, the normalized Pauli basis $bb(P) = {I, X, Y, Z}/sqrt(2)$ forms an orthonormal basis for the operator space, where single-qubit quantum states become vectors $|rho angle.r.double$ with components:
+The PTM formalism provides a powerful framework for classical simulation of noisy quantum circuits. In this representation, the normalized Pauli basis $bb(P) = {I, X, Y, Z}/sqrt(2)$ forms an orthonormal basis for the operator space, where single-qubit quantum states become vectors $|rho angle.r.double_P$ with components:
 
 $ [|rho angle.r.double]_i = tr(rho P_i), quad P_i in bb(P) $
 
-Any single-qubit density matrix expands as $rho = 1/2(I + r_x X + r_y Y + r_z Z)$ where $(r_x, r_y, r_z)$ is the Bloch vector. A quantum channel $cal(E)$
- becomes a matrix $bold(E) in bb(R)^(4 times 4)$ with elements:
+Let us denote the superoperator (vectorized) representation of density matrix $rho$ as $|rho angle.r.double$. The Pauli basis representation corresponds to the following basis transformation:
+$
+|rho angle.r.double_P = U|rho angle.r.double
+\
+U = mat(
+  1/sqrt(2), 0, 0, 1/sqrt(2);
+  0, 1/sqrt(2), (-i)/sqrt(2), 0;
+  0, 1/sqrt(2), i/sqrt(2), 0;
+  1/sqrt(2), 0, 0, (-1)/sqrt(2)
+) $
 
-$ [bold(E)]_(i j) = angle.l.double P_i|bold(E)|P_j angle.r.double = tr(P_i cal(E)[P_j]) $
+The quantum channel $cal(E)$ in the Pauli basis is given by:
 
-It can be generalized to multi-qubit systems, where the $P_i in bb(P)^(times.circle n)$ and $bold(E) in bb(R)^(4^n times 4^n)$.
+$
+|rho angle.r.double_P = U|rho angle.r.double\
+cal(E)_P = U cal(E) U^dagger
+$
 
-For the depolarizing channel, the PTM is $R = "diag"(1, 1-p, 1-p, 1-p)$, enabling efficient multi-qubit simulation via tensor decomposition:
+Diagramatically, this transformation is
+#figure(canvas({
+  import draw: *
+  let s(it) = text(10pt, it)
+  tensor((0, 0.5), "rho", [$rho_P$])
+  line("rho", (rel: (0.5, -0.5)))
+  line("rho", (rel: (0.5, 0.5)))
+  content((1, 0.5), s[$=$])
+
+  set-origin((2.0, 0.5))
+  tensor((0, 0), "rho", [$rho$])
+  tensor((1.2, 0), "U", [$U$])
+  bezier("rho.north-east", "U.north-west", (0.6, 1))
+  bezier("rho.south-east", "U.south-west", (0.6, -1))
+  line("U", (rel: (0.5, -0.5)))
+  line("U", (rel: (0.5, 0.5)))
+
+  set-origin((3.5, 0))
+  tensor((0, 0.0), "E", [$cal(E)_P$])
+  line("E", (rel: (-0.5, 0.5)))
+  line("E", (rel: (0.5, 0.5)))
+  line("E", (rel: (-0.5, -0.5)))
+  line("E", (rel: (0.5, -0.5)))
+  content((1, 0.0), s[$=$])
+
+  set-origin((3.5, 0.0))
+  tensor((0, 0), "E", [$cal(E)$])
+  tensor((1.2, 0), "U", [$U$])
+  tensor((-1.2, 0), "U2", [$U^dagger$])
+  bezier("E.south-east", "U.south-west", (0.6, -1))
+  bezier("E.north-east", "U.north-west", (0.6, 1))
+  bezier("E.south-west", "U2.south-east", (-0.6, -1))
+  bezier("E.north-west", "U2.north-east", (-0.6, 1))
+  line("U", (rel: (0.5, -0.5)))
+  line("U", (rel: (0.5, 0.5)))
+  line("U2", (rel: (-0.5, -0.5)))
+  line("U2", (rel: (-0.5, 0.5)))
+}), numbering: none)
+
+For the depolarizing channel, the Pauli basis representation is $R = "diag"(1, 1-p, 1-p, 1-p)$, enabling efficient multi-qubit simulation via tensor decomposition:
 $
   R = (1-p)I + p|0angle.r.double angle.l.double 0|
 $
