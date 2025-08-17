@@ -9,4 +9,4 @@ update:
 pluto:
 	$(JL) -e "using Pluto; Pluto.run(notebook=\"examples/$${case}/main.jl\")"
 
-.PHONY: init update notebook
+.PHONY: init update pluto
