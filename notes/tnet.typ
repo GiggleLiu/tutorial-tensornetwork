@@ -721,7 +721,7 @@ where $U$ and $V$ are unitary matrices and $S$ is a diagonal matrix with non-neg
   line("k", "L")
 })))
 
-For data compression, we reqire $dim(k) < min(dim(i), dim(j))$, the compression ratio can be computed as: $(dim(i) dim(j))/(dim(k) (dim(i) + dim(j)))$.
+Let us denote $d_i = dim(i)$, $d_j = dim(j)$, $d_k = dim(k)$, $d_s = dim(s)$. For data compression, we reqire $d_k < min(d_i, d_j)$, the compression ratio can be computed as: $(d_i d_j)/(d_k (d_i + d_j))$.
 
 === CP-decomposition
 
@@ -757,6 +757,8 @@ $
   line("c", "L")
 })))
 
+The data compression ratio for CP-decomposition is $(product_(i=1)^N d_i) / (R sum_(i=1)^N d_i)$, where $d_i$ is the dimension of the $i$-th mode, $N$ is the number of modes, and $R$ is the rank (dimension of the shared index $c$). For the rank-4 case shown above, this becomes $(d_i d_j d_k d_l) / (R(d_i + d_j + d_k + d_l + 1))$.
+
 === Tucker decomposition
 
 The Tucker decomposition of a rank-4 tensor $T$ can be represented as
@@ -791,6 +793,12 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
   labeledge("X", "D", [$a$])
 })))
 
+The data compression ratio for Tucker decomposition is $(product_(i=1)^N d_i) / (product_(i=1)^N r_i + sum_(i=1)^N d_i r_i)$, where $d_i$ is the dimension of the $i$-th mode, $N$ is the number of modes, and $r_i$ is the dimension of the $i$-th core tensor mode. For the rank-4 case shown above, this becomes $(d_i d_j d_k d_l) / (r_a r_b r_c r_d + d_i r_a + d_j r_b + d_k r_c + d_l r_d)$.
+
+Tucker decomposition is more flexible than CP decomposition as it allows different compression ratios for different modes, but it suffers from the curse of dimensionality as the core tensor $X$ grows exponentially with the number of modes.
+
+
+=== Tensor Train
 
 A tensor train is a tensor network with the following data structure.
 #align(center, text(10pt, canvas({
@@ -839,7 +847,9 @@ A tensor train is a tensor network with the following data structure.
 //   labeledge("C", "D", [$c$])
 // })))
 
-It represents a high dimensional tensor with a compact 1-dimensional tensor network. Researchers like this 1D representation due to the following nice properties:
+It represents a high dimensional tensor with a compact 1-dimensional tensor network. Let us denote the lateral bond dimension (usually referred as the virtual bond dimension) as $chi$, then the storage complexity is $O(d chi^2 L)$ where $d$ is the number of physical dimensions and $L$ is the length of the chain. The compression ratio is $O(d^L / (chi^2 L))$.
+
+Researchers like this 1D representation due to the following nice properties:
 1. The inner product is easy to compute.
   #figure(canvas({
   import draw: *
