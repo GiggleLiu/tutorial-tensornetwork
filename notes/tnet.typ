@@ -1917,17 +1917,237 @@ Usually, we can specify an $[[n,k,d]]$ quantum code by giving a set of $n-k$ ind
     $
   ]
 )
+In short, a CSS code is a type of quantum code that can be constructed using only $X$ and $Z$ operators. Moreover, most quantum codes encountered in practice belong to the CSS family.
 
 == Surface code
-// #figure(canvas({
-//   import draw: *
-//   surface-code((0, 0), 3, 3,size: 3,color1: aqua,color2:yellow)
-//   stabilizer-label((3, -2))
-//   content((3, -2), [$=$])
-// }), caption: [The surface code. The stabilizer group is the set of all the stabilizers of the surface code. The code space is the $+1$ eigenspace of all the stabilizers. The error space is the $-1$ eigenspace of all the stabilizers. The surface code is a $[[9,1,3]]$ quantum code. The minimum distance is $3$.])
+#let surface-code(loc, m, n, size:1, color1:yellow, color2:aqua, name: "surface", type-tag:true) = {
+  import draw: *
+  for i in range(m){
+    for j in range(n){
+      let x = loc.at(0) + i * size
+      let y = loc.at(1) + j * size
+      if (i != m - 1) and (j != n - 1) {
+        // determine the color of the plaquette
+        let (colora, colorb) = if (calc.rem(i + j, 2) == 0) {
+          (color1, color2)
+        } else {
+          (color2, color1)
+        }
+        // four types of boundary plaquettes
+        if type-tag == (calc.rem(i + j, 2) == 0) {
+          if (i == 0) {
+              bezier((x, y), (x, y + size), (x - size * 0.7, y + size/2), fill: colorb, stroke: black)
+            }
+            if (i == m - 2) {
+              bezier((x + size, y), (x + size, y + size), (x + size * 1.7, y + size/2), fill: colorb, stroke: black)
+            }
+          } else {
+            if (j == 0) {
+              bezier((x, y), (x + size, y), (x + size/2, y - size * 0.7), fill: colorb, stroke: black)
+            }
+            if (j == n - 2) {
+              bezier((x, y + size), (x + size, y + size), (x + size/2, y + size * 1.7), fill: colorb, stroke: black)
+            }
+          }
+          rect((x, y), (x + size, y + size), fill: colora, stroke: black, name: name + "-square" + "-" + str(i) + "-" + str(j))
+      }
+      circle((x, y), radius: 0.08 * size, fill: black, stroke: none, name: name + "-" + str(i) + "-" + str(j))
+    }
+    }
+  }
+#let stabilizer-label(loc, size:1, color1:yellow, color2:aqua) = {
+  import draw: *
+  let x = loc.at(0)
+  let y = loc.at(1)
+  content((x, y), box(stroke: black, inset: 6pt, [$X$ stabilizers],fill: color2, radius: 4pt))
+  content((x, y - 1.5*size), box(stroke: black, inset: 6pt, [$Z$ stabilizers],fill: color1, radius: 4pt))
+}
+The surface code is a prominent example of a topological quantum error-correcting code, defined on a two-dimensional lattice of qubits arranged in a grid. Each plaquette (face) of the lattice is associated with a stabilizer operator, which acts on the qubits at the corners of the plaquette. There are two types of stabilizers: $X$-type (acting with Pauli $X$ operators) and $Z$-type (acting with Pauli $Z$ operators), typically arranged in a checkerboard pattern. Here is an example of $[[9,1,3]]$ surface code.
 
+#figure(canvas({
+  import draw: *
+  let n = 3
+  surface-code((0, 0),size:1.5, n, n,name: "surface1")
+  for i in range(n) {
+    for j in range(n) {
+      content((rel: (0.3, 0.3), to: "surface1" + "-" + str(j) + "-" + str(2-i)), [#(i*n+j+1)])
+    }
+  }
+  content((5.5, 1.4), box(stroke: black, inset: 6pt, [$X$ stabilizers: \ $X_1X_2X_4X_5$ \ $X_3X_6$ \ $X_4X_7$ \ $X_5X_6X_8X_9$],fill: aqua, radius: 4pt))
+  content((8.5, 1.4), box(stroke: black, inset: 6pt, [$Z$ stabilizers: \ $Z_1Z_2$ \ $Z_2Z_3Z_5Z_6$ \ $Z_4Z_5Z_7Z_8$ \ $Z_8Z_9$],fill: yellow, radius: 4pt))
+
+  line("surface1-2-0", "surface1-2-2", stroke: (thickness: 2pt, paint: red))
+  line("surface1-0-2", "surface1-2-2", stroke: (thickness: 2pt, paint: green))
+
+  line((10,2.5), (11,2.5), stroke: (thickness: 2pt, paint: green))
+  content((12.8, 2.5), [Logical $X$: $X_1X_2X_3$])
+
+  line((10.5,1.5), (10.5,0.5), stroke: (thickness: 2pt, paint: red))
+  content((12.8, 1), [Logical $Z$: $Z_3Z_6Z_9$])
+}))
+
+Also we can have different sizes of the surface code.
+#figure(canvas({
+  import draw: *
+  let n = 3
+  surface-code((0, 0),size:1, 5, 5,name: "surface2")
+  surface-code((5, 0),size:0.7, 7, 7,name: "surface3")
+  surface-code((10, 0),size:0.6, 9, 9,name: "surface4")
+  content((2, -0.75), [$d=5$])
+  content((7.25, -0.75), [$d=5$])
+  content((12.5, -0.75), [$d=9$])
+}))
+
+== Decoding problem
+If some Pauli errors happened, some of the stabilizers will be anti-commute with the errors. When we measure them We usually call the measurement outcome of the all stabilizers as syndrome. The decoding problem is given the syndrome, find the most probable error pattern that is consistent with the syndrome.
+#exampleblock([
+*Example: Decoding problem*
+
+Suppose there is an $X$ error on the qubit $2$.  The decoding process is to find the most probable error pattern that is consistent with the syndrome.
+
+#figure(canvas({
+  import draw: *
+  let n = 3
+  surface-code((0, 0),size:1.5, n, n,name: "surface1")
+  for i in range(n) {
+    for j in range(n) {
+      content((rel: (0.3, 0.3), to: "surface1" + "-" + str(j) + "-" + str(2-i)), [#(i*n+j+1)])
+    }
+    }
+  circle("surface1-1-2", radius: 0.3, fill: white, stroke: red,name:"q3")
+  content("q3", text(red,11pt)[$X$])
+
+  content((6, 1.4), box(stroke: black, inset: 6pt, [$X$ stabilizers: \ $X_1X_2X_4X_5$ \ $X_3X_6$ \ $X_4X_7$ \ $X_5X_6X_8X_9$],fill: aqua, radius: 4pt))
+  content((10, 1.4), box(stroke: black, inset: 6pt, [$Z$ stabilizers: \ #text(fill: red)[$Z_1Z_2$] \ #text(fill: red)[$Z_2Z_3Z_5Z_6$] \ $Z_4Z_5Z_7Z_8$ \ $Z_8Z_9$],fill: yellow, radius: 4pt))
+}))
+Only stabilizer $Z_1Z_2$ and $Z_2Z_3Z_5Z_6$ is anti-commute with the error. So if we measure all the stabilizers, we will get six $+1$ and two $-1$. Base on this syndrome, decoders will try to find the most probable error pattern.
+])
 == Tanner graph
 
+#figure(canvas({
+  import draw: *
+  
+  let r = 0.3
+  for j in range(9) {
+    circle((j,0), radius: r, fill: silver, stroke: black,name: "x-" + str(j+1))
+
+    circle((j,2), radius: r, fill: gray, stroke: black,name: "z-" + str(j+1))
+
+    rect((j - r, 1-r), (j + r, 1+r), fill: green, stroke: black, name: "rect-" + str(j+1))
+
+    line("x-" + str(j+1), "rect-" + str(j+1), stroke: black)
+
+    line("z-" + str(j+1), "rect-" + str(j+1), stroke: black)
+  }
+
+  for j in range(9) {
+    content((rel: (0, 0), to: "rect-" + str(j+1)), [#(j+1)])
+  }
+
+  let checkx = ((1,2,4,5), (3,6), (4,7), (5,6,8,9))
+  let checkz = ((1,2), (2,3,5,6), (4,5,7,8), (8,9))
+  for k in range(4) {
+    rect((1.8*(k+1) - r, 3 - r), (1.8*(k+1) + r, 3 + r), fill: purple, stroke: black, name: "xcheck-t-" + str(k+1))
+    circle((1.8*(k+1), 4), radius: r, fill: aqua, stroke: black, name: "xcheck-" + str(k+1))
+    line("xcheck-t-" + str(k+1), "xcheck-" + str(k+1), stroke: black)
+    for i in checkx.at(k) {
+      line("xcheck-t-" + str(k+1), "z-" + str(i), stroke: black)
+    }
+  }
+
+  for k in range(4) {
+    rect((1.8*(k+1) - r, -1 -r), (1.8*(k+1) + r, -1 + r), fill: purple, stroke: black, name: "zcheck-t-" + str(k+1))
+    circle((1.8*(k+1), -2), radius: r, fill: yellow, stroke: black, name: "zcheck-" + str(k+1))
+    line("zcheck-t-" + str(k+1), "zcheck-" + str(k+1), stroke: black)
+    for i in checkz.at(k) {
+      line("zcheck-t-" + str(k+1), "x-" + str(i), stroke: black)
+    }
+  }
+
+  rect((-r,3 - r), (+r,3 + r), fill: purple, stroke: black, name: "xlogical-t-0")
+  circle((0,4), radius: r, fill: maroon, stroke: black, name: "xlogical-0")
+  line("xlogical-t-0", "xlogical-0", stroke: black)
+  rect((-r,-1 - r), (+r,-1 + r), fill: purple, stroke: black, name: "zlogical-t-0")
+  circle((0,-2), radius: r, fill: navy, stroke: black, name: "zlogical-0")
+  line("zlogical-t-0", "zlogical-0", stroke: black)
+
+  let logical_x = (1,2,3)
+  let logical_z = (3,6,9)
+  for k in range(3) {
+    line("xlogical-t-0", "z-" + str(logical_x.at(k)), stroke: black)
+    line("zlogical-t-0", "x-" + str(logical_z.at(k)), stroke: black)
+  }
+
+  let x = 10
+  let y = 4
+  let y_d = 1
+  circle((x,y), radius: r, fill: none, stroke: black, name: "edge-label")
+  content((rel: (3, 0), to: "edge-label"), [Variable])
+
+  circle((x,y - y_d), radius: r, fill: aqua, stroke: black, name: "xqubit-label")
+  content((rel: (3, 0), to: "xqubit-label"), [$X$ error])
+
+  circle((x,y - 2*y_d), radius: r, fill: yellow, stroke: black, name: "zqubit-label")
+  content((rel: (3, 0), to: "zqubit-label"), [$Z$ error])
+
+  circle((x, y - 3*y_d), radius: r, fill: silver, stroke: black, name: "xcheck-label")
+  content((rel: (3, 0), to: "xcheck-label"), [$X$ check])
+
+  circle((x, y - 4*y_d), radius: r, fill: gray, stroke: black, name: "zcheck-label")
+  content((rel: (3, 0), to: "zcheck-label"), [$Z$ check])
+
+  circle((x, y - 5*y_d), radius: r, fill: maroon, stroke: black, name: "xlogical-label")
+  content((rel: (3, 0), to: "xlogical-label"), [$X$ Logical Operator])
+
+  circle((x, y - 6*y_d), radius: r, fill: navy, stroke: black, name: "zlogical-label")
+  content((rel: (3, 0), to: "zlogical-label"), [$Z$ Logical Operator])
+
+  let x = 0
+  let x_d = 4
+  let y = -3.5
+  let y_d = 2
+  rect((x - r, y - r), (x+r, y + r), fill: none, stroke: black, name: "tensor-label")
+  content((rel: (0, -1), to: "tensor-label"), [Tensor])
+
+  rect((x + x_d - r, y - r), (x + x_d + r, y + r), fill: green, stroke: black, name: "rect-label")
+  content((rel: (0, -1), to: "rect-label"), [Depolarization Probability])
+
+  rect((x + 2*x_d - r, y - r), (x + 2*x_d + r, y + r), fill: purple, stroke: black, name: "check-label")
+  content((rel: (0, -1), to: "check-label"), [Parity Tensor])
+}))
+
+
+#figure(canvas({
+  import draw: *
+
+  let r = 0.3
+  rect((0 - r, 0), ( r, 2 * r), fill: green, stroke: black, name: "rect-label")
+  line("rect-label",(rel: (0, -1), to: "rect-label"), stroke: black)
+  line("rect-label",(rel: (0, 1), to: "rect-label"), stroke: black)
+  content((rel: (3, -0.2), to: "rect-label"), text(25pt)[$= mat(p_I, p_Z ;p_X, p_Y)$])
+
+  translate((-10,-3))
+  rect((7 - r, 0), ( 7 + r, 2 * r), fill: purple, stroke: black, name: "check-label")
+
+  line("check-label",(rel: (0, 1.2), to: "check-label"), stroke: black)
+  content((rel: (0, 1.6), to: "check-label"), text(15pt)[$j_1$])
+
+  line("check-label",(rel: (1.2, 0), to: "check-label"), stroke: black)
+  content((rel: (1.6, 0), to: "check-label"), text(15pt)[$j_2$])
+
+  line("check-label",(rel: (1, -1), to: "check-label"), stroke: black)
+  content((rel: (1.4, -1.4), to: "check-label"), text(15pt)[$j_3$])
+
+  line("check-label",(rel: (-1, -1), to: "check-label"), stroke: black)
+  content((rel: (-1.4, -1.4), to: "check-label"), text(15pt)[$j_k$])
+
+  content((rel: (0, -1.1), to: "check-label"), text(25pt)[$...$])
+
+  content((rel: (2.1, 0.2), to: "check-label"), text(30pt)[$:$])
+
+  content((rel: (7.6, 0), to: "check-label"), text(18pt)[$T_(j_1 j_2 j_3...j_k) = (1 + j_1 + j_2 + ... + j_k) % 2
+ $])
+}))
 == Decoding problem
 
 == Circuit level decoding
