@@ -62,7 +62,7 @@ The comprehensive lecture notes are available in Typst format. To compile:
 # Visit: https://typst.app/
 
 # Compile the notes
-typst compile notes/tnet.typ notes/tnet.pdf
+make pdf
 ```
 
 **Alternative**: Preview with VSCode using the [Typst extension](https://github.com/CodingThrust/Templates/tree/main/typst).
