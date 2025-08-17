@@ -696,7 +696,7 @@ The `slice_code` function takes three inputs: the `NestedEinsum` object, the ten
 julia> @assert sliced_code(tensors...) ≈ optcode(tensors...)
 ```
 
-== Data Compression
+== Data Compression and Tensor Decomposition
 Let us define a complex matrix $A in CC^(m times n)$, and let its singular value decomposition be
 $
 A = U S V^dagger
@@ -771,8 +771,6 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
   labeledge("X", "D", [$a$])
 })))
 
-
-== Tensor train decomposition
 
 A tensor train is a tensor network with the following data structure.
 #align(center, text(10pt, canvas({
@@ -1133,8 +1131,8 @@ The norm square of a vector is even more straight forward, it is just sum of the
 Quantum circuits provide a natural setting for tensor network representations, where quantum gates are represented as tensors and quantum states as vectors. This mapping allows us to efficiently simulate quantum circuits using tensor network contraction algorithms.
 ])
 
-== Basic quantum circuit simulation
-
+= Quantum circuit simulation
+== Quantum states and quantum gates
 In quantum computing, a quantum state initialized to $|0 angle.r^(times.circle n)$ can be represented as a direct product of $n$ vectors:
 #figure(canvas({
   import draw: *
@@ -1346,7 +1344,7 @@ which can be simplified to
 Question: How to compute $angle.l "GHZ"|O|"GHZ" angle.r$ and what is the complexity?
 ])
 
-== Practice: Hadamard test
+== Example: Hadamard test
 
 The Hadamard test is a quantum algorithm used to estimate the expectation value of a unitary operator $U$ with respect to a quantum state $|psi angle.r$. It provides a way to measure $angle.l psi | U | psi angle.r$ using an ancilla qubit.
 
@@ -1439,7 +1437,7 @@ The corresponding tensor network representation is:
 
 }), numbering: none)
 
-== Quantum teleportation
+== Example: Quantum teleportation
 
 Teleportation transmits an unknown state $|psi angle.r$ from Alice to Bob using a shared Bell pair and two classical bits. The steps are: (1) prepare a Bell pair on qubits 2–3, (2) perform a Bell-basis measurement on qubits 1–2, (3) apply Pauli corrections $Z^(m_1) X^(m_2)$ on qubit 3 according to outcomes $(m_1, m_2)$.
 
