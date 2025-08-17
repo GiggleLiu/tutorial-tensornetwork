@@ -33,7 +33,7 @@ cd tutorial-tensornetwork
 ### 2. Install Dependencies
 
 ```bash
-make init
+make init  # or `make update`
 ```
 
 This will automatically:
@@ -41,16 +41,16 @@ This will automatically:
 - Set up all example subdirectories with their specific dependencies
 - Install [Yao.jl](https://github.com/QuantumBFS/Yao.jl) for quantum computing and [TensorQEC.jl](https://github.com/nzy1997/TensorQEC.jl) for error correction
 
-### 3. Launch Jupyter Notebooks
+### 3. Launch Pluto Notebooks
 
 For **shallow circuit simulation**:
 ```bash
-case=simulation make notebook
+case=simulation make pluto
 ```
 
 For **quantum error correction**:
 ```bash
-case=qec make notebook
+case=qec make pluto
 ```
 
 ## 📖 Lecture Notes

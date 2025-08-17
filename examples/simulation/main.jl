@@ -79,6 +79,9 @@ net = yao2einsum(c;
 contraction_complexity(net)
 
 # ╔═╡ 12e29146-19df-42df-a8de-f5f73152053b
+# red nodes are variables, transparent nodes are tensors
+# h = [1 1; 1 -1] is the unnormalized version of Hadamard gate
+# 0 tensor is defined as: [1, 0]
 viznet(net; scale=60)
 
 # ╔═╡ 24b5ef24-7b3b-11f0-1635-737c9e87ebba
@@ -117,11 +120,8 @@ md"""
 During the convertion, we also specify an optimizer to specify the contraction order.
 """
 
-# ╔═╡ fa2ea274-a731-4148-8bdd-d8326cab08a2
-mat(c) |> Matrix
-
 # ╔═╡ 3236fab4-ef2c-4f76-8ba2-f56250c85448
-# ## Case 2: add noise and compute <ψ|X₁X₂|ψ>, where |ψ> = c |0>
+# add depolarizing noise
 function add_depolarizing_noise(c::AbstractBlock, depolarizing)
     Optimise.replace_block(c) do blk
         if blk isa PutBlock || blk isa ControlBlock
@@ -135,6 +135,9 @@ function add_depolarizing_noise(c::AbstractBlock, depolarizing)
         end
     end
 end
+
+# ╔═╡ 308ebb49-dc4b-4fa2-8bdc-1d791915bbd8
+md"Hint: please change the noise probability see how the result change with it."
 
 # ╔═╡ 7f5b480e-1632-4819-b722-4e3dec908d38
 noisy_c = add_depolarizing_noise(c, 0.001);
@@ -156,6 +159,7 @@ noisy_net = yao2einsum(noisy_c;
 contraction_complexity(noisy_net)
 
 # ╔═╡ 24b5ef7e-7b3b-11f0-1f8e-8dddae7f921d
+# the green dots are dual variables
 viznet(noisy_net; scale=60)
 
 # ╔═╡ c6e2b89e-6a3d-4e91-94a7-cd2d77e4dd6f
@@ -204,8 +208,8 @@ md"""
 # ╟─e0b200b7-ffe9-4fa9-b269-5232f28166af
 # ╠═6c1b1ef4-b44c-408a-9420-0f88c102ea34
 # ╟─24b5ef56-7b3b-11f0-1966-fd1220651ad3
-# ╠═fa2ea274-a731-4148-8bdd-d8326cab08a2
 # ╠═3236fab4-ef2c-4f76-8ba2-f56250c85448
+# ╟─308ebb49-dc4b-4fa2-8bdc-1d791915bbd8
 # ╠═7f5b480e-1632-4819-b722-4e3dec908d38
 # ╠═bfcdead1-31af-44ef-b427-31fac064a005
 # ╠═9a9f9b2a-4fee-4740-9261-b35991d9efb9
