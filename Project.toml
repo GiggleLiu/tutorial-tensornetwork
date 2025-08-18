@@ -1,3 +1,20 @@
 [deps]
-IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+LuxorGraphPlot = "1f49bdf2-22a7-4bc4-978b-948dc219fbbc"
 OMEinsum = "ebe7aa44-baf0-506c-a96f-8464559b3922"
+Pluto = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
+TensorQEC = "0500ac79-7fb5-4262-aaea-37bb1845d1ef"
+Yao = "5872b779-8223-5990-8dd0-5abbb0748c8c"
+
+[compat]
+BenchmarkTools = "1"
+LinearAlgebra = "1"
+OMEinsum = "0.9"
+Random = "1"
+TensorQEC = "2"
+Yao = "0.9"
+julia = "1.10"

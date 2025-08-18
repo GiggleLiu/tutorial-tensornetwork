@@ -1,3 +1,9 @@
+Objectives:
+
+- Can use tensor network to represent quantum states, quantum circuits and quantum channels.
+- Can use tensor network to represent quantum error correction codes.
+- Can use OMEinsum to contract a tensor network.
+
 = Part 1
 
 == Definition (5min)
@@ -13,7 +19,7 @@
 == Why tensor network? (4min)
 - Lei Wang: "Linear algebra for 21st century"
   - Machine learning (arXiv:2305.06058)
-  - Quantum physics (arXiv:1306.2164)
+  - Quantum many-body physics (arXiv:1306.2164)
   - Combinatorial optimization (arXiv:2008.06888)
   - Probabilistic modeling (arXiv:2405.14060)
   - Quantum computation
@@ -22,29 +28,27 @@
 
 - variables, or index, or leg
 - vector, matrix and tensor
-- contraction
-- e.g.1 trace
-- e.g.2 summation
-- e.g.3 multiplying a seqence of matrices
-- e.g.4 kronecker product
-- e.g.5 trace permutation
-- e.g.6 star contraction
-- e.g.7 proving trace permutation
-- e.g.8 SVD and data compression
-- e.g.9 Tucker decomposition and CP decomposition
-- e.g.10 matrix product state (MPS, tensor train), GHZ state
-- e.g.11 tree tensor network (TTN)
-- e.g.12 projected entangled pair of states (PEPS), maybe the toric code state?
-
-== Einsum notation (2min)
-
-- definition
-- the above example
+- contraction, matrix multiplication as an example
+  - nested loops
+  - open indices
+  - contraction complexity (naively)
+- Examples
+  - e.g.1 trace
+  - e.g.2 summation
+  - e.g.3 multiplying a seqence of matrices
+  - e.g.4 kronecker product
+  - e.g.5 trace permutation
+  - e.g.6 proving trace permutation
+  - e.g.7 SVD and data compression
+  - e.g.8 Tucker decomposition and CP decomposition
+  - e.g.9 matrix product state (MPS, tensor train), GHZ state
+  - e.g.10 tree tensor network (TTN)
+  - e.g.11 projected entangled pair of states (PEPS), maybe the toric code state?
 
 == Quantum circuit and tensor networks (10min)
-- Gates
-- ZX-calculus
-- Example 1: Hadamard test
+- Quantum states: zero state, GHZ state.
+- Gates: Hadamard gate, CZ gate and CNOT gate, etc.
+- Example 1: Bell state preparation, extend to GHZ state.
 - Example 2: Quantum teleportation
 
 = Part 2
@@ -60,7 +64,12 @@
 - QEC basics
 - Surface code and Tanner graph
 - Probability graph
-- QEC with tensor network (Ref needed)
+- QEC with tensor network (arXiv:2310.10722)
+
+== Einsum notation (2min)
+
+- definition
+- the above example
 
 == Tensor network contraction (10min)
 - complexity, big-O notation
@@ -69,15 +78,13 @@
   - contract an MPS
   - contract a TTN
   - contract a PEPS on square lattice
-
-== Treewidth (10min)
-- definition
-- the treewidth of low dimensional topology (arXiv:quant-ph/0511069)
-- the tree SA algorithm (arXiv:2108.05665).
-
-== Slicing and compression (10min)
-- data compression (arXiv:1403.2048)
-- slicing
+- Treewidth (5min)
+  - definition
+  - the treewidth of low dimensional topology (arXiv:quant-ph/0511069)
+  - the tree SA algorithm (arXiv:2108.05665).
+- Slicing and compression
+  - data compression (arXiv:1403.2048)
+  - slicing
 
 == Optinal
 - Autodiff (3min)

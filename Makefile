@@ -2,19 +2,15 @@ JL = julia --project
 
 init:
 	$(JL) -e 'using Pkg; Pkg.instantiate()'
-	for case in basic circuit_simulation qec; do \
-		echo "Instantiating $${case}"; \
-		$(JL) -e "rootdir=\"examples/$${case}\"; using Pkg; Pkg.activate(rootdir); Pkg.instantiate()"; \
-	done
 
 update:
 	$(JL) -e 'using Pkg; Pkg.update()'
-	for case in basic circuit_simulation qec; do \
-		echo "Updating $${case}"; \
-		$(JL) -e "rootdir=\"examples/$${case}\"; using Pkg; Pkg.activate(rootdir); Pkg.update()"; \
-	done
 
-notebook:
-	$(JL) -e "using IJulia; notebook(dir=\"examples/$${case}\", detached=true)"
+pluto:
+	$(JL) -e "using Pluto; Pluto.run(notebook=\"examples/$${case}/main.jl\")"
 
-.PHONY: init update notebook
+pdf:
+	typst compile notes/tnet.typ notes/tnet.pdf
+	@echo "Notebook is ready in notes/tnet.pdf"
+
+.PHONY: init update pluto pdf
