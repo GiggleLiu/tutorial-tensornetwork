@@ -1136,10 +1136,43 @@ The returned `gradients` is a vector of arrays, each of which is an adjoint of a
 [
 == Complex numbers, a tensor network perspective
 
-Let us 
+A complex number is composed of two real numbers, hence we can use a real tensor with one more dimension to represent complex tensors. For example, to represent a matrix, we can use a rank 3 tensor:
+#figure(canvas({
+    import draw: *
+    let s(it) = text(11pt, it)
+    tensor((0, 0), "A", s[])
+    line("A", (rel: (-1, 0)))
+    line("A", (rel: (1, 0)))
+    line("A", (rel: (0, -1)), stroke: green)
+}), numbering: none)
+where we use the green color to denote the extra dimension of size 2.
 
-Complex conjugate is a linear operator.
+In this representation, complex conjugate is a linear operator. It is equivalent to apply Pauli-Z on the extra dimension:
+#figure(canvas({
+    import draw: *
+    let s(it) = text(11pt, it)
+    content((-1.7, 0), s[$A^* = $])
+    tensor((0, 0), "A", s[A])
+    tensor((0, -1), "Z", s[Z])
+    line("A", (rel: (-1, 0)))
+    line("A", (rel: (1, 0)))
+    line("A", "Z", stroke: green)
+    line("Z", (rel: (0, -0.7)), stroke: green)
+}), numbering: none)
 
+Similarly, the operation of adding a phase factor $e^(i phi)$ can be represented as a rotation operation applied on the extra dimension:
+#figure(canvas({
+    import draw: *
+    let s(it) = text(11pt, it)
+    content((-1.9, 0), s[$e^(i phi)A = $])
+    tensor((0, 0), "A", s[A])
+    tensor((0, -1), "Z", s[$R_phi$])
+    line("A", (rel: (-1, 0)))
+    line("A", (rel: (1, 0)))
+    line("A", "Z", stroke: green)
+    line("Z", (rel: (0, -0.7)), stroke: green)
+    content((4, -0.5), s[$R_phi = mat(cos phi, -sin phi; sin phi, cos phi)$])
+}), numbering: none)
 
 Let us define a permutation symmetric tensor $cal(C)$ as:
 $
@@ -1153,7 +1186,7 @@ Given a matrix multiplication $C = A B$, let us stack the real part of $A$ as a 
   tensor((-3, 0), "C", s[$T_C$])
   line("C", (rel: (-1, 0)))
   line("C", (rel: (1, 0)))
-  line("C", (rel: (0, -1)), stroke: aqua)
+  line("C", (rel: (0, -1)), stroke: green)
   content((-1.5, 0), s[$=$])
   tensor((0, 0), "A", s[$T_A$])
   tensor((2, 0), "B", s[$T_B$])
@@ -1162,12 +1195,12 @@ Given a matrix multiplication $C = A B$, let us stack the real part of $A$ as a 
   line("A", "B")
   line("A", (rel: (-1, 0)))
   line("B", (rel: (1, 0)))
-  line("A", (rel: (0, -1)), "c", stroke: aqua)
-  line("B", (rel: (0, -1)), "c", stroke: aqua)
-  line("c", "d", stroke: aqua)
-  line("d", (rel: (0, -0.7)), stroke: aqua)
+  line("A", (rel: (0, -1)), "c", stroke: green)
+  line("B", (rel: (0, -1)), "c", stroke: green)
+  line("c", "d", stroke: green)
+  line("d", (rel: (0, -0.7)), stroke: green)
 }), numbering: none)
-where the aqua color indicates the extra dimension of size 2 for representing the complex numbers.
+where the green color indicates the extra dimension of size 2 for representing the complex numbers.
 We use this formalism to drtive the complex valued backward rule.
 #figure(canvas({
   import draw: *
@@ -1179,10 +1212,10 @@ We use this formalism to drtive the complex valued backward rule.
   tensor((1, -1), "c", s[$cal(C)$])
   tensor((1, -2), "d", s[$Z$])
   line("A", "B")
-  line("A", (rel: (0, -1)), "c", stroke: aqua)
-  line("B", (rel: (0, -1)), "c", stroke: aqua)
-  line("c", "d", stroke: aqua)
-  line("d", "C", stroke: aqua)
+  line("A", (rel: (0, -1)), "c", stroke: green)
+  line("B", (rel: (0, -1)), "c", stroke: green)
+  line("c", "d", stroke: green)
+  line("d", "C", stroke: green)
 
   line("C", (rel: (-2, 0)), (rel: (0, 3)), "A")
   line("C", (rel: (2, 0)), (rel: (0, 3)), "B")
@@ -1220,7 +1253,7 @@ The norm square of a vector is even more straight forward, it is just sum of the
   tensor((0, 0), "A", s[$T_w$])
   tensor((2, 0), "B", s[$T_v$])
   line("A", "B")
-  line("A", (rel: (-1, 0)), (rel: (0, -1)), (rel: (1, -1), to: "B"), (rel: (0, 1)), "B", stroke: aqua)
+  line("A", (rel: (-1, 0)), (rel: (0, -1)), (rel: (1, -1), to: "B"), (rel: (0, 1)), "B", stroke: green)
 }), numbering: none)
 
 === Some properties of $cal(C)$ operator
@@ -1229,17 +1262,17 @@ The norm square of a vector is even more straight forward, it is just sum of the
   import draw: *
   let s(it) = text(11pt, it)
   tensor((0, 0), "c", s[$cal(C)$])
-  bezier("c.south", (rel: (0.9, 0), to: "c"), (rel: (-0.4, -0.7)), (rel: (0.7, 0), to: "c"), stroke: aqua)
-  bezier("c.east", (rel: (0, -0.9), to: "c"), (rel: (0.7, 0.4)), (rel: (0, -0.7), to: "c"), stroke: aqua)
-  line("c", (rel: (-0.7, 0)), stroke: aqua)
+  bezier("c.south", (rel: (0.9, 0), to: "c"), (rel: (-0.4, -0.7)), (rel: (0.7, 0), to: "c"), stroke: green)
+  bezier("c.east", (rel: (0, -0.9), to: "c"), (rel: (0.7, 0.4)), (rel: (0, -0.7), to: "c"), stroke: green)
+  line("c", (rel: (-0.7, 0)), stroke: green)
 
   content((1.5, 0), s[$=$])
 
   set-origin((2.5, 0))
   tensor((0, 0), "c", s[$cal(C)$])
-  line("c", (rel: (0, -0.7)), stroke: aqua)
-  line("c", (rel: (0.7, 0)), stroke: aqua)
-  line("c", (rel: (-0.7, 0)), stroke: aqua)
+  line("c", (rel: (0, -0.7)), stroke: green)
+  line("c", (rel: (0.7, 0)), stroke: green)
+  line("c", (rel: (-0.7, 0)), stroke: green)
 }), numbering: none)
 
 - conjugate invariance
@@ -1250,20 +1283,20 @@ The norm square of a vector is even more straight forward, it is just sum of the
   tensor((0, -1), "d1", s[$Z$])
   tensor((1, 0), "d2", s[$Z$])
   tensor((-1, 0), "d3", s[$Z$])
-  line("c", "d1", stroke: aqua)
-  line("c", "d2", stroke: aqua)
-  line("c", "d3", stroke: aqua)
-  line("d1", (rel: (0, -0.7)), stroke: aqua)
-  line("d2", (rel: (0.7, 0)), stroke: aqua)
-  line("d3", (rel: (-0.7, 0)), stroke: aqua)
+  line("c", "d1", stroke: green)
+  line("c", "d2", stroke: green)
+  line("c", "d3", stroke: green)
+  line("d1", (rel: (0, -0.7)), stroke: green)
+  line("d2", (rel: (0.7, 0)), stroke: green)
+  line("d3", (rel: (-0.7, 0)), stroke: green)
 
   content((2, 0), s[$=$])
 
   set-origin((3, 0))
   tensor((0, 0), "c", s[$cal(C)$])
-  line("c", (rel: (0, -0.7)), stroke: aqua)
-  line("c", (rel: (0.7, 0)), stroke: aqua)
-  line("c", (rel: (-0.7, 0)), stroke: aqua)
+  line("c", (rel: (0, -0.7)), stroke: green)
+  line("c", (rel: (0.7, 0)), stroke: green)
+  line("c", (rel: (-0.7, 0)), stroke: green)
 }), numbering: none)
 - cascade rule
  #figure(canvas({
@@ -1272,12 +1305,12 @@ The norm square of a vector is even more straight forward, it is just sum of the
   tensor((0, 0), "c1", s[$cal(C)$])
   tensor((1, -1), "c2", s[$cal(C)$])
   tensor((0, -1), "z", s[$Z$])
-  line("c1", (rel: (-0.7, 0)), (rel: (0, 0.7)), stroke: aqua)
-  line("c1", (rel: (0, 0.7)), stroke: aqua)
-  line("c1", "z", stroke: aqua)
-  line("c2", "z", stroke: aqua)
-  line("c2", (rel: (0, 1.7)), stroke: aqua)
-  line("c2", (rel: (0, -0.7)), stroke: aqua)
+  line("c1", (rel: (-0.7, 0)), (rel: (0, 0.7)), stroke: green)
+  line("c1", (rel: (0, 0.7)), stroke: green)
+  line("c1", "z", stroke: green)
+  line("c2", "z", stroke: green)
+  line("c2", (rel: (0, 1.7)), stroke: green)
+  line("c2", (rel: (0, -0.7)), stroke: green)
 
   content((2, 0), s[$=$])
 
@@ -1285,12 +1318,12 @@ The norm square of a vector is even more straight forward, it is just sum of the
   tensor((0, -1), "c1", s[$cal(C)$])
   tensor((1, 0), "c2", s[$cal(C)$])
   tensor((1, -1), "z", s[$Z$])
-  line("c2", (rel: (0.7, 0)), (rel: (0, 0.7)), stroke: aqua)
-  line("c1", (rel: (0, 1.7)), stroke: aqua)
-  line("c2", "z", stroke: aqua)
-  line("c1", "z", stroke: aqua)
-  line("c2", (rel: (0, 0.7)), stroke: aqua)
-  line("c1", (rel: (0, -0.7)), stroke: aqua)
+  line("c2", (rel: (0.7, 0)), (rel: (0, 0.7)), stroke: green)
+  line("c1", (rel: (0, 1.7)), stroke: green)
+  line("c2", "z", stroke: green)
+  line("c1", "z", stroke: green)
+  line("c2", (rel: (0, 0.7)), stroke: green)
+  line("c1", (rel: (0, -0.7)), stroke: green)
 
 
 }), numbering: none)
