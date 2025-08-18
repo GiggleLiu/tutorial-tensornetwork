@@ -131,9 +131,13 @@ In this diagram, the cyclic connection of indices creates a closed loop that rep
 
 
 == Einsum notation and computational complexity
-In computational implementations, tensor network topologies are commonly specified using `einsum` notation—a compact string representation that encodes the contraction structure. For example, matrix multiplication $C = A B$ is represented as `ij,jk->ik`, where inputs and outputs are separated by `->` and indices of different input tensors are separated by commas.
+In computational implementations, tensor network topologies are commonly specified using `einsum` notation—a compact string representation that encodes the contraction structure. In this notation,
+- `->` separates the input and output tensors
+- `,` separates the indices of different input tensors
+- each char represents an index
+For example, matrix multiplication $C = A B$ is represented as `ij,jk->ik`, where the two input matrices are represented by `ij` and `jk`, and the output matrix is represented by `ik`.
 
-The following examples use the `OMEinsum` package to demonstrate tensor network specification, contraction order optimization, and execution. Tensor network topologies can be defined using either the convenient `ein` string literal or the more flexible `EinCode` constructor for programmatic construction.
+The following examples use the #link("https://github.com/under-Peter/OMEinsum.jl", "OMEinsum") package to demonstrate tensor network specification, contraction order optimization, and execution. Tensor network topologies can be defined using either the convenient `ein` string literal or the more flexible `EinCode` constructor for programmatic construction.
 
 ```julia
 julia> using OMEinsum
@@ -934,7 +938,7 @@ julia> @assert ein"ia,ajb,bkc,cld,dm->ijklm"(L, M, M, M, R) ≈ uniform_state(5)
 ```
 
 #exampleblock([
-=== Example: Compress a high dimensional tensor
+=== Example: Compress a high dimensional tensor with tensor train
 In this example, we show how to compress a high dimensional tensor with tensor train. We start from defining the data structure.
 ```julia
 using OMEinsum, LinearAlgebra
