@@ -62,15 +62,22 @@ Advanced Materials Thrust, Function Hub, HKUST(GZ)])
 #pagebreak()
 
 = Tensor Networks
-_Tensor network_ is an important concept in quantum physics and quantum information, it is similar to  _einsum_@Harris2020, _unweighted probability graph_@Bishop2006, _sum product network_ and _junction tree_@Villescas2023 in other fields.
-It has been widely used to simulate quantum circuits@Markov2008, decode quantum error correction codes@Piveteau2024, compress neural networks@Qing2024, and simulate the dynamics of a quantum system@Haegeman2016.
+A _tensor network_ is a fundamental concept in quantum physics and quantum information theory that provides a powerful diagrammatic representation for multilinear algebra operations. This framework shares similarities with _einsum_ notation@Harris2020, _unweighted probability graphs_@Bishop2006, _sum-product networks_, and _junction trees_@Villescas2023 found in other computational domains.
+
+Tensor networks have found widespread applications across diverse fields, including quantum circuit simulation@Markov2008, quantum error correction@Piveteau2024, neural network compression@Qing2024, and many-body quantum system dynamics@Haegeman2016. Their versatility stems from their ability to efficiently represent and manipulate high-dimensional mathematical objects through intuitive graphical representations.
 
 == Definition
-In short, _Tensor network_ is a diagrammatic representation of _multilinear algebra_. Consider multiplying a sequence a matrices:
+At its core, a _tensor network_ provides a diagrammatic representation of _multilinear algebra_. To understand this concept, let's first recall that linear algebra deals with linear functions satisfying two fundamental properties:
+- Additivity: $f(x + y) = f(x) + f(y)$ for any vectors $x$ and $y$
+- Homogeneity: $f(alpha x) = alpha f(x)$ for any scalar $alpha$
+
+A function $f$ is called _multilinear_ if it maintains linearity with respect to each of its multiple arguments. For instance, the inner product of two vectors $x$ and $y$ is bilinear since it is linear in both $x$ and $y$. 
+
+Consider the chain multiplication of matrices:
 $
   O_(i n) = sum_(j,k,l,m) A_(i j) B_(j k) C_(k l) D_(l m) E_(m n)
 $ <eq:tensor-contraction>
-The output $O_(i n)$ is linear to each input tensor, and we have multiple input tensors. So, this operation defines a _multilinear map_, which is called _tensor contraction_. In tensor network, we further generalizes it to tensors with multiple indices. We represent a tensor as a node, and an index as a leg. For example, vectors, matrices and higher order tensors can be represented as:
+The output $O_(i n)$ depends linearly on each input tensor, making this a _multilinear map_ known as _tensor contraction_. Tensor networks extend this concept to arbitrary tensors with multiple indices, where we represent each tensor as a node and each index as a connecting edge or "leg." This graphical notation provides an intuitive way to visualize complex multilinear operations.
 
 #align(center, text(10pt, canvas({
   import draw: *
@@ -88,7 +95,7 @@ The output $O_(i n)$ is linear to each input tensor, and we have multiple input 
   content((rel: (0, -1), to: "A"), [Rank-3 tensor $A_(i j k)$])
 })))
 
-The diagramatic representation of @eq:tensor-contraction is:
+The diagrammatic representation of @eq:tensor-contraction reveals the underlying structure more clearly:
 #align(center, text(10pt, canvas({
   import draw: *
   let tensors = ("A", "B", "C", "D", "E")
@@ -101,12 +108,12 @@ The diagramatic representation of @eq:tensor-contraction is:
   labeledge("A", (rel: (-1, 0)), "i")
   labeledge("E", (rel: (1, 0)), "n")
 })))
-This diagrammatic representation is more intuitive than the algebraic representation, which can be better seen from the following example.
+This diagrammatic representation offers significant advantages over algebraic notation by making the computational structure immediately visible. The connected indices represent summation variables, while unconnected indices correspond to the output tensor's dimensions. This visual clarity becomes particularly valuable when analyzing complex tensor contractions, as demonstrated in the following example.
 
 #exampleblock([
-*Example: Proving trace permutation rule*
+*Example: Proving the trace permutation rule*
 
-Let $A, B$ and $C$ be three square matrices with the same size. The trace permutation rule $tr(A B C) = tr(C A B) = tr(B C A)$ can be proved by the following tensor network diagram.
+Consider three square matrices $A$, $B$, and $C$ of the same dimension. The trace permutation rule states that $tr(A B C) = tr(C A B) = tr(B C A)$. This identity can be elegantly demonstrated using tensor network diagrams.
 
 #figure(canvas({
   import draw: *
@@ -118,13 +125,15 @@ Let $A, B$ and $C$ be three square matrices with the same size. The trace permut
   bezier("A.north", "C.north", (1, 3), (5, 3), name:"line")
   content("line.mid", "i", align: center, fill:white, frame:"rect", padding:0.1, stroke: none)
 }), numbering: none)
-From the diagram, we can see the representation of $tr(A B C)$, $tr(C A B)$ and $tr(B C A)$ are identical, indicating the same operation. The diagrammatic representation is less redundant than the algebraic representation.
+
+In this diagram, the cyclic connection of indices creates a closed loop that represents the trace operation. Regardless of which matrix we designate as the "starting point," the topological structure remains invariant. This visual proof immediately reveals why the three expressions $tr(A B C)$, $tr(C A B)$, and $tr(B C A)$ are equivalent—they correspond to identical tensor network contractions. The diagrammatic approach thus provides a more intuitive understanding than algebraic manipulation alone.
 ])
 
 
 == Einsum notation and computational complexity
-In the program, a tensor network topology can be specified with `einsum` notation, which uses a string to denote the tensor network topology. For example, the matrix multiplication can be represented as `ij,jk->ik`. The intputs and outputs are separated by `->`, and the indices of different input tensors are separated by commas.
-In the following, we use the `OMEinsum` package to demonstrate how to specify a tensor network topology, optimize the contraction order, and perform the contraction. A tensor network topology can be specified with the `ein` string literal, or the more flexible `EinCode` constructor.
+In computational implementations, tensor network topologies are commonly specified using `einsum` notation—a compact string representation that encodes the contraction structure. For example, matrix multiplication $C = A B$ is represented as `ij,jk->ik`, where inputs and outputs are separated by `->` and indices of different input tensors are separated by commas.
+
+The following examples use the `OMEinsum` package to demonstrate tensor network specification, contraction order optimization, and execution. Tensor network topologies can be defined using either the convenient `ein` string literal or the more flexible `EinCode` constructor for programmatic construction.
 
 ```julia
 julia> using OMEinsum
@@ -166,12 +175,15 @@ Space complexity: 2^13.287712379549449
 Read-write complexity: 2^15.287712379549449
 ```
 
-Contraction complexity can be measured from different perspectives:
-- The _time complexity_ is $100^4$, which represents the number of floating-point operations (FLOPs) required to contract the tensor network. For an einsum contraction, this is determined by multiplying the sizes of all unique indices involved, since a unique index either appears under the summation sign or in the output tensor. Later we will see the time complexity can be reduced by specifying the contraction order.
-- The _space complexity_ is $100^2$, which measures the memory required to store the largest intermediate tensor during contraction.
-- The _read-write complexity_ is $4 times 100^2$, which quantifies the total memory bandwidth usage by counting the number of floating-point numbers read from and written to memory during the entire contraction process. This is proportional to the total size of all intermediate tensors.
+Contraction complexity can be analyzed from multiple complementary perspectives:
 
-The `EinCode` object is callable, which can be used to perform the contraction.
+- *Time complexity* ($100^4$ operations): Represents the total number of floating-point operations (FLOPs) required for the contraction. For einsum operations, this equals the product of all unique index dimensions, since each unique index either participates in summation or appears in the output. As we'll see later, smart contraction ordering can dramatically reduce this complexity.
+
+- *Space complexity* ($100^2$ elements): Measures the peak memory requirement for storing the largest intermediate tensor generated during contraction. This determines the minimum memory needed to execute the computation.
+
+- *Read-write complexity* ($4 times 100^2$ operations): Quantifies total memory bandwidth usage by counting all floating-point numbers transferred between memory and processor throughout the contraction. This metric captures the cumulative cost of accessing all intermediate tensors and often determines real-world performance on bandwidth-limited systems.
+
+While `EinCode` objects are callable and can directly perform contractions:
 
 ```julia
 julia> code(randn(2, 2), randn(2, 2), randn(2, 2))  # not recommended
@@ -179,7 +191,8 @@ julia> code(randn(2, 2), randn(2, 2), randn(2, 2))  # not recommended
  -0.974692  3.06151
  -0.674225  1.40281
 ```
-However, this is not recommended, since the unordered contraction is not optimized in `OMEinsum`. A better way to to specify an order for it:
+
+This approach is *strongly discouraged* because `OMEinsum` uses an unoptimized contraction order that may be exponentially inefficient. A better approach explicitly specifies the contraction order using parentheses:
 
 ```julia
 julia> nested_code = ein"(ab,bc),cd->ad"
@@ -189,7 +202,8 @@ ac, cd -> ad
 │  └─ bc
 └─ cd
 ```
-The return type is a `NestedEinsum` object, which performs a two step contraction. The first step is to contract the first two input tensors, and the second step is to contract the result with the third tensor. The time complexity is significantly reduced.
+
+The resulting `NestedEinsum` object represents a structured two-step contraction: first computing the intermediate tensor from the first two inputs, then contracting this result with the third tensor. This explicit ordering achieves dramatic complexity reduction:
 
 ```julia
 julia> contraction_complexity(nested_code, label_sizes)
@@ -198,35 +212,38 @@ Space complexity: 2^13.287712379549449
 Read-write complexity: 2^15.872674880270605
 ```
 
-The performance gain is more than this. In OMEinsum, binary contractions can be accelerated by BLAS library.
+Beyond theoretical complexity improvements, practical performance gains are even more substantial. `OMEinsum` leverages optimized BLAS routines for binary tensor contractions, leading to remarkable speedups:
 
 ```julia
 julia> using BenchmarkTools
 
-julia> @btime code(randn(100, 100), randn(100, 100), randn(100, 100)); # naive
+julia> @btime code(randn(100, 100), randn(100, 100), randn(100, 100)); # unoptimized
   86.418 ms (36 allocations: 385.48 KiB)
 
-julia> @btime nested_code(randn(100, 100), randn(100, 100), randn(100, 100));
+julia> @btime nested_code(randn(100, 100), randn(100, 100), randn(100, 100)); # optimized
   133.167 μs (157 allocations: 486.06 KiB)
 ```
+
+This represents over 600× speedup, demonstrating how proper contraction ordering transforms intractable computations into practical ones.
 
 // #raw(read("examples/basic/basic.jl"), lang: "julia", block: true)
 
 #exampleblock([
 *Example A: Star contraction*
 
-The star contraction of three matrices $A, B, C in bb(R)^(n times n)$ is defined as
+The star contraction of three matrices $A, B, C in bb(R)^(n times n)$ is defined as:
 $
 O_(i j k) = sum_a A_(i a) B_(a j) C_(a k)
 $
-Its diagrammatic representation is:
+
+This operation creates a 3-way tensor by connecting all matrices through a shared summation index:
 
 #figure(canvas({
   import draw: *
   let s(it) = text(10pt, it)
   tensor((-1.0, 0), "A", s[$A$])
-  tensor((1.0, 0), "B", s[$A$])
-  tensor((0, 1.0), "C", s[$B$])
+  tensor((1.0, 0), "B", s[$B$])
+  tensor((0, 1.0), "C", s[$C$])
   labeledge("A", (rel: (-1.2, 0)), s[$i$])
   labeledge("B", (rel: (1.2, 0)), s[$j$])
   labeledge("C", (rel: (0, 1.2)), s[$k$])
@@ -236,15 +253,16 @@ Its diagrammatic representation is:
   line("a", "C")
 }), numbering: none)
 
-The einsum notation for the star contraction is `ai,aj,ak->ijk`. Its time complexity is $O(n^4)$ in big O notation.
+The einsum notation is `ai,aj,ak->ijk` with time complexity $O(n^4)$, where the shared index $a$ creates the characteristic "star" topology.
 
 *Example B: Kronecker product*
 
-The kronecker product of two matrices $A, B in bb(R)^(n times n)$ is defined as
+The Kronecker product of two matrices $A, B in bb(R)^(n times n)$ is defined as:
 $
 C_(i j k l) = A_(i j) B_(k l)
 $
-Its diagrammatic representation is:
+
+Unlike the star contraction, this operation has no shared indices:
 
 #figure(canvas({
   import draw: *
@@ -256,13 +274,13 @@ Its diagrammatic representation is:
   labeledge("B", (rel: (0, 1.5)), "k")
 }), numbering: none)
 
-The einsum notation for the kronecker product is `ij,kl->ijkl`. Its time complexity is $O(n^4)$.
+The einsum notation is `ij,kl->ijkl` with time complexity $O(n^4)$. The absence of connections reflects the direct product structure.
 ])
 
-=== Tensor network contraction is \#P complete
-We show this by reducing another \#P complete problem, the counting of satisfying assignments of a 2-SAT formula, to it.
+=== Tensor network contraction is \#P-complete
+The computational complexity of general tensor network contraction can be established by reduction from a known \#P-complete problem: counting satisfying assignments of 2-SAT formulas.
 
-#definition([2-SAT formula], [A 2-SAT formula is a boolean formula in conjunctive normal form (CNF) with at most two literals per clause.
+#definition([2-SAT formula], [A 2-SAT formula is a Boolean formula in conjunctive normal form (CNF) where each clause contains at most two literals.
 
 *Example:*
 $
@@ -270,20 +288,23 @@ $
 $ <eq:2sat>
 ])
 
-Although finding one satisfying assignment to it is easy, counting the number of satisfying assignments is \#P complete, which is believed to be even harder than the NP-complete problems.
+While determining satisfiability (finding any solution) for 2-SAT formulas is polynomial-time solvable, counting the *number* of satisfying assignments is \#P-complete—a complexity class considered even more challenging than NP-complete problems.
 
-This can be reduced to a tensor network contraction problem as follows:
-- For each clause, we create a tensor with 2 indices to store its truth table. For example, for the clause $(x_3 or not x_5)$, we create a tensor $T_(++)$ with the following content:
+The reduction proceeds by encoding the 2-SAT counting problem as a tensor network:
+
+*Step 1: Clause encoding.* Each clause becomes a rank-2 tensor encoding its truth table. For the clause $(x_3 or not x_5)$, we construct tensor $T_(+-)$:
 $
   T_(+-) = mat(1, 0; 1, 1)
 $
-where the first row corresponds to $x_3 = 0$ and the second row to $x_3 = 1$. Similarly, the first column corresponds to $x_5 = 0$ and the second column to $x_5 = 1$. The entry $(T_(+-))_(0,1) = 0$ reflects that the clause $(x_3 or not x_5)$ is false when $x_3 = 0$ and $x_5 = 1$. For other cases, we can define $T_(++)$, $T_(--)$ and $T_(-+)$ similarly.
+where rows correspond to $x_3 in {0, 1}$ and columns to $x_5 in {0, 1}$. The entry $(T_(+-))_(0,1) = 0$ indicates that $x_3 = 0, x_5 = 1$ makes the clause false. Similar tensors $T_(++)$, $T_(--)$, and $T_(-+)$ encode other clause types.
 
-- The tensor network contraction then becomes:
+*Step 2: Network construction.* The counting problem reduces to the tensor contraction:
 $
   "count" = sum_(x_1, x_2, dots, x_n) product_("clauses") T_("clause")
 $
-where the sum is over all possible boolean assignments to the variables, and the product is over all clause tensors. This contraction counts exactly the number of satisfying assignments to the 2-SAT formula. For example, the number of satisfying assignment for the logical expression in @eq:2sat corresponds to the following tensor network contraction
+where the summation spans all Boolean assignments and the product combines all clause tensors. This contraction precisely counts satisfying assignments.
+
+For the 2-SAT formula in @eq:2sat, the corresponding tensor network is:
 #figure(canvas({
   import draw: *
   let s(it) = text(10pt)[#it]
@@ -301,13 +322,13 @@ where the sum is over all possible boolean assignments to the variables, and the
 }))
 
 
-Since counting satisfying assignments for 2-SAT is \#P-complete, and we have shown a polynomial-time reduction from this problem to tensor network contraction, it follows that tensor network contraction is also \#P-complete.
+Since counting satisfying assignments for 2-SAT is \#P-complete, and we have demonstrated a polynomial-time reduction from this problem to tensor network contraction, it follows that general tensor network contraction is also \#P-complete. This establishes tensor network optimization as fundamentally intractable, motivating the development of approximation algorithms and heuristic methods discussed in subsequent sections.
 
 == Contraction order optimization and slicing
 
-The time complexity to contract a tensor network is determined by the chosen contraction order, which is represented as a binary tree.
-The leaves of the tree are the input tensors, and the root is the output tensor.
-For example, the contraction `ein"ab,bc,cd->ad"` can be represented as the following two binary trees:
+The computational cost of tensor network contraction depends critically on the chosen *contraction order*—the sequence in which pairwise tensor multiplications are performed. This order can be represented as a binary tree where leaves correspond to input tensors and internal nodes represent intermediate results.
+
+Consider the contraction `ein"ab,bc,cd->ad"`, which admits multiple valid orderings with dramatically different costs:
 
 #figure(canvas({
   import draw: *
@@ -338,12 +359,9 @@ For example, the contraction `ein"ab,bc,cd->ad"` can be represented as the follo
   content((0, -2), text(10pt)[`ein"(ab,cd),bc->ad"`])
 }), numbering: none)
 
-The left one is superior to the right one. The right one computes a kronecker product first and creates a large intermediate tensor of size $O(n^4)$, while the left one has a time complexity $O(n^3)$ and space complexity $O(n^2)$.
+The left ordering is dramatically superior: it achieves $O(n^3)$ time and $O(n^2)$ space complexity by first contracting compatible matrices. The right ordering creates a $O(n^4)$ intermediate tensor through an inefficient Kronecker product, illustrating how ordering choice can determine computational feasibility.
 
-Finding the optimal contraction order—the one with minimal complexity—is an NP-complete problem@Markov2008.
-However, in practice, a close-to-optimal contraction order is usually sufficient and can be found efficiently using heuristic optimization methods.
-Over the past decade, researchers have developed various optimization techniques, including both exact and heuristic approaches.
-Some of these heuristic methods have proven highly scalable, capable of handling networks containing more than $10^4$ tensors@Gray2021,@Roa2024.
+Finding the globally optimal contraction order constitutes an NP-complete optimization problem@Markov2008. Fortunately, near-optimal solutions often suffice for practical applications and can be obtained efficiently through sophisticated heuristic methods. Modern optimization algorithms have achieved remarkable scalability, successfully handling tensor networks with over $10^4$ tensors@Gray2021,@Roa2024.
 
 The optimal contraction order has a deep mathematical connection to the _tree decomposition_@Markov2008 of the tensor network's line graph.
 #definition([Tree decomposition and treewidth], [A _tree decomposition_ of a (hyper)graph $G=(V,E)$ is a tree $T=(B,F)$ where each node $B_i in B$ contains a subset of vertices in $V$ (called a "bag"), satisfying:
@@ -632,7 +650,6 @@ $
   cal(L) = "tc" + w_s "sc" + w_("rw") "rwc",
 $
 where $w_s$ and $w_("rw")$ are the weights of the space complexity and read-write complexity compared to the time complexity, respectively.
-\rev{The optimal choice of weights depends on the specific device and tensor contraction algorithm. One can freely tune the weights to achieve a best performance for their specific problem.}
 Then the transformation is accepted with a probability given by the Metropolis criterion, which is
 $
   p_("accept") = min(1, e^(-beta Delta cal(L))),
@@ -767,31 +784,32 @@ T_(i j k l) = sum_(a,b,c,d) U_1^(i a) U_2^(j b) U_3^(k c) U_4^(l d) X_(a b c d)
 $
 where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 
-#align(center, text(10pt, canvas({
+#figure(canvas({
   import draw: *
-  tensor((-5.5, 0), "T", [$T$])
-  labeledge("T", (rel: (0, 1.2)), [$i$])
-  labeledge("T", (rel: (-1.2, 0)), [$j$])
-  labeledge("T", (rel: (0, -1.2)), [$k$])
-  labeledge("T", (rel: (1.2, 0)), [$l$])
+  let s(it) = text(10pt, it)
+  tensor((-5.5, 0), "T", s[$T$])
+  labeledge("T", (rel: (0, 1.2)), s[$i$])
+  labeledge("T", (rel: (-1.2, 0)), s[$j$])
+  labeledge("T", (rel: (0, -1.2)), s[$k$])
+  labeledge("T", (rel: (1.2, 0)), s[$l$])
 
   content((-3.5, 0), [$=$])
 
 
-  tensor((-1.5, 0), "A", [$U_1$])
-  tensor((1.5, 0), "B", [$U_2$])
-  tensor((0, -1.5), "C", [$U_3$])
-  tensor((0, 1.5), "D", [$U_4$])
-  tensor((0, 0), "X", [$X$])
-  labeledge("D", (rel: (0, 1.2)), [$i$])
-  labeledge("A", (rel: (-1.2, 0)), [$j$])
-  labeledge("C", (rel: (0, -1.2)), [$k$])
-  labeledge("B", (rel: (1.2, 0)), [$l$])
-  labeledge("X", "A", [$b$])
-  labeledge("X", "B", [$d$])
-  labeledge("X", "C", [$c$])
-  labeledge("X", "D", [$a$])
-})))
+  tensor((-1.5, 0), "A", s[$U_1$])
+  tensor((1.5, 0), "B", s[$U_2$])
+  tensor((0, -1.5), "C", s[$U_3$])
+  tensor((0, 1.5), "D", s[$U_4$])
+  tensor((0, 0), "X", s[$X$])
+  labeledge("D", (rel: (0, 1.2)), s[$i$])
+  labeledge("A", (rel: (-1.2, 0)), s[$j$])
+  labeledge("C", (rel: (0, -1.2)), s[$k$])
+  labeledge("B", (rel: (1.2, 0)), s[$l$])
+  labeledge("X", "A", s[$b$])
+  labeledge("X", "B", s[$d$])
+  labeledge("X", "C", s[$c$])
+  labeledge("X", "D", s[$a$])
+}), numbering: none)
 
 The data compression ratio for Tucker decomposition is $(product_(i=1)^N d_i) / (product_(i=1)^N r_i + sum_(i=1)^N d_i r_i)$, where $d_i$ is the dimension of the $i$-th mode, $N$ is the number of modes, and $r_i$ is the dimension of the $i$-th core tensor mode. For the rank-4 case shown above, this becomes $(d_i d_j d_k d_l) / (r_a r_b r_c r_d + d_i r_a + d_j r_b + d_k r_c + d_l r_d)$.
 
@@ -800,7 +818,7 @@ Tucker decomposition is more flexible than CP decomposition as it allows differe
 
 === Tensor Train
 
-A tensor train is a tensor network with the following data structure.
+Tensor Train (TT) is a specific tensor network architecture that represents high-dimensional tensors as a chain of lower-rank tensors, providing an efficient compressed representation:
 #align(center, text(10pt, canvas({
   import draw: *
   set-origin((-2, -2))
@@ -847,10 +865,11 @@ A tensor train is a tensor network with the following data structure.
 //   labeledge("C", "D", [$c$])
 // })))
 
-It represents a high dimensional tensor with a compact 1-dimensional tensor network. Let us denote the lateral bond dimension (usually referred as the virtual bond dimension) as $chi$, then the storage complexity is $O(d chi^2 L)$ where $d$ is the number of physical dimensions and $L$ is the length of the chain. The compression ratio is $O(d^L / (chi^2 L))$.
+This architecture represents a high-dimensional tensor using a compact one-dimensional chain structure. With bond dimension $chi$ (the size of virtual indices connecting adjacent tensors), the storage requirement scales as $O(d chi^2 L)$, where $d$ is the physical dimension and $L$ is the chain length. This yields a compression ratio of $O(d^L / (chi^2 L))$ compared to the full tensor.
 
-Researchers like this 1D representation due to the following nice properties:
-1. The inner product is easy to compute.
+The tensor train format offers several computational advantages:
+
+*1. Efficient inner products.* Computing overlaps between two tensor trains requires only local contractions:
   #figure(canvas({
   import draw: *
   set-origin((-2, -2))
@@ -867,7 +886,7 @@ Researchers like this 1D representation due to the following nice properties:
   }
 }), numbering: none)
 
-2. Has polynomial time compression algorithm, which could be achieved through iterative application of the following two processes on different bonds:
+*2. Polynomial-time compression.* Unlike many tensor decompositions, tensor trains admit efficient compression through iterative sweeping algorithms that alternately apply:
  #figure(canvas({
   import draw: *
   set-origin((-2, -2))
@@ -994,28 +1013,29 @@ The virtual bond dimension has size $chi = 1$, which means each tensor has only 
 
 == Automatic Differentiation
 
-_Back propagation_ is one of the fundamental techniques in machine learning for computing gradients of a loss function $cal(L)$ with respect to model parameters. The core concept is the _backward rule_, which propagates adjoints through the computational graph. The adjoint of a variable $a$ is defined as $overline(a) = frac(partial cal(L), partial a)$, representing how the loss changes with respect to that variable.
+*Backpropagation* constitutes a fundamental machine learning technique for computing gradients of loss functions $cal(L)$ with respect to model parameters. Its foundation rests on the *backward rule*, which efficiently propagates adjoint information through computational graphs. The adjoint of a variable $a$ is defined as $overline(a) = frac(partial cal(L), partial a)$, representing the sensitivity of the loss to changes in that variable.
 
 For a function $f: bb(R)^n arrow.r bb(R)^m$ with input $x$ and known adjoint of the output $overline(y)$, the backward rule computes the adjoint of the input as:
 $ overline(x) = frac(partial f, partial x)^T overline(y) $
 This process efficiently propagates gradient information backward through the network, enabling optimization of complex models.
 
-For matrix multiplication $C = A B$, the backward rule is given by:
+For matrix multiplication $C = A B$, the backward rule yields:
 $ overline(A) = overline(C) B^T, quad overline(B) = A^T overline(C) $
-This rule plays a crucial role in machine learning optimization. The backward computation is remarkably efficient—it requires only matrix multiplications with time complexity $O(n^3)$, despite the fact that the full Jacobian matrix would have $O(n^4)$ elements. This computational efficiency is fundamental to the scalability of gradient-based optimization in many applications.
-Tensor network contraction generalizes matrix multiplication and inherits this computational efficiency. We can formally represent a tensor network as a triple $(Lambda, cal(T), sigma_Y)$, where:
+
+This rule exemplifies the remarkable efficiency of backpropagation. While the full Jacobian matrix would contain $O(n^4)$ elements, the backward computation requires only $O(n^3)$ matrix operations—the same complexity as the forward pass. This efficiency breakthrough enables practical optimization of complex models and underlies the success of modern deep learning.
+Tensor network contraction generalizes matrix multiplication while preserving differentiation efficiency. We represent a tensor network as the triple $(Lambda, cal(T), sigma_Y)$:
 $
   Y = "contract"(Lambda, cal(T), sigma_Y)
 $
-Here, $Lambda$ denotes the set of all tensor indices, $cal(T)$ represents the collection of tensors, and $sigma_Y subset Lambda$ specifies the indices of the output tensor.
+where $Lambda$ contains all tensor indices, $cal(T)$ holds the tensor collection, and $sigma_Y subset Lambda$ specifies output indices.
 
-Given the output adjoint $overline(Y)$, the backward rule for computing the adjoint of an input tensor $X$ is:
+The backward rule for computing input tensor gradients follows naturally:
 $
 overline(X) = "contract"(Lambda, (cal(T) \\ {X}) union {overline(Y)}, sigma_X)
 $
-where $cal(T) \\ {X}$ denotes the tensor set with input tensor $X$ removed, and $sigma_X$ represents the indices of tensor $X$.
+where $cal(T) \\ {X}$ represents the tensor set excluding $X$, and $sigma_X$ denotes $X$'s indices.
 
-A naive implementation of this backward rule would incur computational overhead linear in the number of input tensors, as it requires contracting the network separately for each tensor's gradient. However, this inefficiency is avoided in practice through the use of binary contraction trees. With proper optimization, the overhead reduces to a constant factor, making gradient computation approximately twice as expensive as the forward pass—a remarkable efficiency considering that each binary contraction has two inputs and each backward computation maintains the same complexity as the forward pass.
+While naive implementation would require separate network contractions for each input (linear overhead), sophisticated binary contraction trees reduce this to constant overhead. Modern automatic differentiation achieves gradient computation at approximately twice the forward pass cost—remarkable efficiency considering the inherent complexity of multilinear operations.
 
 #exampleblock([
 *Example: Backward rule for tensor network contraction*
@@ -1163,7 +1183,10 @@ Quantum circuits provide a natural setting for tensor network representations, w
 
 = Quantum circuit simulation
 == Quantum states and quantum gates
-In quantum computing, a quantum state initialized to $|0 angle.r^(times.circle n)$ can be represented as a direct product of $n$ vectors:
+Quantum circuits provide a natural framework for tensor network representations, where quantum states become vectors and quantum gates become tensors.
+
+A quantum system initialized to $|0 angle.r^(times.circle n)$ (the $n$-fold tensor product of $|0 angle.r$ states) decomposes as a direct product of $n$ individual qubits:
+
 #figure(canvas({
   import draw: *
   let s(it) = text(11pt, it)
@@ -1176,7 +1199,8 @@ In quantum computing, a quantum state initialized to $|0 angle.r^(times.circle n
   tensor((0, -3), "init", s[$0$])
   line("init", (1, -3))
 }), numbering: none)
-where $|0 angle.r = mat(1; 0)$. A single-qubit gate $U$ can be represented as a rank-2 tensor. For example, if we want to apply a Hadamard gate $H$ to the first qubit, we can represent it as:
+
+where each $|0 angle.r = mat(1; 0)$ state is represented as a rank-1 tensor. Single-qubit gates correspond to rank-2 tensors (matrices) that transform individual qubits. For instance, applying a Hadamard gate $H$ to the first qubit creates the following tensor network:
 
 #figure(canvas({
   import draw: *
@@ -1194,7 +1218,8 @@ where $|0 angle.r = mat(1; 0)$. A single-qubit gate $U$ can be represented as a 
   line("init", (1, -3))
 }), numbering: none)
 
-It can be generalized to multiple qubits. Some quantum gates have more detailed structures, such as the CNOT gate:
+Multi-qubit gates create more complex tensor network structures. The CNOT gate, fundamental to quantum computation, can be decomposed into a tensor network representation:
+
 #figure(canvas({
   import draw: *
   let radius = 0.3
@@ -1218,10 +1243,14 @@ It can be generalized to multiple qubits. Some quantum gates have more detailed 
   line((W + ddx + dx, -dy), "H3")
   line("H2", "H3")
 }), numbering: none)
-where we ignored the extra constant factor $sqrt(2)$ on the right side.
 
-=== Useful rules
+This decomposition (ignoring normalization factors) illustrates how two-qubit gates introduce entanglement through shared virtual indices connecting different physical qubits.
 
+=== Useful circuit identities
+
+Tensor network representations make certain quantum circuit identities immediately apparent through graphical manipulation. Several fundamental rules simplify complex circuits:
+
+*Identity 1: Hadamard on computational basis state*
 #figure(canvas({
   import draw: *
   let s(it) = text(11pt, it)
@@ -1230,10 +1259,13 @@ where we ignored the extra constant factor $sqrt(2)$ on the right side.
   line("init", "H")
   line("H", (rel: (1, 0)))
   content((3, 0), "=")
-  tensor((4, 0), "id", s[$"id"$])
+  tensor((4, 0), "id", s[$"+"$])
   line("id", (rel: (1, 0)))
 }), numbering: none)
 
+This transforms $|0 angle.r$ into the $|+ angle.r = (|0 angle.r + |1 angle.r)/sqrt(2)$ state.
+
+*Identity 2: Hadamard conjugation of Pauli gates*
 #figure(canvas({
   import draw: *
   let s(it) = text(11pt, it)
@@ -1250,6 +1282,9 @@ where we ignored the extra constant factor $sqrt(2)$ on the right side.
   line("X", (rel: (1, 0)), name: "b")
 }), numbering: none)
 
+The Hadamard gate transforms Pauli-Z into Pauli-X: $H Z H = X$. This basis transformation is fundamental to many quantum algorithms.
+
+*Identity 3: Two-qubit controlled operations*
 #figure(canvas({
   import draw: *
   let radius = 0.3
@@ -1269,10 +1304,13 @@ where we ignored the extra constant factor $sqrt(2)$ on the right side.
   line("d.mid", "H1")
 }), numbering: none)
 
+A controlled-Z gate (CZ) can be implemented using a single tensor connecting both qubits, demonstrating how entangling operations create shared virtual bonds in the tensor network.
+
 
 === Expectation values
 
-The expectation value of an observable $O$ is given by
+Computing expectation values of observables in quantum circuits translates to a specific tensor network contraction pattern. For a quantum state $|psi angle.r = U|0^n angle.r$ and observable $O$, the expectation value $angle.l psi|O|psi angle.r$ has the tensor network representation:
+
 #figure(canvas({
   import draw: *
   let dx = 0.6
@@ -1304,7 +1342,7 @@ The expectation value of an observable $O$ is given by
   line((2 * gap + dx, y2), "fin2")
 }), numbering: none)
 
-where $U$ is the quantum circuit and $O$ is the observable.
+This "sandwich" structure represents the quantum expectation value formula $angle.l 0^n|U^dagger O U|0^n angle.r$, where the observable $O$ is inserted between the forward circuit $U$ and its conjugate $U^dagger$.
 
 #exampleblock([
 *Example: GHZ state preparation circuit*
@@ -2050,7 +2088,7 @@ julia> superop_dep = reshape(ein"abk,cdk->acbd"(K, conj(K)), 4, 4)
 
 The PTM formalism provides a powerful framework for classical simulation of noisy quantum circuits. In this representation, the normalized Pauli basis $bb(P) = {I, X, Y, Z}/sqrt(2)$ forms an orthonormal basis for the operator space, where single-qubit quantum states become vectors $|rho angle.r.double_P$ with components:
 
-$ [|rho angle.r.double]_i = tr(rho P_i), quad P_i in bb(P) $
+$ (|rho angle.r.double_P)_i = tr(rho P_i), quad P_i in bb(P) $
 
 Let us denote the superoperator (vectorized) representation of density matrix $rho$ as $|rho angle.r.double$. The Pauli basis representation corresponds to the following basis transformation:
 $
