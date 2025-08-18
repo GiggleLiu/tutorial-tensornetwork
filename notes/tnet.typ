@@ -20,7 +20,7 @@
 #let ket(it) = [$|#it angle.r$]
 
 // hide contents under development
-#let hide-dev = true
+#let hide-dev = false
 #let dev(it) = if not hide-dev {it}
 
 #let exampleblock(it) = block(fill: rgb("#ffffff"), width:100%, inset: 1em, radius: 4pt, stroke: black, it)
@@ -1123,9 +1123,9 @@ The returned `gradients` is a vector of arrays, each of which is an adjoint of a
 [
 == Complex numbers, a tensor network perspective
 
-Complex conjugate is a linear operator. Let us define a special tensor $cal(C)$ as:
+Complex conjugate is a linear operator. Let us define a permutation symmetric tensor $cal(C)$ as:
 $
-cal(C) = vec(mat(1, 0; 0, -1), mat(0, 1; 1, 0))
+cal(C) = vec(mat(1, 0; 0, -1), mat(0, -1; -1, 0))
 $
 
 Given a matrix multiplication $C = A B$, let us stack the real part of $A$ as a 3D tensor $T_A$, and $B$ as a 3D tensor $T_B$. We can redefine the matrix multiplication as tensor contraction:
@@ -1140,14 +1140,40 @@ Given a matrix multiplication $C = A B$, let us stack the real part of $A$ as a 
   tensor((0, 0), "A", s[$T_A$])
   tensor((2, 0), "B", s[$T_B$])
   tensor((1, -1), "c", s[$cal(C)$])
+  tensor((1, -2), "d", s[$Z$])
   line("A", "B")
   line("A", (rel: (-1, 0)))
   line("B", (rel: (1, 0)))
   line("A", (rel: (0, -1)), "c", stroke: aqua)
   line("B", (rel: (0, -1)), "c", stroke: aqua)
-  line("c", (rel: (0, -0.7)), stroke: aqua)
-}))
+  line("c", "d", stroke: aqua)
+  line("d", (rel: (0, -0.7)), stroke: aqua)
+}), numbering: none)
 where the aqua color indicates the extra dimension of size 2 for representing the complex numbers.
+We use this formalism to drtive the complex valued backward rule.
+#figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  content((-2, -1), s[$overline(T)_B = $])
+  tensor((1, -3), "C", s[$overline(T)_C$])
+  tensor((0, 0), "A", s[$T_A$])
+  tensor((2, 0), "B", s[$T_B$])
+  tensor((1, -1), "c", s[$cal(C)$])
+  tensor((1, -2), "d", s[$Z$])
+  line("A", "B")
+  line("A", (rel: (0, -1)), "c", stroke: aqua)
+  line("B", (rel: (0, -1)), "c", stroke: aqua)
+  line("c", "d", stroke: aqua)
+  line("d", "C", stroke: aqua)
+
+  line("C", (rel: (-2, 0)), (rel: (0, 3)), "A")
+  line("C", (rel: (2, 0)), (rel: (0, 3)), "B")
+  
+  hobby((1, 0.5), (2, -1), (4, 0), stroke: (dash: "dashed"))
+}), numbering: none)
+
+It corresponds to first take conjugate of $overline(T)_C$, the compute the tensor contraction, and followed by a conjugate, i.e. $overline(T)_B = (T_A * overline(T)_C^*)^*$.
+
 
 ```julia
 using OMEinsum
@@ -1159,10 +1185,11 @@ s = cat(real(m), imag(m), dims=3)
 t = cat(real(n), imag(n), dims=3)
 c = zeros(2, 2, 2)
 c[:, :, 1] = [1 0; 0 -1]
-c[:, :, 2] = [0 1; 1 0]
+c[:, :, 2] = [0 -1; -1 0]
+z = [1 0; 0 -1]
 
 res1 = m * n; res1 = cat(real(res1), imag(res1), dims=3)
-res2 = ein"ija,jkb,abc->ikc"(s, t, c)
+res2 = ein"ija,jkb,abc,cd->ikd"(s, t, c, z)
 @assert res1 ≈ res2
 ```
 
@@ -1175,18 +1202,83 @@ The norm square of a vector is even more straight forward, it is just sum of the
   tensor((2, 0), "B", s[$T_v$])
   line("A", "B")
   line("A", (rel: (-1, 0)), (rel: (0, -1)), (rel: (1, -1), to: "B"), (rel: (0, 1)), "B", stroke: aqua)
-}))
+}), numbering: none)
+
+=== Some properties of $cal(C)$ operator
+- permutation invariance
+ #figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((0, 0), "c", s[$cal(C)$])
+  bezier("c.south", (rel: (0.9, 0), to: "c"), (rel: (-0.4, -0.7)), (rel: (0.7, 0), to: "c"), stroke: aqua)
+  bezier("c.east", (rel: (0, -0.9), to: "c"), (rel: (0.7, 0.4)), (rel: (0, -0.7), to: "c"), stroke: aqua)
+  line("c", (rel: (-0.7, 0)), stroke: aqua)
+
+  content((1.5, 0), s[$=$])
+
+  set-origin((2.5, 0))
+  tensor((0, 0), "c", s[$cal(C)$])
+  line("c", (rel: (0, -0.7)), stroke: aqua)
+  line("c", (rel: (0.7, 0)), stroke: aqua)
+  line("c", (rel: (-0.7, 0)), stroke: aqua)
+}), numbering: none)
+
+- conjugate invariance
+ #figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((0, 0), "c", s[$cal(C)$])
+  tensor((0, -1), "d1", s[$Z$])
+  tensor((1, 0), "d2", s[$Z$])
+  tensor((-1, 0), "d3", s[$Z$])
+  line("c", "d1", stroke: aqua)
+  line("c", "d2", stroke: aqua)
+  line("c", "d3", stroke: aqua)
+  line("d1", (rel: (0, -0.7)), stroke: aqua)
+  line("d2", (rel: (0.7, 0)), stroke: aqua)
+  line("d3", (rel: (-0.7, 0)), stroke: aqua)
+
+  content((2, 0), s[$=$])
+
+  set-origin((3, 0))
+  tensor((0, 0), "c", s[$cal(C)$])
+  line("c", (rel: (0, -0.7)), stroke: aqua)
+  line("c", (rel: (0.7, 0)), stroke: aqua)
+  line("c", (rel: (-0.7, 0)), stroke: aqua)
+}), numbering: none)
+- cascade rule
+ #figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((0, 0), "c1", s[$cal(C)$])
+  tensor((1, -1), "c2", s[$cal(C)$])
+  tensor((0, -1), "z", s[$Z$])
+  line("c1", (rel: (-0.7, 0)), (rel: (0, 0.7)), stroke: aqua)
+  line("c1", (rel: (0, 0.7)), stroke: aqua)
+  line("c1", "z", stroke: aqua)
+  line("c2", "z", stroke: aqua)
+  line("c2", (rel: (0, 1.7)), stroke: aqua)
+  line("c2", (rel: (0, -0.7)), stroke: aqua)
+
+  content((2, 0), s[$=$])
+
+  set-origin((3, 0))
+  tensor((0, -1), "c1", s[$cal(C)$])
+  tensor((1, 0), "c2", s[$cal(C)$])
+  tensor((1, -1), "z", s[$Z$])
+  line("c2", (rel: (0.7, 0)), (rel: (0, 0.7)), stroke: aqua)
+  line("c1", (rel: (0, 1.7)), stroke: aqua)
+  line("c2", "z", stroke: aqua)
+  line("c1", "z", stroke: aqua)
+  line("c2", (rel: (0, 0.7)), stroke: aqua)
+  line("c1", (rel: (0, -0.7)), stroke: aqua)
 
 
-= Quantum Circuit Simulation
-- initial state, product state
-- single-qubit gate, two-qubit gate, diagonal gate and CNOT gates.
-- expectation values
+}), numbering: none)
 
-Quantum circuits provide a natural setting for tensor network representations, where quantum gates are represented as tensors and quantum states as vectors. This mapping allows us to efficiently simulate quantum circuits using tensor network contraction algorithms.
 ])
+= Quantum Circuit Simulation
 
-= Quantum circuit simulation
 == Quantum states and quantum gates
 Quantum circuits provide a natural framework for tensor network representations, where quantum states become vectors and quantum gates become tensors.
 
@@ -2106,10 +2198,10 @@ U = mat(
   1/sqrt(2), 0, 0, (-1)/sqrt(2)
 ) $
 
-The quantum channel $cal(E)$ in the Pauli basis is given by:
+The four columns correspond to the vectorized and normalized Pauli matrices.
+Then, we also apply this basis transformation to the quantum channel $cal(E)$:
 
 $
-|rho angle.r.double_P = U|rho angle.r.double\
 cal(E)_P = U cal(E) U^dagger
 $
 

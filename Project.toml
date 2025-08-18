@@ -9,6 +9,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
 TensorQEC = "0500ac79-7fb5-4262-aaea-37bb1845d1ef"
 Yao = "5872b779-8223-5990-8dd0-5abbb0748c8c"
+YaoToEinsum = "9b173c7b-dc24-4dc5-a0e1-adab2f7b6ba9"
 
 [compat]
 BenchmarkTools = "1"

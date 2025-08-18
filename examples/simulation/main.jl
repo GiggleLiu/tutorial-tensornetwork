@@ -21,7 +21,10 @@ end
 using Pkg; Pkg.activate("../.."); Pkg.status()
 
 # ╔═╡ ba2a2526-047a-4d25-a558-ec1d197dbdeb
-using Yao, PlutoUI
+# `Yao` is a quantum simulator
+# `OMEinsum` is a tensor network contraction engine
+# `PlutoUI` is for control gadgets, e.g. the checkboxes
+using Yao, OMEinsum, PlutoUI
 
 # ╔═╡ 9669e6e0-998c-4d6e-8fb5-7c99b465ca7a
 # circuit reader
@@ -30,10 +33,73 @@ include("reader.jl"); using .YaoCircuitReader: yaocircuit_from_file
 # ╔═╡ a5404349-bc77-417f-8e78-4f58a6c491e3
 using LuxorGraphPlot  # Required by visualization extension
 
+# ╔═╡ d70997f3-71ca-4240-b771-afd682e0ee10
+md"# Tutorial: GHZ state"
+
+# ╔═╡ ac1a4063-0aab-4e16-9e58-2cbf4fd3285b
+md"In this tutorial, we use [Yao.jl](https://github.com/QuantumBFS/Yao.jl) as our default quantum simulation tool."
+
+# ╔═╡ c5a3865a-701d-436f-b320-0cbfeaaef83d
+md"Let us first define a GHZ state."
+
+# ╔═╡ 04073c5e-3a52-4a6e-b242-a8098b66f018
+# chain: connect the component gates
+# put(n, k=>G): place gate G at location k of a n qubits system.
+# control(n, c, k=>G): place controlled gate G at location k, c is the control qubit
+ghz_circuit(n) = chain(put(n, 1=>H), [control(n, i-1, i=>X) for i=2:n]...)
+
+# ╔═╡ 43cd6549-cf66-409f-a8d8-2f6a6812c5bb
+vizcircuit(ghz_circuit(4))
+
+# ╔═╡ 32fef0de-5eb6-49d9-974c-8d872fc2fe65
+# 1st argument is a Yao circuit
+# `initial_state` takes a dictionary
+# `final_state` is left unspecified
+net_ghz = yao2einsum(ghz_circuit(4);
+		initial_state= Dict(zip(1:4, zeros(Int,4))),
+		optimizer = TreeSA(ntrials=1)  # contraction order optimizer
+	)
+
+# ╔═╡ 53467c66-43b3-49e3-8499-b2bc5e730541
+md"The tensor network contraction is represented as a binary tree. It contains both the tensor network topology and an optimized contraction order."
+
+# ╔═╡ 644b8135-e302-4da7-bca7-6927436b26cf
+net_ghz.code  # contraction code in (nested) einsum notation
+
+# ╔═╡ 24b5ef2e-7b3b-11f0-3008-d15614ad193a
+fieldnames(typeof(net_ghz))
+
+# ╔═╡ 7ac4a056-2669-46e5-8781-4c5ffd0118e9
+OMEinsum.getixsv(net_ghz.code)  # input tensor labels
+
+# ╔═╡ 24b5ef3a-7b3b-11f0-1a4f-e735820b44de
+length(net_ghz.tensors)   # input tensor data
+
+# ╔═╡ bbe8da89-c08f-49ad-b880-21097bc5e3ae
+OMEinsum.getiyv(net_ghz.code)  # open indices
+
+# ╔═╡ c93ff4e5-037f-4718-8aaf-93f755809d52
+# red/gray nodes are variables/open variables, transparent nodes are tensors
+# 0 tensor is defined as: [1, 0]
+# + tensor is the XOR gate
+viznet(net_ghz; scale=60)
+
+# ╔═╡ 21c90cee-912c-4709-a50e-b920bb7f9083
+# Time complexity: number of arithematic operations
+# Space complexity: number of elements in the largest tensor
+# Read-write complexity: number of elemental read-write operations
+contraction_complexity(net_ghz)
+
+# ╔═╡ f81fb594-2fea-4f02-8da3-0a591f66415a
+contract(net_ghz)
+
+# ╔═╡ b1e38f66-5b3d-4d73-bc51-d2250938a846
+md"# Simulate quantum supremacy experiments"
+
 # ╔═╡ 24b20e68-7b3b-11f0-2684-0792efd482b9
 md"""
 ## Circuit loading
-Some popular shallow quantum circuits are placed in the `data` folder, they are from [qfelx](https://github.com/s-mandra/qflex) (Ref. qflex datasets, check bottom). To load the circuits to [Yao.jl](https://github.com/QuantumBFS/Yao.jl), please use the `YaoCircuitReader` module provided in file `reader.jl`:
+Some popular shallow quantum circuits are placed in the `data` folder, they are from [qfelx](https://github.com/s-mandra/qflex) (Ref. qflex datasets, check bottom). To load the circuits to Yao, please use the `YaoCircuitReader` module provided in file `reader.jl`:
 """
 
 # ╔═╡ 24b5ee52-7b3b-11f0-20c7-658956fed1fe
@@ -73,9 +139,6 @@ net = yao2einsum(c;
 		)
 
 # ╔═╡ 88c6b213-9819-443f-b0ea-ccbc974bdb0f
-# Time complexity: number of arithematic operations
-# Space complexity: number of elements in the largest tensor
-# Read-write complexity: number of elemental read-write operations
 contraction_complexity(net)
 
 # ╔═╡ 12e29146-19df-42df-a8de-f5f73152053b
@@ -86,12 +149,6 @@ viznet(net; scale=60)
 
 # ╔═╡ 24b5ef24-7b3b-11f0-1635-737c9e87ebba
 md"The space complexity is the number of elements in the largest itermediate tensor. For tensor network backend, it can be a much smaller number compared with the full amplitude simulation given the circuit is shallow enough. Learn more about contraction order optimizers: [https://tensorbfs.github.io/OMEinsumContractionOrders.jl/dev/optimizers/](https://tensorbfs.github.io/OMEinsumContractionOrders.jl/dev/optimizers/)"
-
-# ╔═╡ 24b5ef2e-7b3b-11f0-3008-d15614ad193a
-fieldnames(typeof(net))
-
-# ╔═╡ 24b5ef3a-7b3b-11f0-1a4f-e735820b44de
-length(net.tensors)
 
 # ╔═╡ 8e280a08-ce6c-4961-ae7f-7569ed0b6ba9
 md"""
@@ -184,8 +241,24 @@ md"""
 
 # ╔═╡ Cell order:
 # ╠═24ab1a9a-7b3b-11f0-2569-3df1f2955d62
-# ╟─24b20e68-7b3b-11f0-2684-0792efd482b9
+# ╟─d70997f3-71ca-4240-b771-afd682e0ee10
+# ╟─ac1a4063-0aab-4e16-9e58-2cbf4fd3285b
 # ╠═ba2a2526-047a-4d25-a558-ec1d197dbdeb
+# ╟─c5a3865a-701d-436f-b320-0cbfeaaef83d
+# ╠═04073c5e-3a52-4a6e-b242-a8098b66f018
+# ╠═43cd6549-cf66-409f-a8d8-2f6a6812c5bb
+# ╠═32fef0de-5eb6-49d9-974c-8d872fc2fe65
+# ╟─53467c66-43b3-49e3-8499-b2bc5e730541
+# ╠═644b8135-e302-4da7-bca7-6927436b26cf
+# ╠═24b5ef2e-7b3b-11f0-3008-d15614ad193a
+# ╠═7ac4a056-2669-46e5-8781-4c5ffd0118e9
+# ╠═24b5ef3a-7b3b-11f0-1a4f-e735820b44de
+# ╠═bbe8da89-c08f-49ad-b880-21097bc5e3ae
+# ╠═c93ff4e5-037f-4718-8aaf-93f755809d52
+# ╠═21c90cee-912c-4709-a50e-b920bb7f9083
+# ╠═f81fb594-2fea-4f02-8da3-0a591f66415a
+# ╟─b1e38f66-5b3d-4d73-bc51-d2250938a846
+# ╟─24b20e68-7b3b-11f0-2684-0792efd482b9
 # ╠═9669e6e0-998c-4d6e-8fb5-7c99b465ca7a
 # ╠═24b5ee52-7b3b-11f0-20c7-658956fed1fe
 # ╟─24b5ee96-7b3b-11f0-12a7-dd2e2f0dc089
@@ -199,8 +272,6 @@ md"""
 # ╠═a5404349-bc77-417f-8e78-4f58a6c491e3
 # ╠═12e29146-19df-42df-a8de-f5f73152053b
 # ╟─24b5ef24-7b3b-11f0-1635-737c9e87ebba
-# ╠═24b5ef2e-7b3b-11f0-3008-d15614ad193a
-# ╠═24b5ef3a-7b3b-11f0-1a4f-e735820b44de
 # ╟─8e280a08-ce6c-4961-ae7f-7569ed0b6ba9
 # ╟─80714cc8-77e5-469f-ba86-f47546159f57
 # ╠═24b5ef42-7b3b-11f0-024f-91ef48dcd568
