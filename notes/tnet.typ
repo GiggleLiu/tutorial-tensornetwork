@@ -283,21 +283,33 @@ The einsum notation is `ij,kl->ijkl` with time complexity $O(n^4)$. The absence 
 ])
 
 === Tensor network contraction is \#P-complete
+Contracting a tensor is hard, which is in \#P-complete (harder than the famous NP-complete). Showing a problem is hard can be done through reduction.
+If we can reduce problem $cal(A)$ to problem $cal(B)$, which means by solving problem $cal(B)$ (in time polynomial to input size), we can solve problem $cal(A)$ with the answer to $cal(B)$.
+Then $cal(B)$ is not easier than $cal(A)$ from computational complexity perspective.
+
 The computational complexity of general tensor network contraction can be established by reduction from a known \#P-complete problem: counting satisfying assignments of 2-SAT formulas.
 
-#definition([2-SAT formula], [A 2-SAT formula is a Boolean formula in conjunctive normal form (CNF) where each clause contains at most two literals.
+#definition([2-SAT formula], [
+    A 2-SAT formula is a Boolean formula in conjunctive normal form (CNF) where each clause contains at most two literals.
+    For those who are not familiar with boolean logic, a clause is a disjunction (logical or: $or$) of literals, and a literal is a boolean variable or its negation ($not$).
+    A boolean formula can always be represented as a conjunction (logical and: $and$) of clauses, which is called the conjunctive normal form.
 
 *Example:*
 $
   (x_1 or x_2) and (x_2 or x_3) and (x_3 or x_4) and (x_4 or x_5) and (x_5 or x_1) and (x_3 or not x_5)
 $ <eq:2sat>
+
+- A satisfying assignment is: $x_1 = 1, x_2 = 0, x_3 = 1, x_4 = 0, x_5 = 1$.
+- A non-satisfying assignment is: $x_1 = 1, x_2 = 0, x_3 = 0, x_4 = 0, x_5 = 1$, since it violates $x_2 or x_3$, $x_3 or x_4$ and $x_3 or not x_5$.
+
+The counting of 2-SAT formula asks how many satisfying assignments are there.
 ])
 
 While determining satisfiability (finding any solution) for 2-SAT formulas is polynomial-time solvable, counting the *number* of satisfying assignments is \#P-complete—a complexity class considered even more challenging than NP-complete problems.
 
 The reduction proceeds by encoding the 2-SAT counting problem as a tensor network:
 
-*Step 1: Clause encoding.* Each clause becomes a rank-2 tensor encoding its truth table. For the clause $(x_3 or not x_5)$, we construct tensor $T_(+-)$:
+*Step 1: Clause encoding.* The boolean variables $x_1, x_2, ..., x_n$ directly maps to (hyper)edges in tensor network, now we need to decide the tensors relating these variables. Each clause becomes a rank-2 tensor encoding its truth table. For the clause $(x_3 or not x_5)$, we construct tensor $T_(+-)$:
 $
   T_(+-) = mat(1, 0; 1, 1)
 $
@@ -308,6 +320,7 @@ $
   "count" = sum_(x_1, x_2, dots, x_n) product_("clauses") T_("clause")
 $
 where the summation spans all Boolean assignments and the product combines all clause tensors. This contraction precisely counts satisfying assignments.
+Note tensor network contraction corresponds to sum of product of elements from each tensor, whenever a tensor contributes a zero multiplication factor, the net contribution of this assignment is 0. On the other hand, since we have a 0-1 element only, if all the tensors contribute a 1 multiplication factor (means this constraint is satisfied), the net contribution of this assignment is 1. Hence the contraction corresponds to the counting of true assignments.
 
 For the 2-SAT formula in @eq:2sat, the corresponding tensor network is:
 #figure(canvas({
@@ -1123,7 +1136,12 @@ The returned `gradients` is a vector of arrays, each of which is an adjoint of a
 [
 == Complex numbers, a tensor network perspective
 
-Complex conjugate is a linear operator. Let us define a permutation symmetric tensor $cal(C)$ as:
+Let us 
+
+Complex conjugate is a linear operator.
+
+
+Let us define a permutation symmetric tensor $cal(C)$ as:
 $
 cal(C) = vec(mat(1, 0; 0, -1), mat(0, -1; -1, 0))
 $
@@ -1382,27 +1400,39 @@ This transforms $|0 angle.r$ into the $|+ angle.r = (|0 angle.r + |1 angle.r)/sq
 
 The Hadamard gate transforms Pauli-Z into Pauli-X: $H Z H = X$. This basis transformation is fundamental to many quantum algorithms.
 
-*Identity 3: Two-qubit controlled operations*
+*Identity 3: Controlled-Z*
 #figure(canvas({
   import draw: *
   let radius = 0.3
   let dx = 1.5
   let dy = 0.8
+  let s(it) = text(11pt, it)
   line((0, dy), (dx, dy), name: "a")
   line((0, -dy), (dx, -dy), name: "b")
   circle("a.mid", radius: 0.1, fill:black)
   circle("b.mid", radius: 0.1, fill:black)
   line("a.mid", "b.mid")
   content((2.3, 0), "=")
-  let W = 3
+  let W = 3.5
   line((W, dy), (W + dx, dy), name: "c")
   line((W, -dy), (W + dx, -dy), name: "d")
   tensor((W + dx/2, 0), "H1", [$H$])
   line("c.mid", "H1")
   line("d.mid", "H1")
+  content((rel: (0.2, -0.2), to: "c.mid"), s[$i$])
+  content((rel: (0.2, 0.2), to: "d.mid"), s[$j$])
+  content((3, 0), s[$sqrt(2)$])
 }), numbering: none)
+A controlled-Z gate (CZ) can be implemented using a single tensor connecting both qubits, demonstrating how entangling operations create shared virtual bonds in the tensor network. If you do not believe it, we can easily verify this equality with OMEinsum:
 
-A controlled-Z gate (CZ) can be implemented using a single tensor connecting both qubits, demonstrating how entangling operations create shared virtual bonds in the tensor network.
+```julia
+julia> reshape(ein"ij->ijij"([1 1; 1 -1]), 4, 4)
+4×4 Matrix{Int64}:
+ 1  0  0   0
+ 0  1  0   0
+ 0  0  1   0
+ 0  0  0  -1
+```
 
 
 === Expectation values
@@ -2141,17 +2171,24 @@ Consider applying a Kraus channel $cal(E)$ to a density matrix $rho$. The result
   labelnode("line.mid", [$k$])
 }), numbering: none)
 
-Sometimes, we use the superoperator representation, which corresponds to
+Sometimes, we use the superoperator representation, which corresponds to the contracted Kraus channels
 #figure(canvas({
   import draw: *
   let s(it) = text(10pt, it)
+  tensor((0, 0.5), "rho", [$rho$])
+  line("rho", (rel: (0.5, 0.5)))
+  line("rho", (rel: (0.5, -0.5)))
+  content((0, -0.9), s[density matrix])
+
+  set-origin((4, 0))
+ 
   tensor((0, 0.5), "E", [$cal(E)$])
   line("E", (rel: (-0.5, 0.5)))
   line("E", (rel: (0.5, 0.5)))
   line("E", (rel: (-0.5, -0.5)))
   line("E", (rel: (0.5, -0.5)))
   line((-0.5, -0.5), (0.5, -0.5), mark: (end: "straight"))
-  content((0, -0.9), s[apply from left to right])
+  content((1, -0.9), s[quantum channel])
   content((1, 0.5), s[$=$])
 
   set-origin((2.5, 0.5))
