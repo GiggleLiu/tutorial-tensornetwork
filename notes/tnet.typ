@@ -1170,6 +1170,7 @@ We use this formalism to drtive the complex valued backward rule.
   line("C", (rel: (2, 0)), (rel: (0, 3)), "B")
   
   hobby((1, 0.5), (2, -1), (4, 0), stroke: (dash: "dashed"))
+  content((3, 0.5), s[remove])
 }), numbering: none)
 
 It corresponds to first take conjugate of $overline(T)_C$, the compute the tensor contraction, and followed by a conjugate, i.e. $overline(T)_B = (T_A * overline(T)_C^*)^*$.
