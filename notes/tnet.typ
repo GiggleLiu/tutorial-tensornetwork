@@ -2425,17 +2425,17 @@ The surface code@dennis2002topological@kitaev2003fault is a prominent example of
       content((rel: (0.3, 0.3), to: "surface1" + "-" + str(j) + "-" + str(2-i)), [#(i*n+j+1)])
     }
   }
-  content((5.5, 1.4), box(stroke: black, inset: 6pt, [$X$ stabilizers: \ $X_1X_2X_4X_5$ \ $X_3X_6$ \ $X_4X_7$ \ $X_5X_6X_8X_9$],fill: aqua, radius: 4pt))
-  content((8.5, 1.4), box(stroke: black, inset: 6pt, [$Z$ stabilizers: \ $Z_1Z_2$ \ $Z_2Z_3Z_5Z_6$ \ $Z_4Z_5Z_7Z_8$ \ $Z_8Z_9$],fill: yellow, radius: 4pt))
+  content((5.5, 1.4), box(stroke: black, inset: 6pt, [$X$ stabilizers: \ $S_1 = X_1X_2X_4X_5$ \ $S_2 = X_3X_6$ \ $S_3 = X_4X_7$ \ $S_4 = X_5X_6X_8X_9$],fill: aqua, radius: 4pt))
+  content((9, 1.4), box(stroke: black, inset: 6pt, [$Z$ stabilizers: \ $S_5 = Z_1Z_2$ \ $S_6 = Z_2Z_3Z_5Z_6$ \ $S_7 = Z_4Z_5Z_7Z_8$ \ $S_8 = Z_8Z_9$],fill: yellow, radius: 4pt))
 
   line("surface1-2-0", "surface1-2-2", stroke: (thickness: 2pt, paint: red))
   line("surface1-0-2", "surface1-2-2", stroke: (thickness: 2pt, paint: green))
 
-  line((10,2.5), (11,2.5), stroke: (thickness: 2pt, paint: green))
-  content((12.8, 2.5), [Logical $X$: $X_1X_2X_3$])
+  line((11,2.5), (12,2.5), stroke: (thickness: 2pt, paint: green))
+  content((14.3, 2.5), [Logical $X$: $l_x = X_1X_2X_3$])
 
-  line((10.5,1.5), (10.5,0.5), stroke: (thickness: 2pt, paint: red))
-  content((12.8, 1), [Logical $Z$: $Z_3Z_6Z_9$])
+  line((11.5,1.5), (11.5,0.5), stroke: (thickness: 2pt, paint: red))
+  content((14.3, 1), [Logical $Z$: $l_z = Z_3Z_6Z_9$])
 }))
 
 Also we can have different sizes of the surface code.
@@ -2502,32 +2502,26 @@ Suppose there is an $X$ error on the qubit $2$.  The decoding process is to find
 Only stabilizer $Z_1Z_2$ and $Z_2Z_3Z_5Z_6$ is anti-commute with the error. So if we measure all the stabilizers, we will get six $+1$ and two $-1$. Base on this syndrome, decoders will try to find the most probable error pattern or logical state.
 ])
 == Tensor network decoder
-Here we directly give the tensor network representation@Piveteau2024@chubb2021general of the decoding problem. All circles are 2-dimensional variables. Squares are tensors.
+Here we directly give the tensor network representation@Piveteau2024@chubb2021general of the decoding problem. The dimension of the variables is 2.
 #figure(canvas({
   import draw: *
-  
-  let r = 0.3
+
   for j in range(9) {
-    circle((j,0), radius: r, fill: silver, stroke: black,name: "x-" + str(j+1))
+    labelnode((j,0), [$x_#(j+1)$], name: "x-" + str(j+1))
 
-    circle((j,2), radius: r, fill: gray, stroke: black,name: "z-" + str(j+1))
+    labelnode((j,2), [$z_#(j+1)$], name: "z-" + str(j+1))
 
-    rect((j - r, 1-r), (j + r, 1+r), fill: orange, stroke: black, name: "rect-" + str(j+1))
-
+    tensor((j,1), "rect-" + str(j+1), [$cal(D)$])
     line("x-" + str(j+1), "rect-" + str(j+1), stroke: black)
 
     line("z-" + str(j+1), "rect-" + str(j+1), stroke: black)
   }
 
-  for j in range(9) {
-    content((rel: (0, 0), to: "rect-" + str(j+1)), [#(j+1)])
-  }
-
   let checkx = ((1,2,4,5), (3,6), (4,7), (5,6,8,9))
   let checkz = ((1,2), (2,3,5,6), (4,5,7,8), (8,9))
   for k in range(4) {
-    rect((1.8*(k+1) - r, 3 - r), (1.8*(k+1) + r, 3 + r), fill: purple, stroke: black, name: "xcheck-t-" + str(k+1))
-    circle((1.8*(k+1), 4), radius: r, fill: aqua, stroke: black, name: "xcheck-" + str(k+1))
+    tensor((1.8*(k+1), 3), "xcheck-t-" + str(k+1), [$+$])
+    labelnode((1.8*(k+1), 4), [$S_#(k+1)$], name: "xcheck-" + str(k+1))
     line("xcheck-t-" + str(k+1), "xcheck-" + str(k+1), stroke: black)
     for i in checkx.at(k) {
       line("xcheck-t-" + str(k+1), "z-" + str(i), stroke: black)
@@ -2535,19 +2529,19 @@ Here we directly give the tensor network representation@Piveteau2024@chubb2021ge
   }
 
   for k in range(4) {
-    rect((1.8*(k+1) - r, -1 -r), (1.8*(k+1) + r, -1 + r), fill: purple, stroke: black, name: "zcheck-t-" + str(k+1))
-    circle((1.8*(k+1), -2), radius: r, fill: yellow, stroke: black, name: "zcheck-" + str(k+1))
+    tensor((1.8*(k+1), -1), "zcheck-t-" + str(k+1), [$+$])
+    labelnode((1.8*(k+1), -2), [$S_#(k+5)$], name: "zcheck-" + str(k+1))
     line("zcheck-t-" + str(k+1), "zcheck-" + str(k+1), stroke: black)
     for i in checkz.at(k) {
       line("zcheck-t-" + str(k+1), "x-" + str(i), stroke: black)
     }
   }
 
-  rect((-r,3 - r), (+r,3 + r), fill: purple, stroke: black, name: "xlogical-t-0")
-  circle((0,4), radius: r, fill: green, stroke: black, name: "xlogical-0")
+  tensor((0,3), "xlogical-t-0", [$+$])
+  labelnode((0,4), [$l_x$], name: "xlogical-0")
   line("xlogical-t-0", "xlogical-0", stroke: black)
-  rect((-r,-1 - r), (+r,-1 + r), fill: purple, stroke: black, name: "zlogical-t-0")
-  circle((0,-2), radius: r, fill: red, stroke: black, name: "zlogical-0")
+  tensor((0,-1), "zlogical-t-0", [$+$])
+  labelnode((0,-2), [$l_z$], name: "zlogical-0")
   line("zlogical-t-0", "zlogical-0", stroke: black)
 
   let logical_x = (1,2,3)
@@ -2556,64 +2550,25 @@ Here we directly give the tensor network representation@Piveteau2024@chubb2021ge
     line("xlogical-t-0", "z-" + str(logical_x.at(k)), stroke: black)
     line("zlogical-t-0", "x-" + str(logical_z.at(k)), stroke: black)
   }
-
-  let x = 10
-  let y = 4
-  let y_d = 1
-  circle((x,y), radius: r, fill: none, stroke: black, name: "edge-label")
-  content((rel: (3, 0), to: "edge-label"), [Variable])
-
-  circle((x,y - y_d), radius: r, fill: silver, stroke: black, name: "xqubit-label")
-  content((rel: (3, 0), to: "xqubit-label"), [$X$ error])
-
-  circle((x,y - 2*y_d), radius: r, fill: gray, stroke: black, name: "zqubit-label")
-  content((rel: (3, 0), to: "zqubit-label"), [$Z$ error])
-
-  circle((x, y - 3*y_d), radius: r, fill: aqua, stroke: black, name: "xcheck-label")
-  content((rel: (3, 0), to: "xcheck-label"), [$X$ stabilizer])
-
-  circle((x, y - 4*y_d), radius: r, fill: yellow, stroke: black, name: "zcheck-label")
-  content((rel: (3, 0), to: "zcheck-label"), [$Z$ stabilizer])
-
-  circle((x, y - 5*y_d), radius: r, fill: green, stroke: black, name: "xlogical-label")
-  content((rel: (3, 0), to: "xlogical-label"), [$X$ Logical Operator])
-
-  circle((x, y - 6*y_d), radius: r, fill: red, stroke: black, name: "zlogical-label")
-  content((rel: (3, 0), to: "zlogical-label"), [$Z$ Logical Operator])
-
-  let x = 0
-  let x_d = 4
-  let y = -3.5
-  let y_d = 2
-  rect((x - r, y - r), (x+r, y + r), fill: none, stroke: black, name: "tensor-label")
-  content((rel: (0, -1), to: "tensor-label"), [Tensor])
-
-  rect((x + x_d - r, y - r), (x + x_d + r, y + r), fill: orange, stroke: black, name: "rect-label")
-  content((rel: (0, -1), to: "rect-label"), [Depolarization Probability])
-
-  rect((x + 2*x_d - r, y - r), (x + 2*x_d + r, y + r), fill: purple, stroke: black, name: "check-label")
-  content((rel: (0, -1), to: "check-label"), [Parity Tensor])
 }))
 
-In the middle of the figure, we have 9 orange tensors represent the depolarizing channel acts on the physical qubits.  
+In the middle of the figure, we have 9 tensors represent the depolarizing channel acts on the physical qubits.  
 #figure(canvas({
   import draw: *
 
-  let r = 0.3
-  rect((0 - r, 0), ( r, 2 * r), fill: orange, stroke: black, name: "rect-label")
+  tensor((0,0), "rect-label", [$cal(D)$])
   line("rect-label",(rel: (0, -1), to: "rect-label"), stroke: black)
   line("rect-label",(rel: (0, 1), to: "rect-label"), stroke: black)
   content((rel: (1.5, -0.2), to: "rect-label"), text(12pt)[$= mat(p_I, p_Z ;p_X, p_Y)$])
   content((rel: (6, 0.3), to: "rect-label"), text(12pt)[Depolarizing Channel:])
   content((rel: (10, -0.4), to: "rect-label"), text(12pt)[$ cal(D)(rho) = (1-p_X-p_Y-p_Z)rho + p_X X rho X + p_Y Y rho Y + p_Z Z rho Z$])
 }))
-The circles connected to the depolarizing channel represent Boolean variables indicating $X$ or $Z$ errors on the physical qubits. The purple tensors are the parity tensors.
+The variables connected to the depolarizing channel represent Boolean variables indicating $X$ or $Z$ errors on the physical qubits. The $+$ tensors are the parity tensors.
 
 #figure(canvas({
   import draw: *
 
-  let r = 0.3
-  rect((7 - r, 0), ( 7 + r, 2 * r), fill: purple, stroke: black, name: "check-label")
+  tensor((7, 0), "check-label", [$+$])
 
   line("check-label",(rel: (0, 1.2), to: "check-label"), stroke: black)
   content((rel: (0, 1.6), to: "check-label"), text(15pt)[$j_1$])

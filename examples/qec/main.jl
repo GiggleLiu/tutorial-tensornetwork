@@ -19,6 +19,11 @@ First, we generate the stabilizers of the surface code.
 # ╔═╡ 186f7287-8b02-4e82-89d1-cb721723ee9e
 st = stabilizers(SurfaceCode(3,3))
 
+# ╔═╡ eab5a8ad-e493-43f7-bebe-7a9096d0deda
+md"""
+Why tanner graph and cite!
+"""
+
 # ╔═╡ b4305f5c-cf5b-4b10-8a16-15c3e1c87a0b
 tanner = CSSTannerGraph(st);
 
@@ -199,6 +204,7 @@ length(ct.code.ixs)
 # ╠═4ca7bb44-7b49-11f0-087b-35656aa6fd7c
 # ╟─7072c60a-fff2-4e8e-ad33-0be412174e33
 # ╠═186f7287-8b02-4e82-89d1-cb721723ee9e
+# ╠═eab5a8ad-e493-43f7-bebe-7a9096d0deda
 # ╠═b4305f5c-cf5b-4b10-8a16-15c3e1c87a0b
 # ╟─ea4c2857-6be8-49c6-987e-ef6061fa34aa
 # ╠═6bf846f3-901d-424e-ae9e-3f7c549c72b2
