@@ -20,7 +20,7 @@
 #let ket(it) = [$|#it angle.r$]
 
 // hide contents under development
-#let hide-dev = false
+#let hide-dev = true
 #let dev(it) = if not hide-dev {it}
 
 #let exampleblock(it) = block(fill: rgb("#ffffff"), width:100%, inset: 1em, radius: 4pt, stroke: black, it)

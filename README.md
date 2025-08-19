@@ -3,13 +3,13 @@
 [![Julia](https://img.shields.io/badge/Julia-1.10+-9558B2?style=flat&logo=julia&logoColor=white)](https://julialang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A comprehensive tutorial on quantum circuit simulation and quantum error correction using tensor networks, demonstrating efficient approaches for simulating quantum circuits through tensor contraction algorithms.
+A comprehensive tutorial on quantum circuit simulation and quantum error correction using tensor networks.
 
 ## 📖 Overview
 
 This tutorial explores the intersection of tensor networks and quantum computing, covering:
 
-- **Tensor Networks**: Fundamentals of tensor operations and Einstein summation notation
+- **Tensor Networks and its Contraction Order Optimization**: Fundamentals of tensor operations and Einstein summation notation
 - **Quantum Circuit Simulation**: Efficient simulation of quantum circuits using tensor contraction
 - **Quantum Error Correction**: Tensor network approaches to quantum error correction codes
 
@@ -36,10 +36,11 @@ cd tutorial-tensornetwork
 make init  # or `make update`
 ```
 
-This will automatically:
-- Install the main project dependencies ([OMEinsum.jl](https://github.com/under-Peter/OMEinsum.jl), IJulia.jl)
-- Set up all example subdirectories with their specific dependencies
-- Install [Yao.jl](https://github.com/QuantumBFS/Yao.jl) for quantum computing and [TensorQEC.jl](https://github.com/nzy1997/TensorQEC.jl) for error correction
+This will automatically install the project dependencies, including
+- [OMEinsum.jl](https://github.com/under-Peter/OMEinsum.jl) for tensor network contraction
+- [Yao.jl](https://github.com/QuantumBFS/Yao.jl) for quantum computing
+- [TensorQEC.jl](https://github.com/nzy1997/TensorQEC.jl) for error correction
+- [Pluto.jl](https://github.com/fonsp/Pluto.jl) for interactive notebooks
 
 ### 3. Launch Pluto Notebooks
 
@@ -55,17 +56,12 @@ case=qec make pluto
 
 ## 📖 Lecture Notes
 
-The comprehensive lecture notes are available in Typst format. To compile:
+The comprehensive lecture notes are available in [PDF](notes/lecturenote.pdf) format. To compile from source code, please install [Typst](https://typst.app/) first, and then run:
 
 ```bash
-# Install Typst (if not already installed)
-# Visit: https://typst.app/
-
 # Compile the notes
 make pdf
 ```
-
-**Alternative**: Preview with VSCode using the [Typst extension](https://github.com/CodingThrust/Templates/tree/main/typst).
 
 ## 📄 License
 
