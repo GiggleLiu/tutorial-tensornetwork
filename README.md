@@ -1,7 +1,7 @@
 # Circuit Simulation and Quantum Error Correction with Tensor Networks
 
 [![Julia](https://img.shields.io/badge/Julia-1.10+-9558B2?style=flat&logo=julia&logoColor=white)](https://julialang.org/)
-![Static Badge](https://img.shields.io/badge/Status-Work_in_Progress-blue.svg)
+[![Lecture note](https://img.shields.io/badge/Lecture_Note-Work_in_Progress-blue.svg)](notes/lecturenote.pdf)
 
 A comprehensive tutorial on quantum circuit simulation and quantum error correction using tensor networks (for a quantum AI summer school).
 
