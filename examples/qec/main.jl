@@ -11,13 +11,21 @@ using Pkg; Pkg.activate("../.."); Pkg.status()
 # `TensorQEC` utilizes the tensor network to study the properties of quantum error correction.
 # `Yao` is a quantum simulator.
 # `OMEinsum` is a tensor network contraction engine.
-using TensorQEC, Yao, OMEinsum, Random
+# `PlutoUI` is for control gadgets, e.g. the checkboxes
+using TensorQEC, Yao, OMEinsum, Random, PlutoUI
+
+# ╔═╡ 2cc025a6-142d-4145-a8c0-df171efd8d04
+md"""
+# Tensor network decoding for quantum error correction code
+In this tutorial, we will use the tensor network to decode quantum error correction code with [TensorQEC.jl](https://github.com/nzy1997/TensorQEC.jl).
+"""
+
+# ╔═╡ 6eaef728-8b05-4e25-ba3d-f51d149bb988
+PlutoUI.TableOfContents(aside=false)
 
 # ╔═╡ 7072c60a-fff2-4e8e-ad33-0be412174e33
 md"""
 ## Tensor network decoding for surface code
-In this tutorial, we will use the tensor network to decode the surface code with [TensorQEC.jl](https://github.com/nzy1997/TensorQEC.jl).
-
 ### Code definition and tensor network generation
 First, we generate the stabilizers of the surface code.
 """
@@ -96,7 +104,8 @@ syndrome = syndrome_extraction(error_pattern, tanner)
 
 # ╔═╡ a8b7a1f1-9ec7-444e-ad1a-f207c13f6a96
 # `decode` function takes a compiled decoder and a syndrome, returns the decoding outcome. We will see what is actully happenes in this decode function.
-result = decode(compiled_decoder, syndrome)
+# The decoder saves the deduced error pattern in `docoding_result.error_qubits`.
+docoding_result = decode(compiled_decoder, syndrome)
 
 # ╔═╡ 5a7bc163-a8c2-494e-b276-a526ad56ba85
 md"""
@@ -104,8 +113,7 @@ We can check whether the decoding result matches the syndrome and whether it con
 """
 
 # ╔═╡ 4b84bf82-65c8-446f-a327-dfe6a516c3b0
-# What is result and what is result.error_qubits?
-syndrome == syndrome_extraction(result.error_qubits, tanner)
+syndrome == syndrome_extraction(docoding_result.error_qubits, tanner)
 
 # ╔═╡ 84351bd4-31a2-44fb-96f4-24ea64836f31
 # To check whether there is a logical error, we first compute the logical operators for surface code.
@@ -113,7 +121,7 @@ lx, lz = logical_operator(tanner);
 
 # ╔═╡ 1e988866-2f37-44ca-bb51-3f0a66e67c03
 # `check_logical_error` checks wether there is a logical error between the real error pattern and the decoding result. `false` means that there is no logical error.
-check_logical_error(result.error_qubits, error_pattern, lx, lz)
+check_logical_error(docoding_result.error_qubits, error_pattern, lx, lz)
 
 # ╔═╡ d1b6186e-e17c-4cd2-a416-8aea87c5dd3d
 md"""
@@ -157,7 +165,7 @@ import stim
 
 for d in [3, 5, 7, 9]:
     circuit = stim.Circuit.generated(
-        "surface_code:rotated_memory_z",  # (rotated) surface code, memory z???
+        "surface_code:rotated_memory_z",  # (rotated) surface code. z means the circuit initializes and measures the logical Z basis observable.
         rounds=d,                         # number of measurements rounds
         distance=d,
         after_clifford_depolarization=0.001,  # depolarizing errors
@@ -253,8 +261,10 @@ md"""
 """
 
 # ╔═╡ Cell order:
+# ╟─2cc025a6-142d-4145-a8c0-df171efd8d04
 # ╠═4ca2e164-7b49-11f0-3832-97601fc3d0c2
 # ╠═4ca7bb44-7b49-11f0-087b-35656aa6fd7c
+# ╠═6eaef728-8b05-4e25-ba3d-f51d149bb988
 # ╟─7072c60a-fff2-4e8e-ad33-0be412174e33
 # ╠═186f7287-8b02-4e82-89d1-cb721723ee9e
 # ╟─eab5a8ad-e493-43f7-bebe-7a9096d0deda
@@ -277,12 +287,12 @@ md"""
 # ╠═4b84bf82-65c8-446f-a327-dfe6a516c3b0
 # ╠═84351bd4-31a2-44fb-96f4-24ea64836f31
 # ╠═1e988866-2f37-44ca-bb51-3f0a66e67c03
-# ╠═d1b6186e-e17c-4cd2-a416-8aea87c5dd3d
+# ╟─d1b6186e-e17c-4cd2-a416-8aea87c5dd3d
 # ╠═b4dc1070-9105-426d-bad3-036c5dcd4549
 # ╠═450cacab-01c5-4543-8f08-bcd927fb047d
 # ╠═fcf4d0f6-0dea-4600-97b0-d0550a7056fd
 # ╠═0bdc1a83-9ff7-4090-a0d8-2abbde2c1927
-# ╠═63d95e30-f427-484e-9397-92db129a0a92
+# ╟─63d95e30-f427-484e-9397-92db129a0a92
 # ╠═ed7d0c5c-2b80-4da7-866a-8ced1532b978
 # ╠═4a7f8d2b-71e0-4bbd-9d41-372db49d4e16
 # ╟─4ca94e5a-7b49-11f0-1753-13bfd484cbca
