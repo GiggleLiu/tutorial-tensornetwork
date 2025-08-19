@@ -3,7 +3,7 @@
 [![Julia](https://img.shields.io/badge/Julia-1.10+-9558B2?style=flat&logo=julia&logoColor=white)](https://julialang.org/)
 ![Static Badge](https://img.shields.io/badge/Status-Work_in_Progress-blue.svg)
 
-A comprehensive tutorial on quantum circuit simulation and quantum error correction using tensor networks.
+A comprehensive tutorial on quantum circuit simulation and quantum error correction using tensor networks (for a quantum AI summer school).
 
 ## 📖 Overview
 
