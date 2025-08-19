@@ -34,10 +34,16 @@ include("reader.jl"); using .YaoCircuitReader: yaocircuit_from_file
 using LuxorGraphPlot  # Required by visualization extension
 
 # ╔═╡ d70997f3-71ca-4240-b771-afd682e0ee10
-md"# Tutorial: GHZ state"
+md"# Quantum circuit simulation with tensor network contraction"
 
 # ╔═╡ ac1a4063-0aab-4e16-9e58-2cbf4fd3285b
 md"In this tutorial, we use [Yao.jl](https://github.com/QuantumBFS/Yao.jl) as our default quantum simulation tool."
+
+# ╔═╡ 1c65281e-f374-4cc7-b139-39d7a07970a9
+PlutoUI.TableOfContents(aside=false)
+
+# ╔═╡ e7d40cf3-3aeb-4861-9661-21e6e177636a
+md"## Example 1: GHZ state generation circuit"
 
 # ╔═╡ c5a3865a-701d-436f-b320-0cbfeaaef83d
 md"Let us first define a GHZ state."
@@ -94,11 +100,14 @@ contraction_complexity(net_ghz)
 contract(net_ghz)
 
 # ╔═╡ b1e38f66-5b3d-4d73-bc51-d2250938a846
-md"# Simulate quantum supremacy experiments"
+md"## Example 2: Simulate quantum supremacy experiments"
+
+# ╔═╡ 068abc9b-d80b-4d78-ac91-9e17fe47e389
+md"In this example, we will load the quantum supremacy circuit from the disk, and compute probability of having state $|0\rangle$ by computing $\langle 0|U|0\rangle$, where $U$ is the quantum circuit of interest."
 
 # ╔═╡ 24b20e68-7b3b-11f0-2684-0792efd482b9
 md"""
-## Circuit loading
+### Step 1: circuit loading
 Some popular shallow quantum circuits are placed in the `data` folder, they are from [qfelx](https://github.com/s-mandra/qflex) (Ref. qflex datasets, check bottom). To load the circuits to Yao, please use the `YaoCircuitReader` module provided in file `reader.jl`:
 """
 
@@ -126,7 +135,7 @@ vizcircuit(c)
 
 # ╔═╡ 24b5eee8-7b3b-11f0-0c04-23b83c038f6b
 md"""
-## Example 1: compute <0|c|0> with tensor networks
+### Step 2: construct tensor network
 
 During the convertion, we also specify an optimizer to specify the contraction order.
 """
@@ -150,6 +159,9 @@ viznet(net; scale=60)
 # ╔═╡ 24b5ef24-7b3b-11f0-1635-737c9e87ebba
 md"The space complexity is the number of elements in the largest itermediate tensor. For tensor network backend, it can be a much smaller number compared with the full amplitude simulation given the circuit is shallow enough. Learn more about contraction order optimizers: [https://tensorbfs.github.io/OMEinsumContractionOrders.jl/dev/optimizers/](https://tensorbfs.github.io/OMEinsumContractionOrders.jl/dev/optimizers/)"
 
+# ╔═╡ 7336bc5d-d155-4116-976e-94958aa42fef
+md"### Step 3: contract the tensor network"
+
 # ╔═╡ 8e280a08-ce6c-4961-ae7f-7569ed0b6ba9
 md"""
 If your circuit has space complexity less than 28, the tensor newtork is proababily contractable on your local device. Then please go ahead to check the following box.
@@ -172,8 +184,9 @@ exact_simulate && apply(zero_state(n), c)' * zero_state(n)
 
 # ╔═╡ 24b5ef56-7b3b-11f0-1966-fd1220651ad3
 md"""
-## Case 2: Add noise and compute <ψ|X₁X₂|ψ>, where |ψ> = c |0>
+## Example 3: Construct tensor network for computing observables (channel simulation)
 
+In this example, we show how to compute $\langle ψ|X₁X₂|ψ\rangle$ through quantum channel simulation, where $|ψ\rangle = U |0\rangle$, where $U$ is the quantum circuit with interest.
 During the convertion, we also specify an optimizer to specify the contraction order.
 """
 
@@ -240,10 +253,12 @@ md"""
 """
 
 # ╔═╡ Cell order:
-# ╠═24ab1a9a-7b3b-11f0-2569-3df1f2955d62
 # ╟─d70997f3-71ca-4240-b771-afd682e0ee10
 # ╟─ac1a4063-0aab-4e16-9e58-2cbf4fd3285b
+# ╠═24ab1a9a-7b3b-11f0-2569-3df1f2955d62
 # ╠═ba2a2526-047a-4d25-a558-ec1d197dbdeb
+# ╠═1c65281e-f374-4cc7-b139-39d7a07970a9
+# ╟─e7d40cf3-3aeb-4861-9661-21e6e177636a
 # ╟─c5a3865a-701d-436f-b320-0cbfeaaef83d
 # ╠═04073c5e-3a52-4a6e-b242-a8098b66f018
 # ╠═43cd6549-cf66-409f-a8d8-2f6a6812c5bb
@@ -258,6 +273,7 @@ md"""
 # ╠═21c90cee-912c-4709-a50e-b920bb7f9083
 # ╠═f81fb594-2fea-4f02-8da3-0a591f66415a
 # ╟─b1e38f66-5b3d-4d73-bc51-d2250938a846
+# ╟─068abc9b-d80b-4d78-ac91-9e17fe47e389
 # ╟─24b20e68-7b3b-11f0-2684-0792efd482b9
 # ╠═9669e6e0-998c-4d6e-8fb5-7c99b465ca7a
 # ╠═24b5ee52-7b3b-11f0-20c7-658956fed1fe
@@ -272,6 +288,7 @@ md"""
 # ╠═a5404349-bc77-417f-8e78-4f58a6c491e3
 # ╠═12e29146-19df-42df-a8de-f5f73152053b
 # ╟─24b5ef24-7b3b-11f0-1635-737c9e87ebba
+# ╟─7336bc5d-d155-4116-976e-94958aa42fef
 # ╟─8e280a08-ce6c-4961-ae7f-7569ed0b6ba9
 # ╟─80714cc8-77e5-469f-ba86-f47546159f57
 # ╠═24b5ef42-7b3b-11f0-024f-91ef48dcd568

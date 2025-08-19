@@ -3,25 +3,19 @@
 [![Julia](https://img.shields.io/badge/Julia-1.10+-9558B2?style=flat&logo=julia&logoColor=white)](https://julialang.org/)
 [![Lecture note](https://img.shields.io/badge/Lecture_Note-Work_in_Progress-blue.svg)](notes/lecturenote.pdf)
 
-A comprehensive tutorial on quantum circuit simulation and quantum error correction using tensor networks (for a quantum AI summer school).
+This tutorial explores the intersection of tensor networks and quantum computing. It is originally designed for a quantum AI summer school.
 
 ## 📖 Overview
 
-This tutorial explores the intersection of tensor networks and quantum computing, covering:
+- **Lecture note** ([PDF](notes/lecturenote.pdf)) on tensor networks and relevant topics such as tensor network contraction order optimization, data compression, autodiff, quantum circuit simulation, quantum channel simulation, quantum error correction.
+- **Pluto notebooks** for shallow circuit simulation ([PDF](examples/simulation/simulation.pdf)) and quantum error correction ([PDF](examples/qec/qec.pdf)). To play with these notebooks, please check the following instructions.
 
-- **Tensor Networks and its Contraction Order Optimization**: Fundamentals of tensor operations and Einstein summation notation
-- **Quantum Circuit Simulation**: Efficient simulation of quantum circuits using tensor contraction
-- **Quantum Error Correction**: Tensor network approaches to quantum error correction codes
+## 🚀 Run Pluto notebooks
 
-## 📋 Prerequisites
+### 0. Prerequisites
 
+- A proper terminal, with `make` command available.
 - **Julia**: Version 1.10 or higher ([Installation Guide](https://scfp.jinguo-group.science/chap1-julia/julia-setup.html))
-- **Basic Knowledge**: 
-  - Linear algebra fundamentals
-  - Basic quantum computing concepts (qubits, gates, circuits)
-  - Familiarity with Julia programming (recommended)
-
-## 🚀 Quick Start
 
 ### 1. Clone and Setup
 
@@ -44,12 +38,12 @@ This will automatically install the project dependencies, including
 
 ### 3. Launch Pluto Notebooks
 
-For **shallow circuit simulation**:
+For **shallow circuit simulation** ([PDF preview](examples/simulation/simulation.pdf)):
 ```bash
 case=simulation make pluto
 ```
 
-For **quantum error correction**:
+For **quantum error correction** ([PDF preview](examples/qec/qec.pdf)):
 ```bash
 case=qec make pluto
 ```
