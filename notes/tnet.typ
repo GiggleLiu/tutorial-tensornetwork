@@ -1324,9 +1324,55 @@ The norm square of a vector is even more straight forward, it is just sum of the
   line("c1", "z", stroke: green)
   line("c2", (rel: (0, 0.7)), stroke: green)
   line("c1", (rel: (0, -0.7)), stroke: green)
-
-
 }), numbering: none)
+
+- identity rule, define identity element $1$ as $(1, 0)^T$
+ #figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((0, 0), "c", s[$cal(C)$])
+  tensor((1, 0), "d2", s[$1$])
+  line("c", "d2", stroke: green)
+  line("c", (rel: (0, -0.7)), stroke: green)
+  line("c", (rel: (-0.7, 0)), stroke: green)
+
+  content((1.75, 0), s[$=$])
+
+  set-origin((3, 0))
+  tensor((0, 0), "c", s[$Z$])
+  line("c", (rel: (0, -0.7)), stroke: green)
+  line("c", (rel: (-0.7, 0)), stroke: green)
+}), numbering: none)
+
+=== The completeness of the above rules
+
+- Addition (holds trivially, generalized to vector of length 2)
+    - Associativity: $a + (b + c) = (a + b) + c$
+    - Commutativity: $a + b = b + a$
+    - Existence of identity: $a + 0 = a$
+    - Existence of inverse: $a + (-a) = 0$
+- Multiplication
+    - Associativity: $a ⋅ (b ⋅ c) = (a ⋅ b) ⋅ c$ (cascade rule)
+    - Commutativity: $a ⋅ b = b ⋅ a$ (permutative invariance)
+    - Existence of identity: $a ⋅ 1 = a$ (identity rule)
+      #figure(canvas({
+  import draw: *
+  let s(it) = text(11pt, it)
+  tensor((-2, 0), "C", s[$a$])
+  line("C", (rel: (0, -1)), stroke: green)
+  content((-1, 0), s[$=$])
+  tensor((0, 0), "A", s[$a$])
+  tensor((2, 0), "B", s[$1$])
+  tensor((1, -1), "c", s[$cal(C)$])
+  tensor((1, -2), "d", s[$Z$])
+  line("A", (rel: (0, -1)), "c", stroke: green)
+  line("B", (rel: (0, -1)), "c", stroke: green)
+  line("c", "d", stroke: green)
+  line("d", (rel: (0, -0.7)), stroke: green)
+      }), numbering: none)
+    - Existence of inverse ($a!=0$): $a ⋅ a^(-1) = 1$
+
+- Distributivity of multiplication over addition: $a ⋅ (b + c) = (a ⋅ b) + (a ⋅ c)$ (holds trivially from the tensor algebra)
 
 ])
 = Quantum Circuit Simulation
