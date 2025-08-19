@@ -11,7 +11,7 @@ using Pkg; Pkg.activate("../.."); Pkg.status()
 # `TensorQEC` utilizes the tensor network to study the properties of quantum error correction.
 # `Yao` is a quantum simulator.
 # `OMEinsum` is a tensor network contraction engine.
-using TensorQEC, TensorQEC.Yao, TensorQEC.OMEinsum
+using TensorQEC, Yao, OMEinsum, Random
 
 # ╔═╡ 7072c60a-fff2-4e8e-ad33-0be412174e33
 md"""
@@ -41,10 +41,11 @@ Here we can generate the corresponding tensor network with `compile` function. `
 """
 
 # ╔═╡ 1791953d-cd6f-4a77-85fa-141e1f98e8c0
-# `TNMMAP(TreeSA(),false)` has two default arguments:
 # - `TreeSA()` is the optimizer for optimizing the tensor network contraction order.
-# - `false` means that we don't want to factorize the tensors to rank-3 tensors to avoid large tensors.
-decoder = TNMMAP();
+decoder = TNMMAP(; optimizer=TreeSA());
+
+# ╔═╡ 037c82f0-60af-4086-989a-8dd7a2e7a2dd
+md"Then we compile the decoder to speed up error correction. In this decoder, it precomputes the tensor network contraction order."
 
 # ╔═╡ caf88828-bcfa-4962-bddf-9704ec70261b
 md"""
@@ -67,10 +68,11 @@ error_model = iid_error(0.05,0.05,0.05, 9)
 compiled_decoder = compile(decoder, tanner, error_model);
 
 # ╔═╡ 4f202513-ea0a-4490-ac27-cefd462d4a47
-# The tensor network is saved in `compiled_decoder.code` and `compiled_decoder.tensors`
+# The tensor network topology
 compiled_decoder.code
 
 # ╔═╡ d585574c-7077-4f21-a64a-bc263e5dba7b
+# The tensor network data
 compiled_decoder.tensors |> typeof
 
 # ╔═╡ e7a4c2f5-49eb-4e37-b4a0-e07c8462cc81
@@ -81,7 +83,7 @@ contraction_complexity(compiled_decoder.code,uniformsize(compiled_decoder.code, 
 
 # ╔═╡ dbd5ac0c-4a0c-4f22-9012-5bed0ab68f24
 # `random_error_qubits` generates a random error pattern from the error model.
-error_pattern = random_error_qubits(error_model)
+error_pattern = (Random.seed!(2); random_error_qubits(error_model))
 
 # ╔═╡ b7b514bc-6629-4355-ab73-05b899b6d858
 md"""
@@ -102,6 +104,7 @@ We can check whether the decoding result matches the syndrome and whether it con
 """
 
 # ╔═╡ 4b84bf82-65c8-446f-a327-dfe6a516c3b0
+# What is result and what is result.error_qubits?
 syndrome == syndrome_extraction(result.error_qubits, tanner)
 
 # ╔═╡ 84351bd4-31a2-44fb-96f4-24ea64836f31
@@ -117,6 +120,13 @@ md"""
 ### Within `decode` function
 We firstly update the syndrome in the tensors of the tensor network and compute the probability of different logical sectors by tensor network contraction.
 """
+
+# ╔═╡ b4dc1070-9105-426d-bad3-036c5dcd4549
+# Q: why do not we just use 0 and 1?
+compiled_decoder.zero_tensor
+
+# ╔═╡ 450cacab-01c5-4543-8f08-bcd927fb047d
+compiled_decoder.one_tensor
 
 # ╔═╡ fcf4d0f6-0dea-4600-97b0-d0550a7056fd
 TensorQEC.update_syndrome!(compiled_decoder.tensors, syndrome, compiled_decoder.zero_tensor, compiled_decoder.one_tensor);
@@ -251,6 +261,7 @@ md"""
 # ╠═b4305f5c-cf5b-4b10-8a16-15c3e1c87a0b
 # ╟─f1295d36-2ba1-4903-a835-d88ba215e921
 # ╠═1791953d-cd6f-4a77-85fa-141e1f98e8c0
+# ╟─037c82f0-60af-4086-989a-8dd7a2e7a2dd
 # ╠═59e0f320-c5fd-479c-8317-ac6240e11ea6
 # ╠═4f202513-ea0a-4490-ac27-cefd462d4a47
 # ╠═d585574c-7077-4f21-a64a-bc263e5dba7b
@@ -267,6 +278,8 @@ md"""
 # ╠═84351bd4-31a2-44fb-96f4-24ea64836f31
 # ╠═1e988866-2f37-44ca-bb51-3f0a66e67c03
 # ╠═d1b6186e-e17c-4cd2-a416-8aea87c5dd3d
+# ╠═b4dc1070-9105-426d-bad3-036c5dcd4549
+# ╠═450cacab-01c5-4543-8f08-bcd927fb047d
 # ╠═fcf4d0f6-0dea-4600-97b0-d0550a7056fd
 # ╠═0bdc1a83-9ff7-4090-a0d8-2abbde2c1927
 # ╠═63d95e30-f427-484e-9397-92db129a0a92
