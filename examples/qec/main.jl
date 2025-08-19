@@ -29,7 +29,7 @@ using TensorQEC, Yao, OMEinsum, Random, PlutoUI
 # ╔═╡ 2cc025a6-142d-4145-a8c0-df171efd8d04
 md"""
 # Tensor network decoding for quantum error correction code
-In this tutorial, we will use the tensor network to decode quantum error correction code with [TensorQEC.jl](https://github.com/nzy1997/TensorQEC.jl), which is a package contains multiple error correction methods, including xxxxxx. It could serve as a good starting point to benchmark different QEC decoding algorithms.
+In this tutorial, we will use the tensor network to decode quantum error correction code with [TensorQEC.jl](https://github.com/nzy1997/TensorQEC.jl), which is a package contains multiple error correction methods, including integer programming decoder, tensor net work decoder, belief propagation decoder and so on. It could serve as a good starting point to benchmark different QEC decoding algorithms.
 """
 
 # ╔═╡ 6eaef728-8b05-4e25-ba3d-f51d149bb988
@@ -69,8 +69,8 @@ error_model = iid_error(0.05, 0.05, 0.05, 9)
 md"Then we generate a random error pattern"
 
 # ╔═╡ dbd5ac0c-4a0c-4f22-9012-5bed0ab68f24
-# `random_error_qubits` generates a random error pattern from the error model.
-error_pattern = (Random.seed!(2); random_error_qubits(error_model))
+# `random_error_pattern` generates a random error pattern from the error model.
+error_pattern = (Random.seed!(2); random_error_pattern(error_model))
 
 # ╔═╡ b7b514bc-6629-4355-ab73-05b899b6d858
 md"""
@@ -86,7 +86,7 @@ md"""The goal is to infer the error pattern or its equivalent form from the abov
 """
 
 # ╔═╡ 89b3099b-65cf-46df-b005-ee05b3e479d6
-md"### Step 2: Tensor network representation"
+md"### Step 2: tensor network representation"
 
 # ╔═╡ f1295d36-2ba1-4903-a835-d88ba215e921
 md"""
@@ -121,7 +121,7 @@ compiled_decoder.tensors |> length
 # Time complexity: number of arithematic operations
 # Space complexity: number of elements in the largest tensor
 # Read-write complexity: number of elemental read-write operations
-contraction_complexity(compiled_decoder.code,uniformsize(compiled_decoder.code, 2))
+contraction_complexity(compiled_decoder)
 
 # ╔═╡ ea4c2857-6be8-49c6-987e-ef6061fa34aa
 md"""
@@ -130,20 +130,19 @@ md"""
 
 # ╔═╡ a8b7a1f1-9ec7-444e-ad1a-f207c13f6a96
 # `decode` function takes a compiled decoder and a syndrome, returns the decoding outcome. We will see what is actully happenes in this decode function.
-# The decoder saves the deduced error pattern in `docoding_result.error_qubits`.
-docoding_result = decode(compiled_decoder, syndrome)
+# The decoder saves the deduced error pattern in `docoding_result.error_pattern`.
+decoding_result = decode(compiled_decoder, syndrome)
 
-
-# TODO: remove the show function for result
+# ╔═╡ f10fa13a-82d4-4bde-98b8-b4d83d7a5638
+decoding_result.error_pattern
 
 # ╔═╡ 5a7bc163-a8c2-494e-b276-a526ad56ba85
 md"""
-We can check whether the decoding result matches the syndrome and whether it contains any logical errors.
+We can check whether the decoding result matches the syndrome.
 """
 
 # ╔═╡ 4b84bf82-65c8-446f-a327-dfe6a516c3b0
-# `error_qubits` means the error pattern, which is a Pauli string.
-syndrome == syndrome_extraction(docoding_result.error_qubits, tanner)
+syndrome == syndrome_extraction(decoding_result.error_pattern, tanner)
 
 # ╔═╡ d1b6186e-e17c-4cd2-a416-8aea87c5dd3d
 md"""
@@ -233,8 +232,7 @@ md"""
 """
 
 # ╔═╡ 092ac9b0-263c-498b-9718-e13d25ec9591
-# TDOO: polish the error message, or default to factorize false
-compiled_dem_decoder = compile(TNMMAP(; optimizer=TreeSA(ntrials=1), factorize=true), dem);
+compiled_dem_decoder = compile(TNMMAP(; optimizer=TreeSA(ntrials=1)), dem);
 
 # ╔═╡ 09c37b01-e82f-44fb-b610-6b7eff0563de
 contraction_complexity(compiled_dem_decoder)
@@ -243,7 +241,7 @@ contraction_complexity(compiled_dem_decoder)
 # Generate an error pattern and the corresponding syndrome.
 syndrome_dem = let
 	Random.seed!(2)
-	error_pattern = random_error_qubits(IndependentFlipError(dem.error_rates))
+	error_pattern = random_error_pattern(IndependentFlipError(dem.error_rates))
 	syndrome_extraction(error_pattern, compiled_dem_decoder.tanner)
 end
 
@@ -257,24 +255,19 @@ compiled_dem_decoder.code(compiled_dem_decoder.tensors...)
 # ╔═╡ 4cab0c0e-7b49-11f0-26bc-b74e4105ca84
 md"""
 ### Challenge: Tensor network decoder for [[144,12,12]] BB Code.
-The circuit level decoder for BB code is notoriously hard problem for tensor network decoders. Here, we load the dem file from [https://github.com/quantumlib/tesseract-decoder/tree/main/testdata/bivariatebicyclecodes](https://github.com/quantumlib/tesseract-decoder/tree/main/testdata/bivariatebicyclecodes). The belief propagation based approach is efficient, but the accuracy is not enough. The integer programming based approach is only efficient when the error rate is low enough (check below).
+The circuit level decoder for BB code is notoriously hard problem for tensor network decoders. Here, we load the dem file from [https://github.com/quantumlib/tesseract-decoder/tree/main/testdata/bivariatebicyclecodes](https://github.com/quantumlib/tesseract-decoder/tree/main/testdata/bivariatebicyclecodes). The belief propagation based approach is efficient, but the accuracy is not enough. The integer programming based approach is only efficient when the error rate is low enough (check below). For additional decoders applicable to this example, please refer to (Beni2025).
 
-#### TODO: cite
-
-Goal: xxx
+Goal: Develop a decoder that achieves both high accuracy and computational efficiency.
 """
 
 # ╔═╡ 27cffb7b-60de-478f-85c2-9609be6ec574
 dem_bb = TensorQEC.parse_dem_file(joinpath(@__DIR__, "data", "r=12,d=12,p=0.001,noise=si1000,c=bivariate_bicycle_X,nkd=[[144,12,12]],q=288,iscolored=True,A_poly=x^3+y+y^2,B_poly=y^3+x+x^2.dem"))
 
 # ╔═╡ 99377317-ee92-4b5a-bc78-194ceabd0d5b
-compiled_dem_decoder2 = compile(TNMMAP(TensorQEC.NoOptimizer(), true), dem_bb); # Here we use the NoOptimizer to avoid any optimization. Since the code is too large, the default optimizer will be too slow.
+compiled_dem_decoder_bb = compile(TNMMAP(; optimizer=TensorQEC.NoOptimizer()), dem_bb); # Here we use the NoOptimizer to avoid any optimization. Since the code is too large, the default optimizer will be too slow.
 
 # ╔═╡ ef8f08f1-1a40-44b2-afe4-cbc51259a83a
-length(compiled_dem_decoder2.code.ixs)
-
-# ╔═╡ 0a6c1072-0740-4b87-a4d5-797437ca2093
-md"TODO: integer programming solver."
+length(compiled_dem_decoder_bb.code.ixs)
 
 # ╔═╡ 25c583c9-d5ee-42a5-a852-ff8722ff1162
 md"`compute_complexity` = $(@bind compute_complexity CheckBox())"
@@ -282,23 +275,47 @@ md"`compute_complexity` = $(@bind compute_complexity CheckBox())"
 # ╔═╡ 4cab0c2c-7b49-11f0-2d37-fd584e9466ba
 # Too slow!
 if compute_complexity
-	contraction_complexity(compiled_dem_decoder2.code,uniformsize(compiled_dem_decoder2.code, 2))
+	contraction_complexity(compiled_dem_decoder_bb)
 end
 
 # ╔═╡ bf2eeeb5-9d83-44d1-8d59-bd7260be4c80
 md"It has ~585k tensors! Can you come up with a tensor network based decoder for it?"
 
+# ╔═╡ a18e130d-1e61-4dbf-a226-9bc962354dd2
+md"""
+#### The performance of integer programming decoder
+"""
+
+# ╔═╡ d131882f-8d6e-4703-afd1-898c394d0626
+syndrome_bb = let
+Random.seed!(110);error_pattern = random_error_pattern(dem_bb)
+syndrome_extraction(error_pattern, compiled_dem_decoder_bb.tanner)
+end
+
+# ╔═╡ c04c3a4d-a13d-4037-b073-24bc5c299335
+let
+# decode with a integer programming decoder
+res = decode(IPDecoder(),compiled_dem_decoder_bb.tanner,syndrome_bb) 
+
+# test weather we get a same syndrome
+syndrome_bb == syndrome_extraction(res.error_pattern, compiled_dem_decoder_bb.tanner)
+end
+
+# ╔═╡ 784fdc67-2cfb-4855-9f22-dc17728af54e
+md"Integer programming decoder takes about 30 seconds. Can you beat it?"
+
 # ╔═╡ dac4001b-e265-4219-9ee5-e175b9bc732a
 md"""
 ## References
 - **(Piveteau2024)** Piveteau, C.; Chubb, C. T.; Renes, J. M. Tensor Network Decoding Beyond 2D. PRX Quantum 2024, 5 (4), 040303. https://doi.org/10.1103/PRXQuantum.5.040303.
+- **(Beni2025)** Beni, L. A.; Higgott, O.; Shutty, N. Tesseract: A Search-Based Decoder for Quantum Error Correction. arXiv March 14, 2025. https://doi.org/10.48550/arXiv.2503.10988.
 """
 
 # ╔═╡ Cell order:
 # ╟─2cc025a6-142d-4145-a8c0-df171efd8d04
 # ╠═4ca2e164-7b49-11f0-3832-97601fc3d0c2
 # ╠═4ca7bb44-7b49-11f0-087b-35656aa6fd7c
-# ╠═6eaef728-8b05-4e25-ba3d-f51d149bb988
+# ╟─6eaef728-8b05-4e25-ba3d-f51d149bb988
 # ╟─7072c60a-fff2-4e8e-ad33-0be412174e33
 # ╟─f16f3a9d-f8dd-42c0-b094-aa33b6e3ed85
 # ╠═00807971-4e26-435f-9534-098dab49f227
@@ -320,6 +337,7 @@ md"""
 # ╠═e7a4c2f5-49eb-4e37-b4a0-e07c8462cc81
 # ╟─ea4c2857-6be8-49c6-987e-ef6061fa34aa
 # ╠═a8b7a1f1-9ec7-444e-ad1a-f207c13f6a96
+# ╠═f10fa13a-82d4-4bde-98b8-b4d83d7a5638
 # ╟─5a7bc163-a8c2-494e-b276-a526ad56ba85
 # ╠═4b84bf82-65c8-446f-a327-dfe6a516c3b0
 # ╟─d1b6186e-e17c-4cd2-a416-8aea87c5dd3d
@@ -343,8 +361,11 @@ md"""
 # ╠═27cffb7b-60de-478f-85c2-9609be6ec574
 # ╠═99377317-ee92-4b5a-bc78-194ceabd0d5b
 # ╠═ef8f08f1-1a40-44b2-afe4-cbc51259a83a
-# ╠═0a6c1072-0740-4b87-a4d5-797437ca2093
 # ╟─25c583c9-d5ee-42a5-a852-ff8722ff1162
 # ╠═4cab0c2c-7b49-11f0-2d37-fd584e9466ba
 # ╟─bf2eeeb5-9d83-44d1-8d59-bd7260be4c80
+# ╟─a18e130d-1e61-4dbf-a226-9bc962354dd2
+# ╠═d131882f-8d6e-4703-afd1-898c394d0626
+# ╠═c04c3a4d-a13d-4037-b073-24bc5c299335
+# ╠═784fdc67-2cfb-4855-9f22-dc17728af54e
 # ╟─dac4001b-e265-4219-9ee5-e175b9bc732a
