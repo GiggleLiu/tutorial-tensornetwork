@@ -152,7 +152,7 @@ We firstly update the syndrome in the tensors of the tensor network and compute 
 """
 
 # ╔═╡ fcf4d0f6-0dea-4600-97b0-d0550a7056fd
-TensorQEC.update_syndrome!(compiled_decoder.tensors, syndrome);
+TensorQEC.update_syndrome!(compiled_decoder, syndrome);
 
 # ╔═╡ 0bdc1a83-9ff7-4090-a0d8-2abbde2c1927
 # the contraction result is the marginal probabilities on lx and lz
