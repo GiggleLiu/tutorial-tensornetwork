@@ -1,7 +1,7 @@
 # Circuit Simulation and Quantum Error Correction with Tensor Networks
 
 [![Julia](https://img.shields.io/badge/Julia-1.10+-9558B2?style=flat&logo=julia&logoColor=white)](https://julialang.org/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Static Badge](https://img.shields.io/badge/Status-Work_in_Progress-blue.svg)
 
 A comprehensive tutorial on quantum circuit simulation and quantum error correction using tensor networks.
 
@@ -62,10 +62,6 @@ The comprehensive lecture notes are available in [PDF](notes/lecturenote.pdf) fo
 # Compile the notes
 make pdf
 ```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 📧 Contact
 
