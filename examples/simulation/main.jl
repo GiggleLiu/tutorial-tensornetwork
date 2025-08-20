@@ -46,6 +46,9 @@ using LuxorGraphPlot  # Required by visualization extension
 # ╔═╡ d70997f3-71ca-4240-b771-afd682e0ee10
 md"# Quantum circuit simulation with tensor network contraction"
 
+# ╔═╡ 1b4cfe64-d698-4cf6-bc0a-548acb049cb4
+md"Link to the tutorial repository: [https://github.com/GiggleLiu/tutorial-tensornetwork](https://github.com/GiggleLiu/tutorial-tensornetwork)"
+
 # ╔═╡ 1c65281e-f374-4cc7-b139-39d7a07970a9
 PlutoUI.TableOfContents(aside=false)
 
@@ -110,23 +113,40 @@ run_benchmark && @btime code(randn(100, 100), randn(100, 100), randn(100, 100));
 # ╔═╡ 4418cd21-d42c-486a-b3f4-b93566e3ce24
 run_benchmark && @btime nested_code(randn(100, 100), randn(100, 100), randn(100, 100)); # optimized
 
+# ╔═╡ 10e53b4a-92fc-4df5-81ba-f8ed192c9bbc
+md"
+Reasons why order matters:
+1. Contraction order reduces the computational complexity
+2. Binary contraction can make use of BLAS
+"
+
 # ╔═╡ 3b5fe2ee-dbb7-4c97-9074-dd2b50e7f005
-md"### Discussion: Contracting a tensor network is #P-hard"
+md"""### Contraction order optimization
+- Contracting a tensor network is #P-hard, the complexity is $O(2^{{\rm tw}(\overline{T})})$, i.e. exponential to the tree width of the line graph of the tensor network hypergraph topology $T$.
+- Optimizing the contraction order is NP-hard
+"""
 
 # ╔═╡ 4e84a98c-23f6-45c1-884c-bd5214cd0ba9
-function demo_network(n::Int)
-   g = random_regular_graph(n, 3)
-   code = EinCode([[e.src, e.dst] for e in edges(g)], Int[])
-   sizes = uniformsize(code, 2)
-   tensors = [randn([sizes[leg] for leg in ix]...) for ix in getixsv(code)]
-   return code, tensors, sizes
+function demo_network(n::Int; seed=2)
+	# random regular graph
+    g = random_regular_graph(n, 3; seed)
+	# place a matrix on each edge
+    code = EinCode([[e.src, e.dst] for e in edges(g)], Int[])
+	# each input matrix has size 2x2
+    sizes = uniformsize(code, 2)
+    tensors = [randn([sizes[leg] for leg in ix]...) for ix in getixsv(code)]
+    return code, tensors, sizes
 end
 
 # ╔═╡ 04772512-2827-42ef-b348-e000eb14d32d
 code_r3, tensors_r3, sizes_r3 = demo_network(100);
 
 # ╔═╡ ed1ec4bd-e33a-4925-87b8-fc77f359d64c
-optcode = optimize_code(code_r3, sizes_r3, TreeSA());
+optcode = optimize_code(
+	code_r3,   # tensor network topology
+	sizes_r3,  # variable sizes
+	TreeSA()   # optimizer
+);
 
 # ╔═╡ 81e1f9c0-21b5-476f-b225-356f2dccae80
 cc_r3 = contraction_complexity(optcode, sizes_r3)
@@ -136,7 +156,11 @@ md"For more choices of optimizers, please check: [OMEinsumContractionOrdersBench
 
 # ╔═╡ 5de1f7fe-c57b-4e35-adce-76d2d83910fb
 # reduce the memory cost by slicing
-sliced_code = slice_code(optcode, sizes_r3, TreeSASlicer(score=ScoreFunction(sc_target=cc_r3.sc-3)));
+sliced_code = slice_code(
+	optcode,
+	sizes_r3,
+	TreeSASlicer(score=ScoreFunction(sc_target=cc_r3.sc-3))  # keep slicing until the space complexity target `sc_target` is reached.
+);
 
 # ╔═╡ f50074c6-9e86-46b0-8bec-71ef1b521ec5
 cc_r3_sliced = contraction_complexity(sliced_code, sizes_r3)
@@ -358,6 +382,7 @@ md"""
 
 # ╔═╡ Cell order:
 # ╟─d70997f3-71ca-4240-b771-afd682e0ee10
+# ╟─1b4cfe64-d698-4cf6-bc0a-548acb049cb4
 # ╠═24ab1a9a-7b3b-11f0-2569-3df1f2955d62
 # ╠═ba2a2526-047a-4d25-a558-ec1d197dbdeb
 # ╠═1c65281e-f374-4cc7-b139-39d7a07970a9
@@ -380,6 +405,7 @@ md"""
 # ╟─e573d942-790d-4605-86e7-038c9f680c99
 # ╠═2e9a3226-8f3f-49b8-8b63-dade011b7528
 # ╠═4418cd21-d42c-486a-b3f4-b93566e3ce24
+# ╟─10e53b4a-92fc-4df5-81ba-f8ed192c9bbc
 # ╟─3b5fe2ee-dbb7-4c97-9074-dd2b50e7f005
 # ╠═5fdbc76c-f8ac-4fd1-b5d1-51dd7df6283f
 # ╠═4e84a98c-23f6-45c1-884c-bd5214cd0ba9
