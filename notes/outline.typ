@@ -39,6 +39,7 @@ Objectives:
   - e.g.4 kronecker product
   - e.g.5 trace permutation
   - e.g.6 proving trace permutation
+- Tensor Network & Data Compression
   - e.g.7 SVD and data compression
   - e.g.8 Tucker decomposition and CP decomposition
   - e.g.9 matrix product state (MPS, tensor train), GHZ state

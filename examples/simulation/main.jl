@@ -21,10 +21,20 @@ end
 using Pkg; Pkg.activate("../.."); Pkg.status()
 
 # ╔═╡ ba2a2526-047a-4d25-a558-ec1d197dbdeb
-# `Yao` is a quantum simulator
-# `OMEinsum` is a tensor network contraction engine
 # `PlutoUI` is for control gadgets, e.g. the checkboxes
-using Yao, OMEinsum, PlutoUI
+using PlutoUI
+
+# ╔═╡ f06c5c12-6721-42a3-896d-d75f3f487883
+using OMEinsum   # Tensor network contraction backend
+
+# ╔═╡ 1ef56e59-11a2-4460-a5ce-cebcdef62ec3
+using BenchmarkTools  # use for benchmark
+
+# ╔═╡ 5fdbc76c-f8ac-4fd1-b5d1-51dd7df6283f
+using Graphs  # used for constructing graphs
+
+# ╔═╡ c32e072a-5d26-4e61-bec3-3d90da466abb
+using Yao   # Quantum circuit simulator
 
 # ╔═╡ 9669e6e0-998c-4d6e-8fb5-7c99b465ca7a
 # circuit reader
@@ -36,22 +46,111 @@ using LuxorGraphPlot  # Required by visualization extension
 # ╔═╡ d70997f3-71ca-4240-b771-afd682e0ee10
 md"# Quantum circuit simulation with tensor network contraction"
 
-# ╔═╡ ac1a4063-0aab-4e16-9e58-2cbf4fd3285b
-md"""In this tutorial, we use
-- [Yao.jl](https://github.com/QuantumBFS/Yao.jl) as our default quantum simulation tool.
-  - State of the art performance, has GPU support
-  - Supports tensor network backend
-  - Supports noisy channel simulation
-- [OMEinsum.jl](https://github.com/under-Peter/OMEinsum.jl) as our default tensor network contractor.
-  - State of the art performance in optimizing the contraction order ([issue](https://github.com/TensorBFS/OMEinsumContractionOrders.jl/issues/58#issuecomment-3100527416))
-  - Has GPU support
-"""
-
 # ╔═╡ 1c65281e-f374-4cc7-b139-39d7a07970a9
 PlutoUI.TableOfContents(aside=false)
 
+# ╔═╡ 95e973b9-36bf-4279-a195-944f70ba0a74
+md"## Tutorial: einsum notation"
+
+# ╔═╡ ac1a4063-0aab-4e16-9e58-2cbf4fd3285b
+md"""In this tutorial, we use [OMEinsum.jl](https://github.com/under-Peter/OMEinsum.jl) as our default tensor network contractor.
+- State of the art performance in optimizing the contraction order
+- Has GPU support
+"""
+
+# ╔═╡ 2511cebe-290b-4c42-a07c-c6acea3fe21e
+md"Specify a tensor network with string literal `ein`"
+
+# ╔═╡ 50973ca4-636a-47cf-a654-4170b05af63d
+# `->` separates the input and output tensors
+# `,` separates the indices of different input tensors
+# each char represents an index
+
+code = ein"ab,bc,cd->ad"  # using string literal
+
+# ╔═╡ 3ab377e0-77f7-4726-a90a-51e317b2e12d
+md"or programmatically"
+
+# ╔═╡ ab1523d3-edfb-45a4-b63f-6d06d3117f09
+EinCode([[1,2], [2, 3], [3, 4]], [1, 4]) # alternatively
+
+# ╔═╡ 5cb8978f-2744-48f5-b203-9dbf28138bc6
+getixsv(code)   # indices for input tensors
+
+# ╔═╡ 45ead3b1-6d00-405f-bb1f-039d6c95a30c
+getiyv(code)    # indices for the output tensor
+
+# ╔═╡ 52b28fed-44df-4a27-91a9-058486b4cc0e
+md"`variable_dimension` = $(variable_dimension = @bind variable_dimension Slider(1:100, default=2, show_value=true))"
+
+# ╔═╡ d19208d4-d6c0-4b89-9c4c-6fcc29d69e58
+label_sizes = uniformsize(code, variable_dimension)  # define the sizes of the indices
+
+# ╔═╡ f75fa80f-0d77-44e6-bd94-c18c147fc856
+# Time complexity: number of arithematic operations
+# Space complexity: number of elements in the largest tensor
+# Read-write complexity: number of elemental read-write operations
+contraction_complexity(code, label_sizes)
+
+# ╔═╡ 2bb754ae-60b6-4b6a-9fce-c6b758da6573
+code(randn(2, 2), randn(2, 2), randn(2, 2))  # not recommended
+
+# ╔═╡ b21822d7-09ac-4654-b465-72a1d6c2d5ea
+nested_code = ein"(ab,bc),cd->ad"  # recommended
+
+# ╔═╡ 2ffa144c-fcf5-4557-803d-c62c87f4633e
+contraction_complexity(nested_code, label_sizes)
+
+# ╔═╡ e573d942-790d-4605-86e7-038c9f680c99
+md"`run_benchmark` = $(@bind run_benchmark CheckBox())"
+
+# ╔═╡ 2e9a3226-8f3f-49b8-8b63-dade011b7528
+run_benchmark && @btime code(randn(100, 100), randn(100, 100), randn(100, 100)); # unoptimized
+
+# ╔═╡ 4418cd21-d42c-486a-b3f4-b93566e3ce24
+run_benchmark && @btime nested_code(randn(100, 100), randn(100, 100), randn(100, 100)); # optimized
+
+# ╔═╡ 3b5fe2ee-dbb7-4c97-9074-dd2b50e7f005
+md"### Discussion: Contracting a tensor network is #P-hard"
+
+# ╔═╡ 4e84a98c-23f6-45c1-884c-bd5214cd0ba9
+function demo_network(n::Int)
+   g = random_regular_graph(n, 3)
+   code = EinCode([[e.src, e.dst] for e in edges(g)], Int[])
+   sizes = uniformsize(code, 2)
+   tensors = [randn([sizes[leg] for leg in ix]...) for ix in getixsv(code)]
+   return code, tensors, sizes
+end
+
+# ╔═╡ 04772512-2827-42ef-b348-e000eb14d32d
+code_r3, tensors_r3, sizes_r3 = demo_network(100);
+
+# ╔═╡ ed1ec4bd-e33a-4925-87b8-fc77f359d64c
+optcode = optimize_code(code_r3, sizes_r3, TreeSA());
+
+# ╔═╡ 81e1f9c0-21b5-476f-b225-356f2dccae80
+cc_r3 = contraction_complexity(optcode, sizes_r3)
+
+# ╔═╡ 5ff2ba46-add0-4e6f-b137-da553de4c373
+md"For more choices of optimizers, please check: [OMEinsumContractionOrdersBenchmark](https://github.com/TensorBFS/OMEinsumContractionOrdersBenchmark) and [issue](https://github.com/TensorBFS/OMEinsumContractionOrders.jl/issues/58#issuecomment-3100527416)"
+
+# ╔═╡ 5de1f7fe-c57b-4e35-adce-76d2d83910fb
+# reduce the memory cost by slicing
+sliced_code = slice_code(optcode, sizes_r3, TreeSASlicer(score=ScoreFunction(sc_target=cc_r3.sc-3)));
+
+# ╔═╡ f50074c6-9e86-46b0-8bec-71ef1b521ec5
+cc_r3_sliced = contraction_complexity(sliced_code, sizes_r3)
+
 # ╔═╡ e7d40cf3-3aeb-4861-9661-21e6e177636a
 md"## Example 1: GHZ state generation circuit"
+
+# ╔═╡ 685f9abb-2ebe-4377-b284-9f40d9cebe7e
+md"""
+We use [Yao.jl](https://github.com/QuantumBFS/Yao.jl) as our default quantum simulation tool.
+  - State of the art performance, has GPU support
+  - Supports tensor network backend
+  - Supports noisy channel simulation
+"""
 
 # ╔═╡ c5a3865a-701d-436f-b320-0cbfeaaef83d
 md"Let us first define a GHZ state generation circuit."
@@ -99,13 +198,10 @@ OMEinsum.getiyv(net_ghz.code)  # open indices
 viznet(net_ghz; scale=60)
 
 # ╔═╡ 21c90cee-912c-4709-a50e-b920bb7f9083
-# Time complexity: number of arithematic operations
-# Space complexity: number of elements in the largest tensor
-# Read-write complexity: number of elemental read-write operations
 contraction_complexity(net_ghz)
 
 # ╔═╡ f81fb594-2fea-4f02-8da3-0a591f66415a
-contract(net_ghz)
+Yao.contract(net_ghz)
 
 # ╔═╡ b1e38f66-5b3d-4d73-bc51-d2250938a846
 md"## Example 2: Simulate quantum supremacy experiments"
@@ -262,11 +358,40 @@ md"""
 
 # ╔═╡ Cell order:
 # ╟─d70997f3-71ca-4240-b771-afd682e0ee10
-# ╟─ac1a4063-0aab-4e16-9e58-2cbf4fd3285b
 # ╠═24ab1a9a-7b3b-11f0-2569-3df1f2955d62
 # ╠═ba2a2526-047a-4d25-a558-ec1d197dbdeb
 # ╠═1c65281e-f374-4cc7-b139-39d7a07970a9
+# ╟─95e973b9-36bf-4279-a195-944f70ba0a74
+# ╟─ac1a4063-0aab-4e16-9e58-2cbf4fd3285b
+# ╠═f06c5c12-6721-42a3-896d-d75f3f487883
+# ╟─2511cebe-290b-4c42-a07c-c6acea3fe21e
+# ╠═50973ca4-636a-47cf-a654-4170b05af63d
+# ╟─3ab377e0-77f7-4726-a90a-51e317b2e12d
+# ╠═ab1523d3-edfb-45a4-b63f-6d06d3117f09
+# ╠═5cb8978f-2744-48f5-b203-9dbf28138bc6
+# ╠═45ead3b1-6d00-405f-bb1f-039d6c95a30c
+# ╟─52b28fed-44df-4a27-91a9-058486b4cc0e
+# ╠═d19208d4-d6c0-4b89-9c4c-6fcc29d69e58
+# ╠═f75fa80f-0d77-44e6-bd94-c18c147fc856
+# ╠═2bb754ae-60b6-4b6a-9fce-c6b758da6573
+# ╠═b21822d7-09ac-4654-b465-72a1d6c2d5ea
+# ╠═2ffa144c-fcf5-4557-803d-c62c87f4633e
+# ╠═1ef56e59-11a2-4460-a5ce-cebcdef62ec3
+# ╟─e573d942-790d-4605-86e7-038c9f680c99
+# ╠═2e9a3226-8f3f-49b8-8b63-dade011b7528
+# ╠═4418cd21-d42c-486a-b3f4-b93566e3ce24
+# ╟─3b5fe2ee-dbb7-4c97-9074-dd2b50e7f005
+# ╠═5fdbc76c-f8ac-4fd1-b5d1-51dd7df6283f
+# ╠═4e84a98c-23f6-45c1-884c-bd5214cd0ba9
+# ╠═04772512-2827-42ef-b348-e000eb14d32d
+# ╠═ed1ec4bd-e33a-4925-87b8-fc77f359d64c
+# ╠═81e1f9c0-21b5-476f-b225-356f2dccae80
+# ╟─5ff2ba46-add0-4e6f-b137-da553de4c373
+# ╠═5de1f7fe-c57b-4e35-adce-76d2d83910fb
+# ╠═f50074c6-9e86-46b0-8bec-71ef1b521ec5
 # ╟─e7d40cf3-3aeb-4861-9661-21e6e177636a
+# ╟─685f9abb-2ebe-4377-b284-9f40d9cebe7e
+# ╠═c32e072a-5d26-4e61-bec3-3d90da466abb
 # ╟─c5a3865a-701d-436f-b320-0cbfeaaef83d
 # ╠═04073c5e-3a52-4a6e-b242-a8098b66f018
 # ╠═43cd6549-cf66-409f-a8d8-2f6a6812c5bb
