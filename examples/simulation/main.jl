@@ -37,7 +37,15 @@ using LuxorGraphPlot  # Required by visualization extension
 md"# Quantum circuit simulation with tensor network contraction"
 
 # ╔═╡ ac1a4063-0aab-4e16-9e58-2cbf4fd3285b
-md"In this tutorial, we use [Yao.jl](https://github.com/QuantumBFS/Yao.jl) as our default quantum simulation tool."
+md"""In this tutorial, we use
+- [Yao.jl](https://github.com/QuantumBFS/Yao.jl) as our default quantum simulation tool.
+  - State of the art performance, has GPU support
+  - Supports tensor network backend
+  - Supports noisy channel simulation
+- [OMEinsum.jl](https://github.com/under-Peter/OMEinsum.jl) as our default tensor network contractor.
+  - State of the art performance in optimizing the contraction order ([issue](https://github.com/TensorBFS/OMEinsumContractionOrders.jl/issues/58#issuecomment-3100527416))
+  - Has GPU support
+"""
 
 # ╔═╡ 1c65281e-f374-4cc7-b139-39d7a07970a9
 PlutoUI.TableOfContents(aside=false)
@@ -46,7 +54,7 @@ PlutoUI.TableOfContents(aside=false)
 md"## Example 1: GHZ state generation circuit"
 
 # ╔═╡ c5a3865a-701d-436f-b320-0cbfeaaef83d
-md"Let us first define a GHZ state."
+md"Let us first define a GHZ state generation circuit."
 
 # ╔═╡ 04073c5e-3a52-4a6e-b242-a8098b66f018
 # chain: connect the component gates

@@ -29,7 +29,13 @@ using TensorQEC, Yao, OMEinsum, Random, PlutoUI
 # ╔═╡ 2cc025a6-142d-4145-a8c0-df171efd8d04
 md"""
 # Tensor network decoding for quantum error correction code
-In this tutorial, we will use the tensor network to decode quantum error correction code with [TensorQEC.jl](https://github.com/nzy1997/TensorQEC.jl), which is a package contains multiple error correction methods, including integer programming decoder, tensor net work decoder, belief propagation decoder and so on. It could serve as a good starting point to benchmark different QEC decoding algorithms.
+In this tutorial, we will use the tensor network to decode quantum error correction code with [TensorQEC.jl](https://github.com/nzy1997/TensorQEC.jl), which is a package contains multiple error correction methods, including
+- integer programming decoder
+- tensor net work decoder
+- belief propagation decoder (including BPOSD)
+- ...
+
+It could serve as a good starting point to benchmark different QEC decoding algorithms.
 """
 
 # ╔═╡ 6eaef728-8b05-4e25-ba3d-f51d149bb988
@@ -269,15 +275,6 @@ compiled_dem_decoder_bb = compile(TNMMAP(; optimizer=TensorQEC.NoOptimizer()), d
 # ╔═╡ ef8f08f1-1a40-44b2-afe4-cbc51259a83a
 length(compiled_dem_decoder_bb.code.ixs)
 
-# ╔═╡ 25c583c9-d5ee-42a5-a852-ff8722ff1162
-md"`compute_complexity` = $(@bind compute_complexity CheckBox())"
-
-# ╔═╡ 4cab0c2c-7b49-11f0-2d37-fd584e9466ba
-# Too slow!
-if compute_complexity
-	contraction_complexity(compiled_dem_decoder_bb)
-end
-
 # ╔═╡ bf2eeeb5-9d83-44d1-8d59-bd7260be4c80
 md"It has ~585k tensors! Can you come up with a tensor network based decoder for it?"
 
@@ -288,17 +285,28 @@ md"""
 
 # ╔═╡ d131882f-8d6e-4703-afd1-898c394d0626
 syndrome_bb = let
-Random.seed!(110);error_pattern = random_error_pattern(dem_bb)
-syndrome_extraction(error_pattern, compiled_dem_decoder_bb.tanner)
+	Random.seed!(110)
+	error_pattern = random_error_pattern(dem_bb)
+	syndrome_extraction(error_pattern, compiled_dem_decoder_bb.tanner)
 end
 
-# ╔═╡ c04c3a4d-a13d-4037-b073-24bc5c299335
-let
-# decode with a integer programming decoder
-res = decode(IPDecoder(),compiled_dem_decoder_bb.tanner,syndrome_bb) 
+# ╔═╡ 2af4cbc9-3858-4e3c-ad7f-b8ec31bdbd06
+md"`integer_prog_solve` = $(@bind integer_prog_solve CheckBox())"
 
-# test weather we get a same syndrome
-syndrome_bb == syndrome_extraction(res.error_pattern, compiled_dem_decoder_bb.tanner)
+# ╔═╡ c04c3a4d-a13d-4037-b073-24bc5c299335
+if integer_prog_solve
+	# decode with a integer programming decoder
+	@time ip_res = decode(
+		IPDecoder(),  # integer programming backend
+		compiled_dem_decoder_bb.tanner,
+		syndrome_bb
+	)
+	
+	# test weather we get a same syndrome
+	syndrome_bb == syndrome_extraction(
+		ip_res.error_pattern,
+		compiled_dem_decoder_bb.tanner
+	)
 end
 
 # ╔═╡ 784fdc67-2cfb-4855-9f22-dc17728af54e
@@ -361,11 +369,10 @@ md"""
 # ╠═27cffb7b-60de-478f-85c2-9609be6ec574
 # ╠═99377317-ee92-4b5a-bc78-194ceabd0d5b
 # ╠═ef8f08f1-1a40-44b2-afe4-cbc51259a83a
-# ╟─25c583c9-d5ee-42a5-a852-ff8722ff1162
-# ╠═4cab0c2c-7b49-11f0-2d37-fd584e9466ba
 # ╟─bf2eeeb5-9d83-44d1-8d59-bd7260be4c80
 # ╟─a18e130d-1e61-4dbf-a226-9bc962354dd2
 # ╠═d131882f-8d6e-4703-afd1-898c394d0626
+# ╟─2af4cbc9-3858-4e3c-ad7f-b8ec31bdbd06
 # ╠═c04c3a4d-a13d-4037-b073-24bc5c299335
-# ╠═784fdc67-2cfb-4855-9f22-dc17728af54e
+# ╟─784fdc67-2cfb-4855-9f22-dc17728af54e
 # ╟─dac4001b-e265-4219-9ee5-e175b9bc732a
