@@ -299,7 +299,7 @@ If your circuit has space complexity less than 28, the tensor newtork is proabab
 md"`contract_network` = $(@bind contract_network CheckBox())"
 
 # ╔═╡ 24b5ef42-7b3b-11f0-024f-91ef48dcd568
-contract_network && contract(net)[]
+contract_network && Yao.contract(net)[]
 
 # ╔═╡ 1cebfafa-9806-42dc-bca8-03d76136d67d
 md"The result should be consistent with the exact simulation."
@@ -364,7 +364,7 @@ viznet(noisy_net; scale=60)
 md"`contract_noisy` = $(@bind contract_noisy CheckBox())"
 
 # ╔═╡ 24b5ef92-7b3b-11f0-0a85-bffde55b12b8
-contract_noisy && contract(noisy_net)
+contract_noisy && Yao.contract(noisy_net)
 
 # ╔═╡ d217150f-e253-4fba-aa0b-4cc5b26b118a
 md"`exact_noisy` = $(@bind exact_noisy CheckBox())"
