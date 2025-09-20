@@ -63,22 +63,28 @@ Advanced Materials Thrust, Function Hub, HKUST(GZ)])
 #pagebreak()
 
 = Tensor Networks
-A _tensor network_ is a fundamental concept in quantum physics and quantum information theory that provides a powerful diagrammatic representation for multilinear algebra operations. This framework shares similarities with _einsum_ notation@Harris2020, _unweighted probability graphs_@Bishop2006, _sum-product networks_, and _junction trees_@Villescas2023 found in other computational domains.
+A _tensor network_ is a fundamental mathematical framework that provides an elegant diagrammatic representation for multilinear algebra operations. At its core, it transforms complex high-dimensional tensor contractions into intuitive graphical structures where tensors become nodes and shared indices become connecting edges. This visualization paradigm not only makes abstract mathematical operations more accessible but also reveals underlying computational structure that guides optimization strategies.
 
-Tensor networks have found widespread applications across diverse fields, including quantum circuit simulation@Markov2008, quantum error correction@Piveteau2024, neural network compression@Qing2024, and many-body quantum system dynamics@Haegeman2016. Their versatility stems from their ability to efficiently represent and manipulate high-dimensional mathematical objects through intuitive graphical representations.
+The power of tensor networks lies in their universality—they naturally emerge across seemingly disparate computational domains. The framework shares deep connections with _einsum_ notation@Harris2020 in numerical computing, _factor graphs_@Bishop2006 in probabilistic inference, _sum-product networks_ in machine learning, and _junction trees_@Villescas2023 in graphical models. This convergence suggests that tensor networks capture something fundamental about how complex systems decompose into simpler, interacting components.
+
+Tensor networks have revolutionized computational approaches across quantum circuit simulation@Markov2008, where they enable classical simulation of quantum algorithms that would otherwise require exponential resources. In quantum error correction@Piveteau2024, tensor network methods optimize decoding algorithms for fault-tolerant quantum computing by exploiting the sparse structure of error syndromes. The framework has similarly transformed neural network compression@Qing2024, reducing model parameters while preserving performance through low-rank tensor decompositions. Perhaps most significantly, tensor networks have become indispensable for simulating strongly correlated quantum materials@Haegeman2016, where traditional methods fail due to exponential scaling with system size.
+
+This versatility stems from a key insight: many high-dimensional objects that appear computationally intractable actually possess hidden structure that tensor networks can exploit through efficient graphical representations.
 
 == Definition
-At its core, a _tensor network_ provides a diagrammatic representation of _multilinear algebra_. To understand this concept, let's first recall that linear algebra deals with linear functions satisfying two fundamental properties:
-- Additivity: $f(x + y) = f(x) + f(y)$ for any vectors $x$ and $y$
-- Homogeneity: $f(alpha x) = alpha f(x)$ for any scalar $alpha$
+A _tensor network_ provides a diagrammatic representation of _multilinear algebra_—the study of functions that are linear in each of their arguments separately. To build intuition, let's first recall the foundation of linear algebra.
 
-A function $f$ is called _multilinear_ if it maintains linearity with respect to each of its multiple arguments. For instance, the inner product of two vectors $x$ and $y$ is bilinear since it is linear in both $x$ and $y$. 
+A function $f$ is _linear_ if it satisfies the fundamental properties of additivity, where $f(x + y) = f(x) + f(y)$ for any vectors $x$ and $y$, and homogeneity, where $f(alpha x) = alpha f(x)$ for any scalar $alpha$.
+
+Extending this concept, a function $f$ is called _multilinear_ if it is linear with respect to each of its arguments when all other arguments are held fixed. The canonical example is the inner product $angle.l x, y angle.r$, which is _bilinear_—linear in $x$ when $y$ is fixed, and linear in $y$ when $x$ is fixed. 
 
 Consider the chain multiplication of matrices:
 $
   O_(i n) = sum_(j,k,l,m) A_(i j) B_(j k) C_(k l) D_(l m) E_(m n)
 $ <eq:tensor-contraction>
-The output $O_(i n)$ depends linearly on each input tensor, making this a _multilinear map_ known as _tensor contraction_. Tensor networks extend this concept to arbitrary tensors with multiple indices, where we represent each tensor as a node and each index as a connecting edge or "leg." This graphical notation provides an intuitive way to visualize complex multilinear operations.
+This expression exemplifies a _tensor contraction_—a multilinear map where the output $O_(i n)$ depends linearly on each input tensor $A, B, C, D, E$. The summation over repeated indices $(j, k, l, m)$ creates the "contraction" that eliminates internal degrees of freedom.
+
+Tensor networks extend this algebraic concept through a powerful graphical representation where each tensor becomes a _node_ (represented as a circle or shape), each tensor index becomes an _edge_ or "leg" connecting nodes, shared indices between tensors become _internal edges_, and unshared indices become _external edges_ representing the final tensor's dimensions. This graphical notation transforms abstract index manipulations into intuitive network diagrams, making the computational structure immediately visible.
 
 #align(center, text(10pt, canvas({
   import draw: *
@@ -109,12 +115,20 @@ The diagrammatic representation of @eq:tensor-contraction reveals the underlying
   labeledge("A", (rel: (-1, 0)), "i")
   labeledge("E", (rel: (1, 0)), "n")
 })))
-This diagrammatic representation offers significant advantages over algebraic notation by making the computational structure immediately visible. The connected indices represent summation variables, while unconnected indices correspond to the output tensor's dimensions. This visual clarity becomes particularly valuable when analyzing complex tensor contractions, as demonstrated in the following example.
+
+This visual approach becomes indispensable when analyzing complex tensor contractions, as illustrated in the following example.
 
 #exampleblock([
-*Example: Proving the trace permutation rule*
+*Example: Trace Permutation Rule*
 
-Consider three square matrices $A$, $B$, and $C$ of the same dimension. The trace permutation rule states that $tr(A B C) = tr(C A B) = tr(B C A)$. This identity can be elegantly demonstrated using tensor network diagrams.
+The cyclic property of matrix traces provides an excellent introduction to tensor network reasoning. Consider three square matrices $A$, $B$, and $C$ of compatible dimensions. The trace permutation rule states:
+$
+"tr"(A B C) = "tr"(C A B) = "tr"(B C A)
+$
+
+*Algebraic proof*: This identity follows from the definition of matrix multiplication and trace, but requires careful index manipulation.
+
+*Tensor network insight*: The graphical approach reveals why this identity holds at a topological level.
 
 #figure(canvas({
   import draw: *
@@ -127,16 +141,16 @@ Consider three square matrices $A$, $B$, and $C$ of the same dimension. The trac
   content("line.mid", "i", align: center, fill:white, frame:"rect", padding:0.1, stroke: none)
 }), numbering: none)
 
-In this diagram, the cyclic connection of indices creates a closed loop that represents the trace operation. Regardless of which matrix we designate as the "starting point," the topological structure remains invariant. This visual proof immediately reveals why the three expressions $tr(A B C)$, $tr(C A B)$, and $tr(B C A)$ are equivalent—they correspond to identical tensor network contractions. The diagrammatic approach thus provides a more intuitive understanding than algebraic manipulation alone.
+*Visual insight*: The tensor network reveals the essential structure—a closed loop where indices connect cyclically. The trace operation corresponds to this loop contraction, and the cyclic symmetry becomes visually obvious.
+
+*Key lesson*: Regardless of where we "cut" the loop to begin algebraic evaluation, the result remains identical. The three expressions $"tr"(A B C)$, $"tr"(C A B)$, and $"tr"(B C A)$ represent the same geometric object viewed from different starting points. This topological invariance provides deeper insight than purely algebraic derivations.
 ])
 
 
-== Einsum notation and computational complexity
-In computational implementations, tensor network topologies are commonly specified using `einsum` notation—a compact string representation that encodes the contraction structure. In this notation,
-- `->` separates the input and output tensors
-- `,` separates the indices of different input tensors
-- each char represents an index
-For example, matrix multiplication $C = A B$ is represented as `ij,jk->ik`, where the two input matrices are represented by `ij` and `jk`, and the output matrix is represented by `ik`.
+== Einsum Notation and Computational Complexity
+In computational practice, tensor network topologies are specified using _einsum notation_—a compact string representation that encodes contraction structure through a simple syntax. The notation employs `->` to separate input tensors (left) from output tensor (right), with `,` separating the index signatures of different input tensors. Each character represents a unique tensor index, where indices appearing only on the right become output dimensions, and indices not appearing on the right are summed over during contraction.
+
+Matrix multiplication $C = A B$ exemplifies this notation as `ij,jk->ik`, where the input tensors `ij` (matrix $A$) and `jk` (matrix $B$) share the contracted index `j` (which appears twice on the left but is absent on the right), producing the output tensor `ik` (matrix $C$).
 
 The following examples use the #link("https://github.com/under-Peter/OMEinsum.jl", "OMEinsum") package to demonstrate tensor network specification, contraction order optimization, and execution. Tensor network topologies can be defined using either the convenient `ein` string literal or the more flexible `EinCode` constructor for programmatic construction.
 
@@ -180,13 +194,13 @@ Space complexity: 2^13.287712379549449
 Read-write complexity: 2^15.287712379549449
 ```
 
-Contraction complexity can be analyzed from multiple complementary perspectives:
+Tensor contraction complexity can be analyzed through three complementary lenses:
 
-- *Time complexity* ($100^4$ operations): Represents the total number of floating-point operations (FLOPs) required for the contraction. For einsum operations, this equals the product of all unique index dimensions, since each unique index either participates in summation or appears in the output. As we'll see later, smart contraction ordering can dramatically reduce this complexity.
+*Time complexity* ($≈ 100^4$ operations): The total number of floating-point operations (FLOPs) required for contraction. For einsum operations, this generally equals the product of all unique index dimensions—each combination of index values requires one multiplication and addition. Crucially, intelligent contraction ordering can reduce this from exponential to polynomial scaling.
 
-- *Space complexity* ($100^2$ elements): Measures the peak memory requirement for storing the largest intermediate tensor generated during contraction. This determines the minimum memory needed to execute the computation.
+*Space complexity* ($≈ 100^2$ elements): The peak memory footprint needed to store the largest intermediate tensor during contraction. This represents the computational "bottleneck" that determines whether a calculation is feasible on available hardware.
 
-- *Read-write complexity* ($4 times 100^2$ operations): Quantifies total memory bandwidth usage by counting all floating-point numbers transferred between memory and processor throughout the contraction. This metric captures the cumulative cost of accessing all intermediate tensors and often determines real-world performance on bandwidth-limited systems.
+*Read-write complexity* ($≈ 4 × 100^2$ operations): The total memory bandwidth consumed by transferring all intermediate results between storage and processor. On modern architectures where memory access often dominates arithmetic costs, this metric frequently determines practical performance.
 
 While `EinCode` objects are callable and can directly perform contractions:
 
@@ -197,7 +211,9 @@ julia> code(randn(2, 2), randn(2, 2), randn(2, 2))  # not recommended
  -0.674225  1.40281
 ```
 
-This approach is *strongly discouraged* because `OMEinsum` uses an unoptimized contraction order that may be exponentially inefficient. A better approach explicitly specifies the contraction order using parentheses:
+This direct approach is *strongly discouraged* because `OMEinsum` defaults to an unoptimized contraction order that can be exponentially inefficient. The naive left-to-right evaluation often creates unnecessarily large intermediate tensors.
+
+A superior approach explicitly specifies the contraction order using parentheses to guide the computation:
 
 ```julia
 julia> nested_code = ein"(ab,bc),cd->ad"
@@ -234,14 +250,14 @@ This represents over 600× speedup, demonstrating how proper contraction orderin
 // #raw(read("examples/basic/basic.jl"), lang: "julia", block: true)
 
 #exampleblock([
-*Example A: Star contraction*
+*Example A: Star Contraction Pattern*
 
-The star contraction of three matrices $A, B, C in bb(R)^(n times n)$ is defined as:
+Star contractions demonstrate how tensor networks can create higher-dimensional outputs from matrix inputs. Given three matrices $A, B, C in bb(R)^(n times n)$, the star contraction produces a rank-3 tensor:
 $
 O_(i j k) = sum_a A_(i a) B_(a j) C_(a k)
 $
 
-This operation creates a 3-way tensor by connecting all matrices through a shared summation index:
+*Geometric interpretation*: Three matrices "radiate" from a central summation index $a$, creating a star-like topology. This pattern frequently appears in quantum many-body problems and machine learning applications.
 
 #figure(canvas({
   import draw: *
@@ -260,14 +276,14 @@ This operation creates a 3-way tensor by connecting all matrices through a share
 
 The einsum notation is `ai,aj,ak->ijk` with time complexity $O(n^4)$, where the shared index $a$ creates the characteristic "star" topology.
 
-*Example B: Kronecker product*
+*Example B: Kronecker Product Structure*
 
-The Kronecker product of two matrices $A, B in bb(R)^(n times n)$ is defined as:
+The Kronecker product illustrates tensor networks with disconnected components. For matrices $A, B in bb(R)^(n times n)$, their Kronecker product creates:
 $
 C_(i j k l) = A_(i j) B_(k l)
 $
 
-Unlike the star contraction, this operation has no shared indices:
+*Structural insight*: The absence of shared indices reflects the direct product structure—no information flows between the matrix components. This disconnected topology contrasts sharply with the connected star pattern.
 
 #figure(canvas({
   import draw: *
@@ -279,15 +295,15 @@ Unlike the star contraction, this operation has no shared indices:
   labeledge("B", (rel: (0, 1.5)), "k")
 }), numbering: none)
 
-The einsum notation is `ij,kl->ijkl` with time complexity $O(n^4)$. The absence of connections reflects the direct product structure.
+The einsum notation `ij,kl->ijkl` reveals the $O(n^4)$ complexity, which arises from forming all possible index combinations rather than performing contractions. This disconnected structure makes the Kronecker product trivially parallelizable.
 ])
 
-=== Tensor network contraction is \#P-complete
-Contracting a tensor is hard, which is in \#P-complete (harder than the famous NP-complete). Showing a problem is hard can be done through reduction.
-If we can reduce problem $cal(A)$ to problem $cal(B)$, which means by solving problem $cal(B)$ (in time polynomial to input size), we can solve problem $cal(A)$ with the answer to $cal(B)$.
-Then $cal(B)$ is not easier than $cal(A)$ from computational complexity perspective.
+=== Tensor Network Contraction is \#P-Complete
+General tensor network contraction belongs to the \#P-complete complexity class—a computational category even more challenging than the famous NP-complete problems. Understanding this complexity helps explain why approximate methods and heuristics dominate practical tensor network algorithms.
 
-The computational complexity of general tensor network contraction can be established by reduction from a known \#P-complete problem: counting satisfying assignments of 2-SAT formulas.
+*Computational reduction*: To establish computational hardness, we use the technique of _reduction_. If we can transform any instance of problem $cal(A)$ into an instance of problem $cal(B)$ using polynomial-time operations, then $cal(B)$ is at least as hard as $cal(A)$. When $cal(A)$ is known to be computationally intractable, this proves that $cal(B)$ is also intractable.
+
+We establish the \#P-completeness of tensor network contraction through a reduction from a canonical \#P-complete problem: counting the satisfying assignments of 2-SAT Boolean formulas. This reduction demonstrates that any algorithm efficiently solving general tensor contractions could also efficiently count 2-SAT solutions—something believed to be computationally impossible.
 
 #definition([2-SAT formula], [
     A 2-SAT formula is a Boolean formula in conjunctive normal form (CNF) where each clause contains at most two literals.
@@ -732,11 +748,13 @@ julia> @assert sliced_code(tensors...) ≈ optcode(tensors...)
 ```
 
 == Data Compression and Tensor Decomposition
-Let us define a complex matrix $A in CC^(m times n)$, and let its singular value decomposition be
+Tensor decomposition provides a systematic approach to data compression by representing high-dimensional objects as networks of smaller, more manageable tensors. This section explores how various decomposition strategies achieve different compression-computation trade-offs.
+
+*Singular Value Decomposition (SVD)*: Consider a complex matrix $A in CC^(m times n)$ with singular value decomposition:
 $
 A = U S V^dagger
 $
-where $U$ and $V$ are unitary matrices and $S$ is a diagonal matrix with non-negative real numbers on the diagonal. Let $s$ be the diagonal part of $S$, the diagramatic representation of SVD decomposition is
+where $U$ and $V$ are unitary matrices and $S$ contains non-negative singular values. The tensor network representation of this decomposition reveals its essential structure:
 #align(center, text(10pt, canvas({
   import draw: *
   tensor((-5.5, 0), "A", [$A$])
@@ -756,14 +774,20 @@ where $U$ and $V$ are unitary matrices and $S$ is a diagonal matrix with non-neg
   line("k", "L")
 })))
 
-Let us denote $d_i = dim(i)$, $d_j = dim(j)$, $d_k = dim(k)$, $d_s = dim(s)$. For data compression, we reqire $d_k < min(d_i, d_j)$, the compression ratio can be computed as: $(d_i d_j)/(d_k (d_i + d_j))$.
+The compression efficiency depends on the dimensions involved. Let $d_i = \dim(i)$, $d_j = \dim(j)$, and $d_k = \dim(k)$ denote the sizes of the respective indices. 
 
-=== CP-decomposition
+*Compression condition*: Meaningful compression requires $d_k < min(d_i, d_j)$ —the internal bond dimension must be smaller than both external dimensions.
 
-For example, the CP-decomposition of a rank-4 tensor $T$ can be represented as
+*Compression ratio*: The storage reduction achieved is $(d_i d_j)/(d_k (d_i + d_j))$, representing the ratio of original matrix elements to total decomposed elements.
+
+=== CP Decomposition
+The Canonical Polyadic (CP) decomposition, also known as CANDECOMP/PARAFAC, represents tensors as sums of rank-1 components. This decomposition is particularly effective for tensors with inherent low-rank structure.
+
+*Mathematical form*: A rank-4 tensor $T$ decomposes as:
 $
-T_(i j k l) = sum_(c) U_1^(i c) U_2^(j c) U_3^(k c) U_4^(l c) Lambda_(c)
+T_(i j k l) = sum_(c=1)^R U_1^(i c) U_2^(j c) U_3^(k c) U_4^(l c) Lambda_c
 $
+where $R$ is the CP rank and $Lambda_c$ are optional scaling factors.
 
 #align(center, text(10pt, canvas({
   import draw: *
@@ -792,15 +816,23 @@ $
   line("c", "L")
 })))
 
-The data compression ratio for CP-decomposition is $(product_(i=1)^N d_i) / (R sum_(i=1)^N d_i)$, where $d_i$ is the dimension of the $i$-th mode, $N$ is the number of modes, and $R$ is the rank (dimension of the shared index $c$). For the rank-4 case shown above, this becomes $(d_i d_j d_k d_l) / (R(d_i + d_j + d_k + d_l + 1))$.
+*Compression analysis*: For an $N$-mode tensor with mode dimensions ${d_i}_(i=1)^N$ and CP rank $R$:
+- Original storage: $product_(i=1)^N d_i$ elements  
+- Decomposed storage: $R sum_(i=1)^N d_i + R$ elements (including scaling factors)
+- Compression ratio: $(product_(i=1)^N d_i)/(R(sum_(i=1)^N d_i + 1))$
 
-=== Tucker decomposition
+For our rank-4 example: $(d_i d_j d_k d_l)/(R(d_i + d_j + d_k + d_l + 1))$
 
-The Tucker decomposition of a rank-4 tensor $T$ can be represented as
+*Key advantage*: Storage scales linearly with tensor order, avoiding the "curse of dimensionality."
+
+=== Tucker Decomposition
+Tucker decomposition generalizes matrix SVD to higher-order tensors by decomposing each mode separately while retaining a dense core tensor. This provides more flexibility than CP decomposition at the cost of exponential core tensor growth.
+
+*Mathematical form*: A rank-4 tensor $T$ decomposes as:
 $
 T_(i j k l) = sum_(a,b,c,d) U_1^(i a) U_2^(j b) U_3^(k c) U_4^(l d) X_(a b c d)
 $
-where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
+where $\{U_i\}$ are mode-wise orthogonal matrices and $X$ is the core tensor encoding mode interactions.
 
 #figure(canvas({
   import draw: *
@@ -831,7 +863,11 @@ where $U_1, U_2, U_3, U_4$ are unitary matrices and $X$ is a rank-4 tensor.
 
 The data compression ratio for Tucker decomposition is $(product_(i=1)^N d_i) / (product_(i=1)^N r_i + sum_(i=1)^N d_i r_i)$, where $d_i$ is the dimension of the $i$-th mode, $N$ is the number of modes, and $r_i$ is the dimension of the $i$-th core tensor mode. For the rank-4 case shown above, this becomes $(d_i d_j d_k d_l) / (r_a r_b r_c r_d + d_i r_a + d_j r_b + d_k r_c + d_l r_d)$.
 
-Tucker decomposition is more flexible than CP decomposition as it allows different compression ratios for different modes, but it suffers from the curse of dimensionality as the core tensor $X$ grows exponentially with the number of modes.
+The Tucker decomposition exhibits distinct computational characteristics that determine its practical applicability. Unlike CP decomposition, which imposes uniform rank constraints across all modes, Tucker decomposition permits independent rank selection for each tensor mode, enabling targeted compression strategies that exploit mode-specific structure. This flexibility allows the decomposition to capture complex multilinear dependencies that would require prohibitively high CP ranks.
+
+However, this representational power comes at a fundamental computational cost. The core tensor $X$ scales as $product_(i=1)^N r_i$, where $r_i$ denotes the rank of the $i$-th mode and $N$ is the tensor order. This exponential scaling in the number of modes—commonly termed the "curse of dimensionality"—severely constrains the method's applicability to high-order tensors. For tensors of order $N > 6$, the core tensor typically becomes the dominant storage component, negating compression benefits.
+
+Consequently, Tucker decomposition finds optimal application in moderate-order scenarios ($N ≤ 4$) where the exponential core scaling remains computationally tractable while preserving the method's superior representational capabilities.
 
 
 === Tensor Train
@@ -952,51 +988,68 @@ julia> @assert ein"ia,ajb,bkc,cld,dm->ijklm"(L, M, M, M, R) ≈ uniform_state(5)
 ```
 
 #exampleblock([
-=== Example: Compress a high dimensional tensor with tensor train
-In this example, we show how to compress a high dimensional tensor with tensor train. We start from defining the data structure.
+=== Example: High-Dimensional Tensor Compression with Tensor Train
+
+This example demonstrates practical tensor train decomposition for compressing exponentially large tensors into manageable representations. We'll compress a tensor with $2^20 approx 1$ million elements using polynomial storage.
+
+*Data structure*: We define a Matrix Product State (MPS) to store the tensor train:
 ```julia
 using OMEinsum, LinearAlgebra
 
+# MPS represents a tensor train decomposition
 struct MPS{T}
-    tensors::Vector{Array{T, 3}}
+    tensors::Vector{Array{T, 3}}  # Each tensor has (left_bond, physical, right_bond)
 end
 ```
 
-The main algorithm is implemented as follows:
+*Decomposition algorithm*: The tensor train decomposition proceeds through iterative SVD sweeps:
 ```julia
-# Function to compress a tensor using Tensor Train (TT) decomposition
-function tensor_train_decomposition(tensor::AbstractArray, largest_rank::Int; atol=1e-6)
+# Compress tensor using iterative SVD-based tensor train decomposition
+function tensor_train_decomposition(tensor::AbstractArray, max_rank::Int; atol=1e-6)
     dims = size(tensor)
     n = length(dims)
     tensors = Array{Float64, 3}[]
-    rpre = 1  # virtual bond dimension size
-    current_tensor = reshape(tensor, dims[1], :)
+    
+    # Initialize left bond dimension
+    left_bond = 1
+    current_tensor = reshape(tensor, dims[1], :)  # Matricize first mode
+    
+    # Sweep through all modes except the last
     for i in 1:(n-1)
-        # Perform SVD
-        U_truncated, S_truncated, V_truncated, r = truncated_svd(current_tensor, largest_rank, atol)
-        push!(tensors, reshape(U_truncated, (rpre, dims[i], r)))
+        # SVD with rank truncation
+        U, S, V, new_rank = truncated_svd(current_tensor, max_rank, atol)
         
-        # Prepare the tensor for the next iteration
-        current_tensor = reshape(S_truncated * V_truncated', r * dims[i+1], :)
-        rpre = r
+        # Store current tensor with proper bond structure
+        push!(tensors, reshape(U, (left_bond, dims[i], new_rank)))
+        
+        # Prepare remainder for next iteration
+        remainder = Diagonal(S) * V'
+        current_tensor = reshape(remainder, new_rank * dims[i+1], :)
+        left_bond = new_rank
     end
-    push!(tensors, reshape(current_tensor, (rpre, dims[n], 1)))
+    
+    # Final tensor has right bond dimension 1
+    push!(tensors, reshape(current_tensor, (left_bond, dims[n], 1)))
     return MPS(tensors)
 end
 ```
 
-We basically iteratively call the truncated singular value decomposition (SVD) to reduce the virtual bond dimension.
+*Algorithm insight*: Each iteration performs SVD to optimally separate the current mode from all remaining modes, then truncates small singular values to control bond dimensions. This greedy approach often achieves near-optimal compression for many practical tensors.
 
 ```julia
-function truncated_svd(current_tensor::AbstractArray, largest_rank::Int, atol)
-    U, S, V = svd(current_tensor)
-    r = min(largest_rank, sum(S .> atol))  # error estimation
-    S_truncated = Diagonal(S[1:r])
-    U_truncated = U[:, 1:r]
-    V_truncated = V[:, 1:r]
-    return U_truncated, S_truncated, V_truncated, r
+function truncated_svd(matrix::AbstractArray, max_rank::Int, atol)
+    U, S, V = svd(matrix)
+    
+    # Determine truncation rank: respect both rank limit and error tolerance
+    significant_values = S .> atol
+    effective_rank = min(max_rank, sum(significant_values))
+    
+    # Return truncated factors
+    return U[:, 1:effective_rank], S[1:effective_rank], V[:, 1:effective_rank], effective_rank
 end
 ```
+
+*Truncation strategy*: The algorithm balances two competing objectives by maintaining bond dimensions at computationally manageable levels while retaining singular values above the specified error threshold. This dual constraint ensures both computational tractability and approximation accuracy.
 
 To recover the tensor, we construct the matrix product state, we construct the tensor network topology and 
 
@@ -1011,22 +1064,26 @@ function contract(mps::MPS)
 end
 ```
 
-As an example, we compress a uniform tensor of size 2^20.
+*Practical demonstration*: We compress a uniform tensor with $2^20 approx 1$ million elements:
 ```julia
-tensor = ones(Float64, fill(2, 20)...);
-mps = tensor_train_decomposition(tensor, 5)
-reconstructed_tensor = contract(mps);
+# Create a uniform tensor (all entries equal to 1)
+tensor = ones(Float64, fill(2, 20)...)  # Shape: (2,2,2,...,2) with 20 modes
 
-relative_error = norm(tensor - reconstructed_tensor) / norm(tensor)
-# output: 5.114071183432393e-12
+# Perform tensor train decomposition
+mps = tensor_train_decomposition(tensor, max_rank=5)
+reconstructed = contract(mps)
 
-original_size = prod(size(tensor))
-compressed_size = sum([prod(size(core)) for core in mps.tensors])
-compression_ratio = original_size / compressed_size
-# output: 26214.4
+# Analyze compression performance
+relative_error = norm(tensor - reconstructed) / norm(tensor)
+# Result: ~5e-12 (nearly perfect reconstruction)
+
+original_storage = prod(size(tensor))  # 2^20 = 1,048,576 elements
+compressed_storage = sum(prod(size(core)) for core in mps.tensors)
+compression_ratio = original_storage / compressed_storage
+# Result: ~26,214 (massive compression!)
 ```
 
-The virtual bond dimension has size $chi = 1$, which means each tensor has only $chi^2 d = 2$ elements.
+*Compression analysis*: The uniform tensor has remarkable structure—its tensor train rank is exactly 1, enabling each core tensor to store only 2 elements. This demonstrates how tensor networks can exploit hidden low-rank structure for exponential compression gains.
 ])
 
 == Automatic Differentiation
@@ -1131,256 +1188,12 @@ julia> gradients = cost_and_gradient(optcode, (tensors...,));
 
 The returned `gradients` is a vector of arrays, each of which is an adjoint of an input tensor.
 
-
-#dev(
-[
-== Complex numbers, a tensor network perspective
-
-A complex number is composed of two real numbers, hence we can use a real tensor with one more dimension to represent complex tensors. For example, to represent a matrix, we can use a rank 3 tensor:
-#figure(canvas({
-    import draw: *
-    let s(it) = text(11pt, it)
-    tensor((0, 0), "A", s[])
-    line("A", (rel: (-1, 0)))
-    line("A", (rel: (1, 0)))
-    line("A", (rel: (0, -1)), stroke: green)
-}), numbering: none)
-where we use the green color to denote the extra dimension of size 2.
-
-In this representation, complex conjugate is a linear operator. It is equivalent to apply Pauli-Z on the extra dimension:
-#figure(canvas({
-    import draw: *
-    let s(it) = text(11pt, it)
-    content((-1.7, 0), s[$A^* = $])
-    tensor((0, 0), "A", s[A])
-    tensor((0, -1), "Z", s[Z])
-    line("A", (rel: (-1, 0)))
-    line("A", (rel: (1, 0)))
-    line("A", "Z", stroke: green)
-    line("Z", (rel: (0, -0.7)), stroke: green)
-}), numbering: none)
-
-Similarly, the operation of adding a phase factor $e^(i phi)$ can be represented as a rotation operation applied on the extra dimension:
-#figure(canvas({
-    import draw: *
-    let s(it) = text(11pt, it)
-    content((-1.9, 0), s[$e^(i phi)A = $])
-    tensor((0, 0), "A", s[A])
-    tensor((0, -1), "Z", s[$R_phi$])
-    line("A", (rel: (-1, 0)))
-    line("A", (rel: (1, 0)))
-    line("A", "Z", stroke: green)
-    line("Z", (rel: (0, -0.7)), stroke: green)
-    content((4, -0.5), s[$R_phi = mat(cos phi, -sin phi; sin phi, cos phi)$])
-}), numbering: none)
-
-Let us define a permutation symmetric tensor $cal(C)$ as:
-$
-cal(C) = vec(mat(1, 0; 0, -1), mat(0, -1; -1, 0))
-$
-
-Given a matrix multiplication $C = A B$, let us stack the real part of $A$ as a 3D tensor $T_A$, and $B$ as a 3D tensor $T_B$. We can redefine the matrix multiplication as tensor contraction:
-#figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  tensor((-3, 0), "C", s[$T_C$])
-  line("C", (rel: (-1, 0)))
-  line("C", (rel: (1, 0)))
-  line("C", (rel: (0, -1)), stroke: green)
-  content((-1.5, 0), s[$=$])
-  tensor((0, 0), "A", s[$T_A$])
-  tensor((2, 0), "B", s[$T_B$])
-  tensor((1, -1), "c", s[$cal(C)$])
-  tensor((1, -2), "d", s[$Z$])
-  line("A", "B")
-  line("A", (rel: (-1, 0)))
-  line("B", (rel: (1, 0)))
-  line("A", (rel: (0, -1)), "c", stroke: green)
-  line("B", (rel: (0, -1)), "c", stroke: green)
-  line("c", "d", stroke: green)
-  line("d", (rel: (0, -0.7)), stroke: green)
-}), numbering: none)
-where the green color indicates the extra dimension of size 2 for representing the complex numbers.
-We use this formalism to drtive the complex valued backward rule.
-#figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  content((-2, -1), s[$overline(T)_B = $])
-  tensor((1, -3), "C", s[$overline(T)_C$])
-  tensor((0, 0), "A", s[$T_A$])
-  tensor((2, 0), "B", s[$T_B$])
-  tensor((1, -1), "c", s[$cal(C)$])
-  tensor((1, -2), "d", s[$Z$])
-  line("A", "B")
-  line("A", (rel: (0, -1)), "c", stroke: green)
-  line("B", (rel: (0, -1)), "c", stroke: green)
-  line("c", "d", stroke: green)
-  line("d", "C", stroke: green)
-
-  line("C", (rel: (-2, 0)), (rel: (0, 3)), "A")
-  line("C", (rel: (2, 0)), (rel: (0, 3)), "B")
-  
-  hobby((1, 0.5), (2, -1), (4, 0), stroke: (dash: "dashed"))
-  content((3, 0.5), s[remove])
-}), numbering: none)
-
-It corresponds to first take conjugate of $overline(T)_C$, the compute the tensor contraction, and followed by a conjugate, i.e. $overline(T)_B = (T_A * overline(T)_C^*)^*$.
-
-
-```julia
-using OMEinsum
-
-n = 10
-m = randn(ComplexF64, n, n)
-n = randn(ComplexF64, n, n)
-s = cat(real(m), imag(m), dims=3)
-t = cat(real(n), imag(n), dims=3)
-c = zeros(2, 2, 2)
-c[:, :, 1] = [1 0; 0 -1]
-c[:, :, 2] = [0 -1; -1 0]
-z = [1 0; 0 -1]
-
-res1 = m * n; res1 = cat(real(res1), imag(res1), dims=3)
-res2 = ein"ija,jkb,abc,cd->ikd"(s, t, c, z)
-@assert res1 ≈ res2
-```
-
-The norm square of a vector is even more straight forward, it is just sum of the norm of the real and imaginary parts. Diagramatically, it can be represented as:
-
-#figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  tensor((0, 0), "A", s[$T_w$])
-  tensor((2, 0), "B", s[$T_v$])
-  line("A", "B")
-  line("A", (rel: (-1, 0)), (rel: (0, -1)), (rel: (1, -1), to: "B"), (rel: (0, 1)), "B", stroke: green)
-}), numbering: none)
-
-=== Some properties of $cal(C)$ operator
-- permutation invariance
- #figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  tensor((0, 0), "c", s[$cal(C)$])
-  bezier("c.south", (rel: (0.9, 0), to: "c"), (rel: (-0.4, -0.7)), (rel: (0.7, 0), to: "c"), stroke: green)
-  bezier("c.east", (rel: (0, -0.9), to: "c"), (rel: (0.7, 0.4)), (rel: (0, -0.7), to: "c"), stroke: green)
-  line("c", (rel: (-0.7, 0)), stroke: green)
-
-  content((1.5, 0), s[$=$])
-
-  set-origin((2.5, 0))
-  tensor((0, 0), "c", s[$cal(C)$])
-  line("c", (rel: (0, -0.7)), stroke: green)
-  line("c", (rel: (0.7, 0)), stroke: green)
-  line("c", (rel: (-0.7, 0)), stroke: green)
-}), numbering: none)
-
-- conjugate invariance
- #figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  tensor((0, 0), "c", s[$cal(C)$])
-  tensor((0, -1), "d1", s[$Z$])
-  tensor((1, 0), "d2", s[$Z$])
-  tensor((-1, 0), "d3", s[$Z$])
-  line("c", "d1", stroke: green)
-  line("c", "d2", stroke: green)
-  line("c", "d3", stroke: green)
-  line("d1", (rel: (0, -0.7)), stroke: green)
-  line("d2", (rel: (0.7, 0)), stroke: green)
-  line("d3", (rel: (-0.7, 0)), stroke: green)
-
-  content((2, 0), s[$=$])
-
-  set-origin((3, 0))
-  tensor((0, 0), "c", s[$cal(C)$])
-  line("c", (rel: (0, -0.7)), stroke: green)
-  line("c", (rel: (0.7, 0)), stroke: green)
-  line("c", (rel: (-0.7, 0)), stroke: green)
-}), numbering: none)
-- cascade rule
- #figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  tensor((0, 0), "c1", s[$cal(C)$])
-  tensor((1, -1), "c2", s[$cal(C)$])
-  tensor((0, -1), "z", s[$Z$])
-  line("c1", (rel: (-0.7, 0)), (rel: (0, 0.7)), stroke: green)
-  line("c1", (rel: (0, 0.7)), stroke: green)
-  line("c1", "z", stroke: green)
-  line("c2", "z", stroke: green)
-  line("c2", (rel: (0, 1.7)), stroke: green)
-  line("c2", (rel: (0, -0.7)), stroke: green)
-
-  content((2, 0), s[$=$])
-
-  set-origin((3, 0))
-  tensor((0, -1), "c1", s[$cal(C)$])
-  tensor((1, 0), "c2", s[$cal(C)$])
-  tensor((1, -1), "z", s[$Z$])
-  line("c2", (rel: (0.7, 0)), (rel: (0, 0.7)), stroke: green)
-  line("c1", (rel: (0, 1.7)), stroke: green)
-  line("c2", "z", stroke: green)
-  line("c1", "z", stroke: green)
-  line("c2", (rel: (0, 0.7)), stroke: green)
-  line("c1", (rel: (0, -0.7)), stroke: green)
-}), numbering: none)
-
-- identity rule, define identity element $1$ as $(1, 0)^T$
- #figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  tensor((0, 0), "c", s[$cal(C)$])
-  tensor((1, 0), "d2", s[$1$])
-  line("c", "d2", stroke: green)
-  line("c", (rel: (0, -0.7)), stroke: green)
-  line("c", (rel: (-0.7, 0)), stroke: green)
-
-  content((1.75, 0), s[$=$])
-
-  set-origin((3, 0))
-  tensor((0, 0), "c", s[$Z$])
-  line("c", (rel: (0, -0.7)), stroke: green)
-  line("c", (rel: (-0.7, 0)), stroke: green)
-}), numbering: none)
-
-=== The completeness of the above rules
-
-- Addition (holds trivially, generalized to vector of length 2)
-    - Associativity: $a + (b + c) = (a + b) + c$
-    - Commutativity: $a + b = b + a$
-    - Existence of identity: $a + 0 = a$
-    - Existence of inverse: $a + (-a) = 0$
-- Multiplication
-    - Associativity: $a ⋅ (b ⋅ c) = (a ⋅ b) ⋅ c$ (cascade rule)
-    - Commutativity: $a ⋅ b = b ⋅ a$ (permutative invariance)
-    - Existence of identity: $a ⋅ 1 = a$ (identity rule)
-      #figure(canvas({
-  import draw: *
-  let s(it) = text(11pt, it)
-  tensor((-2, 0), "C", s[$a$])
-  line("C", (rel: (0, -1)), stroke: green)
-  content((-1, 0), s[$=$])
-  tensor((0, 0), "A", s[$a$])
-  tensor((2, 0), "B", s[$1$])
-  tensor((1, -1), "c", s[$cal(C)$])
-  tensor((1, -2), "d", s[$Z$])
-  line("A", (rel: (0, -1)), "c", stroke: green)
-  line("B", (rel: (0, -1)), "c", stroke: green)
-  line("c", "d", stroke: green)
-  line("d", (rel: (0, -0.7)), stroke: green)
-      }), numbering: none)
-    - Existence of inverse ($a!=0$): $a ⋅ a^(-1) = 1$
-
-- Distributivity of multiplication over addition: $a ⋅ (b + c) = (a ⋅ b) + (a ⋅ c)$ (holds trivially from the tensor algebra)
-
-])
 = Quantum Circuit Simulation
 
-== Quantum states and quantum gates
-Quantum circuits provide a natural framework for tensor network representations, where quantum states become vectors and quantum gates become tensors.
+== Quantum States and Quantum Gates
+Quantum circuits map naturally onto tensor networks through a simple correspondence: quantum states become vectors (rank-1 tensors), quantum gates become matrices (rank-2 tensors), and multi-qubit gates become higher-rank tensors. This mapping transforms quantum circuit simulation into tensor network contraction problems.
 
-A quantum system initialized to $|0 angle.r^(times.circle n)$ (the $n$-fold tensor product of $|0 angle.r$ states) decomposes as a direct product of $n$ individual qubits:
+*Initial state representation*: A quantum system initialized to $|0 angle.r^(times.circle n)$ (the $n$-fold tensor product of computational zero states) decomposes as a product of independent single-qubit states:
 
 #figure(canvas({
   import draw: *
@@ -1395,7 +1208,9 @@ A quantum system initialized to $|0 angle.r^(times.circle n)$ (the $n$-fold tens
   line("init", (1, -3))
 }), numbering: none)
 
-where each $|0 angle.r = mat(1; 0)$ state is represented as a rank-1 tensor. Single-qubit gates correspond to rank-2 tensors (matrices) that transform individual qubits. For instance, applying a Hadamard gate $H$ to the first qubit creates the following tensor network:
+where each $|0 angle.r = mat(1; 0)$ state appears as a rank-1 tensor in the network.
+
+*Gate representation*: Single-qubit gates correspond to rank-2 tensors (matrices) that transform individual qubits. For example, applying a Hadamard gate $H = 1/sqrt(2) mat(1, 1; 1, -1)$ to the first qubit creates the tensor network:
 
 #figure(canvas({
   import draw: *
@@ -1413,7 +1228,7 @@ where each $|0 angle.r = mat(1; 0)$ state is represented as a rank-1 tensor. Sin
   line("init", (1, -3))
 }), numbering: none)
 
-Multi-qubit gates create more complex tensor network structures. The CNOT gate, fundamental to quantum computation, can be decomposed into a tensor network representation:
+*Multi-qubit gates*: Two-qubit and multi-qubit gates create richer tensor network structures by introducing shared virtual indices between previously independent qubits. The CNOT gate, which creates entanglement between qubits, admits the tensor network decomposition:
 
 #figure(canvas({
   import draw: *
@@ -1439,13 +1254,12 @@ Multi-qubit gates create more complex tensor network structures. The CNOT gate, 
   line("H2", "H3")
 }), numbering: none)
 
-This decomposition (ignoring normalization factors) illustrates how two-qubit gates introduce entanglement through shared virtual indices connecting different physical qubits.
+This decomposition (up to normalization) reveals a key insight: two-qubit gates create *entanglement* by establishing shared virtual bonds between previously independent qubits. These virtual indices carry the quantum correlations that classical systems cannot efficiently represent.
 
-=== Useful circuit identities
+=== Useful Circuit Identities
+The graphical nature of tensor networks makes quantum circuit identities visually obvious, often revealing why certain simplifications work at an intuitive level. These identities become powerful tools for circuit optimization and theoretical analysis.
 
-Tensor network representations make certain quantum circuit identities immediately apparent through graphical manipulation. Several fundamental rules simplify complex circuits:
-
-*Identity 1: Hadamard on computational basis state*
+*Identity 1: Hadamard basis transformation*
 #figure(canvas({
   import draw: *
   let s(it) = text(11pt, it)
@@ -1458,9 +1272,9 @@ Tensor network representations make certain quantum circuit identities immediate
   line("id", (rel: (1, 0)))
 }), numbering: none)
 
-This transforms $|0 angle.r$ into the $|+ angle.r = (|0 angle.r + |1 angle.r)/sqrt(2)$ state.
+The Hadamard gate transforms the computational basis state $|0 angle.r$ into the superposition state $|+ angle.r = (|0 angle.r + |1 angle.r)/sqrt(2)$. Graphically, this substitution can be made wherever the pattern appears.
 
-*Identity 2: Hadamard conjugation of Pauli gates*
+*Identity 2: Basis rotation under conjugation*
 #figure(canvas({
   import draw: *
   let s(it) = text(11pt, it)
@@ -1477,9 +1291,9 @@ This transforms $|0 angle.r$ into the $|+ angle.r = (|0 angle.r + |1 angle.r)/sq
   line("X", (rel: (1, 0)), name: "b")
 }), numbering: none)
 
-The Hadamard gate transforms Pauli-Z into Pauli-X: $H Z H = X$. This basis transformation is fundamental to many quantum algorithms.
+The conjugation identity $H Z H = X$ reflects a deeper principle: the Hadamard gate rotates between the $Z$ and $X$ measurement bases. This basis transformation underlies many quantum algorithms, from quantum teleportation to variational quantum eigensolvers.
 
-*Identity 3: Controlled-Z*
+*Identity 3: Symmetric two-qubit gates*
 #figure(canvas({
   import draw: *
   let radius = 0.3
@@ -1502,7 +1316,9 @@ The Hadamard gate transforms Pauli-Z into Pauli-X: $H Z H = X$. This basis trans
   content((rel: (0.2, 0.2), to: "d.mid"), s[$j$])
   content((3, 0), s[$sqrt(2)$])
 }), numbering: none)
-A controlled-Z gate (CZ) can be implemented using a single tensor connecting both qubits, demonstrating how entangling operations create shared virtual bonds in the tensor network. If you do not believe it, we can easily verify this equality with OMEinsum:
+The controlled-Z gate (CZ) admits a remarkably simple tensor network representation as a single rank-4 tensor. This symmetric implementation reveals that CZ is its own inverse and demonstrates how entangling gates create shared virtual indices.
+
+*Verification*: We can confirm this identity using OMEinsum:
 
 ```julia
 julia> reshape(ein"ij->ijij"([1 1; 1 -1]), 4, 4)
@@ -1514,9 +1330,10 @@ julia> reshape(ein"ij->ijij"([1 1; 1 -1]), 4, 4)
 ```
 
 
-=== Expectation values
+=== Expectation Values
+Computing quantum expectation values $angle.l psi | O | psi angle.r$ requires working with both the quantum state and its complex conjugate, leading to distinctive "sandwich" tensor network patterns. This structure naturally emerges from the Born rule for quantum measurements.
 
-Computing expectation values of observables in quantum circuits translates to a specific tensor network contraction pattern. For a quantum state $|psi angle.r = U|0^n angle.r$ and observable $O$, the expectation value $angle.l psi|O|psi angle.r$ has the tensor network representation:
+*Mathematical setup*: For a quantum state $|psi angle.r = U|0^n angle.r$ prepared by unitary circuit $U$ and observable $O$, the expectation value becomes:
 
 #figure(canvas({
   import draw: *
@@ -1549,7 +1366,12 @@ Computing expectation values of observables in quantum circuits translates to a 
   line((2 * gap + dx, y2), "fin2")
 }), numbering: none)
 
-This "sandwich" structure represents the quantum expectation value formula $angle.l 0^n|U^dagger O U|0^n angle.r$, where the observable $O$ is inserted between the forward circuit $U$ and its conjugate $U^dagger$.
+*Tensor network structure*: The resulting "sandwich" pattern represents the quantum mechanical formula $angle.l 0^n | U^dagger O U | 0^n angle.r$. This structure has several important features:
+- The observable $O$ sits between the forward evolution $U$ and backward evolution $U^dagger$
+- Initial and final states are identical computational basis states
+- The contraction computes a scalar expectation value
+
+This pattern appears throughout quantum algorithms and forms the basis for variational quantum computing approaches.
 
 #exampleblock([
 *Example: GHZ state preparation circuit*
@@ -2415,41 +2237,62 @@ In the path-integral point of view, we either pick the first term or the second 
 
   
 = Quantum Error Correction
-Quantum error correction(QEC) is a process of protecting quantum information from errors@nielsen2010quantum@gottesman1997stabilizer@calderbank1996good. The errors can be caused by the environment, the control system, or the quantum gates. The quantum error correction is a process of encoding the quantum information into a larger Hilbert space such that the quantum information can be recovered from the errors. Usually, a quantum error correction scheme is described by a stabilizer group.
+Quantum error correction (QEC) addresses a fundamental challenge in quantum computing: protecting fragile quantum information from inevitable errors caused by environmental decoherence, imperfect control systems, and gate imperfections@nielsen2010quantum@gottesman1997stabilizer@calderbank1996good.
 
-== Stablizers and Quantum Codes
-In this section, we will introduce the concept of stabilizers and quantum codes.
-#definition([Pauli Group and Stabilizer Group], [A _stabilizer group_ $cal(S)$ is an Abelian subgroup of the $n$-qubit Pauli group. The $n$-qubit pauli group is the group generated by the $n$-qubit Pauli matrices@gaitan2008quantum
+*Core principle*: QEC works by encoding logical quantum information into a larger physical Hilbert space with built-in redundancy. This encoding creates "error syndromes" that reveal error locations without destroying the logical information—a delicate balance unique to quantum mechanics.
+
+*Stabilizer formalism*: Most practical QEC schemes are described using the elegant stabilizer formalism, which characterizes quantum codes through their symmetries rather than explicit state vectors.
+
+== Stabilizers and Quantum Codes
+The stabilizer formalism provides an algebraic framework for constructing and analyzing quantum error-correcting codes through group theory.
+
+#definition([Pauli Group and Stabilizer Group], [The _$n$-qubit Pauli group_ is the group generated by tensor products of single-qubit Pauli matrices@gaitan2008quantum:
 $
-cal(P)_n = (plus.minus i){I, X, Y, Z}^(times.circle n)
-$ 
-We usually call the elements of the Pauli group pauli operators or pauli strings.
+cal(P)_n = {plus.minus 1, plus.minus i} times {I, X, Y, Z}^(times.circle n)
+$
+Elements of this group are called _Pauli operators_ or _Pauli strings_.
+
+A _stabilizer group_ $cal(S)$ is an Abelian subgroup of $cal(P)_n$ that contains only operators with eigenvalue $+1$ on all code states. The requirement of commutativity ensures that stabilizer measurements are compatible and don't disturb each other.
 ])
 
-The stabilizer group is abelian means that it is commutative and the measurement outcome of any two stabilizers will not affect each other. We can specify a stabilizer group by giving a set of independent stabilizer generators ${S_a}_(a=1,...,m)$
+*Generator structure*: Any stabilizer group can be specified by a set of independent generators ${S_a}_(a=1,dots,m)$:
 $
-cal(S) = angle.l S_1, S_2,...,S_m angle.r.
+cal(S) = angle.l S_1, S_2, dots, S_m angle.r
 $
-The code space is the $+1$ eigenspace of all the stabilizers. We can detect whether a state is in the code space by only measuring the generators of the stabilizer group. If any of the generators gives $-1$, then the state is not in the code space. And we call such an outcome a symdrome. It is worth mentioned that this measurement will not cause the quantum computing collapse, since we only measure the stabilizers and the final state is in a subspace of the original Hilbert space, which is the code space or an error space. The entanglements in the code space are not destroyed.
+
+*Code space definition*: The quantum code space consists of all states that are $+1$ eigenvectors of every stabilizer operator. This space contains the protected logical information.
+
+*Error detection*: Measuring the stabilizer generators reveals whether errors have occurred:
+- All generators yield $+1$: state remains in code space  
+- Any generator yields $-1$: error detected, creating an "error syndrome"
+
+*Crucial insight*: Stabilizer measurements preserve quantum information because they project onto subspaces (code space or error spaces) rather than classical bit values. The logical quantum state remains coherent within these subspaces.
 
 
 #definition(
   [Quantum Code],[
-    An $[[n,k,d]]$ quantum code is a quantum error correction scheme that encodes a $k$-qubit subspace of an $n$-qubit Hilbert space with minimum distance $d$. The minimum distance is the minimum pauli operators that need to be apllied on one code word to get to another code word.
+    An $[[n,k,d]]$ quantum code encodes $k$ logical qubits into $n$ physical qubits with minimum distance $d$. The parameters have precise meanings:
+    - $n$: number of physical qubits required
+    - $k$: number of logical qubits protected  
+    - $d$: minimum weight of Pauli operators that can transform one codeword into a different codeword
+    
+    The distance $d$ determines error-correcting capability: the code can detect up to $d-1$ errors and correct up to $floor((d-1)/2)$ errors.
   ])
 
-Usually, we can specify an $[[n,k,d]]$ quantum code by giving a set of $n-k$ independent stabilizer generators.
+*Code specification*: An $[[n,k,d]]$ quantum code is typically specified by providing $n-k$ independent stabilizer generators, with the remaining degrees of freedom corresponding to the $k$ logical qubits.
 
 #definition(
   [CSS Code@calderbank1996good@steane1996error@steane1996multiple],[
-    We call a quantum stabilizer code a Calderbank-Shor-Steane (CSS) code if the stabilizer group can be generated by pauli matrices that only contain $X$ or $Z$ operators, i.e.,
+    A quantum stabilizer code is called a _Calderbank-Shor-Steane (CSS) code_ if its stabilizer group can be generated entirely by Pauli operators containing only $X$ or only $Z$ (no $Y$ operators):
     
     $
-    cal(S) = angle.l S_a angle.r_(a=1,...,n-k), "where" S_a in {I, X}^(times.circle n) union {I, Z}^(times.circle n)
+    cal(S) = angle.l S_a angle.r_(a=1,dots,n-k), quad "where " S_a in {I, X}^(times.circle n) union {I, Z}^(times.circle n)
     $
+    
+    This structure enables classical error correction techniques to be applied separately to bit-flip ($X$) and phase-flip ($Z$) errors.
   ]
 )
-In short, a CSS code is a type of quantum code that can be constructed using only $X$ and $Z$ operators. Moreover, most quantum codes encountered in practice belong to the CSS family.
+*Practical significance*: CSS codes represent a large and important class of quantum error-correcting codes that can be constructed using classical error correction principles. Many of the most practical quantum codes, including surface codes and color codes, belong to this family due to their relatively simple implementation requirements.
 
 == Surface code
 #let surface-code(loc, m, n, size:1, color1:yellow, color2:aqua, name: "surface", type-tag:true) = {
