@@ -68,15 +68,12 @@ Advanced Materials Thrust, Function Hub, HKUST(GZ)])
 #pagebreak()
 
 = Tensor Networks
-A _tensor network_ constitutes a fundamental mathematical framework that provides an elegant diagrammatic representation for multilinear algebra operations. At its core, it transforms complex high-dimensional tensor contractions into intuitive graphical structures where tensors are represented as nodes and shared indices as connecting edges. This visualization paradigm not only renders abstract mathematical operations more accessible but also exposes the underlying computational structure that guides optimization strategies.
 
-The power of tensor networks lies in their remarkable universality—they emerge naturally across seemingly disparate computational domains. The framework exhibits deep connections with _einsum_ notation@Harris2020 in numerical computing, _factor graphs_@Bishop2006 in probabilistic inference, _sum-product networks_ in machine learning, and _junction trees_@Villescas2023 in graphical models. This convergence suggests that tensor networks capture something fundamental about how complex systems decompose into simpler, interacting components.
+== Representations of Multilinear Algebra
+A _tensor network_ is a mathematical framework that represents multilinear algebra operations as intuitive graphical structures, where tensors become nodes and shared indices become connecting edges. This diagrammatic approach transforms complex high-dimensional contractions into accessible visual networks that expose underlying computational structure.
 
-Tensor networks have revolutionized computational approaches across multiple domains. In quantum circuit simulation@Markov2008, they enable efficient classical simulation of quantum algorithms that would otherwise require exponential resources. For quantum error correction@Piveteau2024, tensor network methods optimize decoding algorithms for fault-tolerant quantum computing by exploiting the sparse structure of error syndromes. The framework has similarly transformed neural network compression@Qing2024, reducing model parameters while maintaining performance through low-rank tensor decompositions. Perhaps most significantly, tensor networks have become indispensable for simulating strongly correlated quantum materials@Haegeman2016, where conventional methods fail due to exponential scaling with system size.
+The framework exhibits remarkable universality, emerging across diverse domains: _einsum_ notation@Harris2020 in numerical computing, _factor graphs_@Bishop2006 in probabilistic inference, _sum-product networks_ in machine learning, and _junction trees_@Villescas2023 in graphical models. Tensor networks have revolutionized quantum circuit simulation@Markov2008, quantum error correction@Piveteau2024, neural network compression@Qing2024, and strongly correlated quantum materials@Haegeman2016.
 
-This versatility stems from a fundamental insight: many high-dimensional objects that appear computationally intractable actually possess hidden structure that tensor networks can exploit through efficient graphical representations.
-
-== Definition
 
 #definition([Multilinear algebra])[
   _Multilinear algebra_ is the study of functions that are linear in each of their arguments separately. A function $f: V_1 times V_2 times dots times V_k -> W$ is called _multilinear_ if it is linear with respect to each argument when all other arguments are held fixed. That is, for any $i in {1, 2, dots, k}$ and fixed values of all arguments except the $i$-th, the function
