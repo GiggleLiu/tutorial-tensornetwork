@@ -111,14 +111,46 @@ Identify the multilinear algebra in the following expression
 ])
 ])
 
-#definition([Tensor network diagram])[
-  A _tensor network diagram_ is a graphical representation of multilinear algebra operations that provides an intuitive visualization of tensor contractions. In this representation:
-  - Each tensor becomes a _node_ (represented as a circle or geometric shape)
-  - Each tensor index becomes an _edge_ or "leg" extending from nodes
-  - Shared indices between tensors become _internal edges_ connecting different nodes
-  - Unshared indices become _external edges_ representing the dimensions of the final result
+#definition([Tensor Network])[
+  A _tensor network_ is a mathematical framework for defining multilinear maps, which can be represented by a triple $cal(N) = (Lambda, cal(T), V_0)$, where:
+  - $Lambda$ is the set of variables (indices) present in the network $cal(N)$
+  - $cal(T) = {T_(V_k)}_(k=1)^K$ is the set of input tensors, where each tensor $T_(V_k)$ is associated with the index set $V_k$
+  - $V_0$ specifies the indices of the output tensor
   
-  The tensor network transforms abstract index manipulations into intuitive network diagrams where the computational structure becomes immediately apparent. The contraction of the entire network corresponds to summing over all internal indices while preserving external indices.
+  Each tensor $T_(V_k) in cal(T)$ is labeled by a set of variables $V_k subset.eq Lambda$, where the cardinality $|V_k|$ equals the rank of $T_(V_k)$. The variables in $Lambda without V_0$ are the internal indices that will be contracted (summed over).
+]
+
+#definition([Tensor network contraction])[
+  The multilinear map, or _contraction_, applied to a tensor network $cal(N) = (Lambda, cal(T), V_0)$ is defined as:
+  $
+  T_(V_0) = "contract"(Lambda, cal(T), V_0) := sum_(m in "dom"(Lambda without V_0)) product_(T_V in cal(T)) T_V (m)
+  $
+  where $m$ represents an assignment of values to the variables in $Lambda without V_0$, and the summation runs over all possible such assignments.
+]
+
+#exampleblock([
+*Example*: Matrix multiplication can be described as the contraction of a tensor network:
+$
+(A B)_({i, k}) = "contract"({i,j,k}, {A_({i, j}), B_({j, k})}, {i, k})
+$
+where matrices $A$ and $B$ are input tensors with variable sets ${i, j}$ and ${j, k}$ respectively, which are subsets of $Lambda = {i, j, k}$. The output tensor has variables ${i, k}$ and the summation runs over variables $Lambda without {i, k} = {j}$. The contraction corresponds to:
+$
+(A B)_({i, k}) = sum_j A_({i,j}) B_({j, k})
+$ <eq:matrix-multiplication-contraction>
+
+In the following discussion, we will ignore the set notation and use the more compact subscript notation for the variable sets: $(A B)_(i k) = sum_j A_(i j) B_(j k)$.
+])
+
+*Generalization*: This definition introduces a minor generalization of the standard tensor network definition commonly used in physics. It allows a label to appear more than twice across the tensors in the network, deviating from the conventional practice of restricting each label to two appearances. This generalized form, while maintaining the same level of representational power, has been demonstrated to potentially reduce the network's treewidth, a metric that measures its connectivity.
+
+#definition([Tensor network diagram])[
+  A _tensor network diagram_ is a graphical representation of a tensor network that provides an intuitive visualization of the mathematical structure. In this representation:
+  - Each tensor $T_i in cal(T)$ becomes a _node_ (represented as a circle or geometric shape)
+  - Each index of tensor $T_i$ becomes an _edge_ or "leg" extending from the corresponding node
+  - Internal indices become _internal edges_ connecting different nodes that share the same index
+  - External indices become _external edges_ representing the dimensions of the final result
+  
+  The diagram transforms abstract index manipulations into intuitive network topology where the computational structure becomes immediately apparent.
 ]
 
 This graphical notation extends the algebraic concept of tensor contraction through powerful visual representation, rendering complex multilinear operations more accessible and revealing underlying computational structure that guides optimization strategies.
@@ -420,7 +452,7 @@ Understanding the computational complexity of tensor network contraction require
 
 *Example*: Consider the 2-SAT formula:
 $
-(x_1 or x_2) and (x_2 or x_3) and (x_3 or x_4) and (x_4 or x_5) and (x_5 or x_1) and (x_3 or not x_5)
+  (x_1 or x_2) and (x_2 or x_3) and (x_3 or x_4) and (x_4 or x_5) and (x_5 or x_1) and (x_3 or not x_5)
 $ <eq:2sat>
 
 This formula contains six clauses and five Boolean variables. A satisfying assignment is: $x_1 = 1, x_2 = 0, x_3 = 1, x_4 = 0, x_5 = 1$. A non-satisfying assignment is: $x_1 = 1, x_2 = 0, x_3 = 0, x_4 = 0, x_5 = 1$, since it violates the clauses $x_2 or x_3$, $x_3 or x_4$ and $x_3 or not x_5$.
@@ -434,15 +466,15 @@ This formula contains six clauses and five Boolean variables. A satisfying assig
 #proof[
 We establish \#P-completeness through a polynomial-time reduction from the canonical \#P-complete problem of counting satisfying assignments of 2-SAT Boolean formulas.
 
-*Reduction construction*: Given a 2-SAT formula, we construct a tensor network that computes the number of its satisfying assignments.
+*Reduction construction*: Given a 2-SAT formula $c_1 and c_2 and dots and c_n$, we construct a tensor network that computes the number of its satisfying assignments.
 
-_Step 1: Variable encoding._ Boolean variables $x_1, x_2, dots, x_n$ map directly to tensor indices in the network.
+_Step 1: Variable encoding._ Boolean variables $x_1, x_2, dots, x_n$ map directly to tensor indices in the network, denoted as $Lambda = {x_1, x_2, dots, x_n}$.
 
-_Step 2: Clause encoding._ Each clause becomes a rank-2 tensor encoding its truth table. For a clause $(x_i or not x_j)$, we construct tensor $T$ where entry $T_(v_i, v_j)$ equals 1 if the clause is satisfied by assignment $x_i = v_i, x_j = v_j$, and 0 otherwise.
+_Step 2: Clause encoding._ Each clause becomes a rank-2 tensor encoding its truth table. For a clause $c_i$ involving variables $x_i, x_j$, we construct tensor $T(c_i)$ indexed by $x_i, x_j$ where entry $T_(v_i v_j)$ equals 1 if the clause is satisfied by assignment $x_i = v_i, x_j = v_j$, and 0 otherwise.
 
 _Step 3: Network contraction._ The counting problem reduces to the tensor contraction:
 $
-"count" = sum_(x_1, x_2, dots, x_n) product_("clauses") T_"clause"
+"count" = "contract"({x_1, x_2, dots, x_n}, {T(c_i) | i=1 dots n}, emptyset)
 $
 
 This contraction precisely counts satisfying assignments because each valid assignment contributes 1 to the sum (all clause tensors evaluate to 1), while invalid assignments contribute 0 (at least one clause tensor evaluates to 0).
@@ -911,7 +943,7 @@ The compression efficiency depends on the dimensions involved. Let $d_i = \dim(i
   This decomposition is particularly effective for tensors with inherent low-rank structure.
 ]
 
-#align(center, text(10pt, canvas({
+#figure(text(10pt, canvas({
   import draw: *
   tensor((-5.5, 0), "T", [$T$])
   labeledge("T", (rel: (0, 1.2)), [$i$])
@@ -936,7 +968,7 @@ The compression efficiency depends on the dimensions involved. Let $d_i = \dim(i
   line("c", "B")
   line("c", "A")
   line("c", "L")
-})))
+})), numbering: none)
 
 *Compression analysis*: For an $N$-mode tensor with mode dimensions ${d_i}_(i=1)^N$ and CP rank $R$:
 - Original storage: $product_(i=1)^N d_i$ elements  
