@@ -14,14 +14,19 @@
   block(fill:rgb("#fcf9ec"),inset:1.5em,width:99%,text(it))
 }
 
-#let definition = thmbox("definition", "Definition", inset: (x: 1.2em, top: 1em, bottom: 1em), base: none, stroke: black)
-#let theorem = thmbox("theorem", "Theorem", base: none, stroke: black)
+#let definition = thmbox("definition", "Definition", inset: (x: 1.2em, top: 1em, bottom: 1em), base: none, stroke: none, fill: rgb("#e8f4fd"), namefmt: x => [(#strong[#x.])], titlefmt: x => [(#emph[#x])])
+#let theorem = thmbox("theorem", "Theorem", base: none, stroke: none, fill: rgb("#f0f9e8"), namefmt: x => [(#strong[#x.])], titlefmt: x => [(#emph[#x])])
+#let lemma = thmbox("lemma", "Lemma", base: "theorem", stroke: none, fill: rgb("#f0f9e8"), namefmt: x => [(#strong[Lemma #x.])], titlefmt: x => [(#emph[#x])])
+#let corollary = thmbox("corollary", "Corollary", base: "theorem", stroke: none, fill: rgb("#f0f9e8"), namefmt: x => [(#strong[Corollary #x.])], titlefmt: x => [(#emph[#x])])
+#let proposition = thmbox("proposition", "Proposition", base: "theorem", stroke: none, fill: rgb("#f0f9e8"), namefmt: x => [(#strong[Proposition #x.])], titlefmt: x => [(#emph[#x])])
 #let proof = thmproof("proof", "Proof")
 #let ket(it) = [$|#it angle.r$]
 
 // hide contents under development
 #let hide-dev = true
 #let dev(it) = if not hide-dev {it}
+#let hide-solution = false
+#let solution(it) = if not hide-solution {[*Solution:*\ #it]}
 
 #let exampleblock(it) = block(fill: rgb("#ffffff"), width:100%, inset: 1em, radius: 4pt, stroke: black, it)
 #let tensor(location, name, label) = {
@@ -63,28 +68,60 @@ Advanced Materials Thrust, Function Hub, HKUST(GZ)])
 #pagebreak()
 
 = Tensor Networks
-A _tensor network_ is a fundamental mathematical framework that provides an elegant diagrammatic representation for multilinear algebra operations. At its core, it transforms complex high-dimensional tensor contractions into intuitive graphical structures where tensors become nodes and shared indices become connecting edges. This visualization paradigm not only makes abstract mathematical operations more accessible but also reveals underlying computational structure that guides optimization strategies.
+A _tensor network_ constitutes a fundamental mathematical framework that provides an elegant diagrammatic representation for multilinear algebra operations. At its core, it transforms complex high-dimensional tensor contractions into intuitive graphical structures where tensors are represented as nodes and shared indices as connecting edges. This visualization paradigm not only renders abstract mathematical operations more accessible but also exposes the underlying computational structure that guides optimization strategies.
 
-The power of tensor networks lies in their universality—they naturally emerge across seemingly disparate computational domains. The framework shares deep connections with _einsum_ notation@Harris2020 in numerical computing, _factor graphs_@Bishop2006 in probabilistic inference, _sum-product networks_ in machine learning, and _junction trees_@Villescas2023 in graphical models. This convergence suggests that tensor networks capture something fundamental about how complex systems decompose into simpler, interacting components.
+The power of tensor networks lies in their remarkable universality—they emerge naturally across seemingly disparate computational domains. The framework exhibits deep connections with _einsum_ notation@Harris2020 in numerical computing, _factor graphs_@Bishop2006 in probabilistic inference, _sum-product networks_ in machine learning, and _junction trees_@Villescas2023 in graphical models. This convergence suggests that tensor networks capture something fundamental about how complex systems decompose into simpler, interacting components.
 
-Tensor networks have revolutionized computational approaches across quantum circuit simulation@Markov2008, where they enable classical simulation of quantum algorithms that would otherwise require exponential resources. In quantum error correction@Piveteau2024, tensor network methods optimize decoding algorithms for fault-tolerant quantum computing by exploiting the sparse structure of error syndromes. The framework has similarly transformed neural network compression@Qing2024, reducing model parameters while preserving performance through low-rank tensor decompositions. Perhaps most significantly, tensor networks have become indispensable for simulating strongly correlated quantum materials@Haegeman2016, where traditional methods fail due to exponential scaling with system size.
+Tensor networks have revolutionized computational approaches across multiple domains. In quantum circuit simulation@Markov2008, they enable efficient classical simulation of quantum algorithms that would otherwise require exponential resources. For quantum error correction@Piveteau2024, tensor network methods optimize decoding algorithms for fault-tolerant quantum computing by exploiting the sparse structure of error syndromes. The framework has similarly transformed neural network compression@Qing2024, reducing model parameters while maintaining performance through low-rank tensor decompositions. Perhaps most significantly, tensor networks have become indispensable for simulating strongly correlated quantum materials@Haegeman2016, where conventional methods fail due to exponential scaling with system size.
 
-This versatility stems from a key insight: many high-dimensional objects that appear computationally intractable actually possess hidden structure that tensor networks can exploit through efficient graphical representations.
+This versatility stems from a fundamental insight: many high-dimensional objects that appear computationally intractable actually possess hidden structure that tensor networks can exploit through efficient graphical representations.
 
 == Definition
-A _tensor network_ provides a diagrammatic representation of _multilinear algebra_—the study of functions that are linear in each of their arguments separately. To build intuition, let's first recall the foundation of linear algebra.
 
-A function $f$ is _linear_ if it satisfies the fundamental properties of additivity, where $f(x + y) = f(x) + f(y)$ for any vectors $x$ and $y$, and homogeneity, where $f(alpha x) = alpha f(x)$ for any scalar $alpha$.
+#definition([Multilinear algebra])[
+  _Multilinear algebra_ is the study of functions that are linear in each of their arguments separately. A function $f: V_1 times V_2 times dots times V_k -> W$ is called _multilinear_ if it is linear with respect to each argument when all other arguments are held fixed. That is, for any $i in {1, 2, dots, k}$ and fixed values of all arguments except the $i$-th, the function
+  $
+  v_i mapsto f(v_1, dots, v_(i-1), v_i, v_(i+1), dots, v_k)
+  $
+  is linear. The canonical example is the inner product $angle.l x, y angle.r$, which is _bilinear_—linear in $x$ when $y$ is fixed, and linear in $y$ when $x$ is fixed.
+]
 
-Extending this concept, a function $f$ is called _multilinear_ if it is linear with respect to each of its arguments when all other arguments are held fixed. The canonical example is the inner product $angle.l x, y angle.r$, which is _bilinear_—linear in $x$ when $y$ is fixed, and linear in $y$ when $x$ is fixed. 
+To build intuition, we begin by recalling that a function $f$ is _linear_ if it satisfies the fundamental properties of additivity, where $f(x + y) = f(x) + f(y)$ for any vectors $x$ and $y$, and homogeneity, where $f(alpha x) = alpha f(x)$ for any scalar $alpha$. 
 
 Consider the chain multiplication of matrices:
 $
   O_(i n) = sum_(j,k,l,m) A_(i j) B_(j k) C_(k l) D_(l m) E_(m n)
 $ <eq:tensor-contraction>
-This expression exemplifies a _tensor contraction_—a multilinear map where the output $O_(i n)$ depends linearly on each input tensor $A, B, C, D, E$. The summation over repeated indices $(j, k, l, m)$ creates the "contraction" that eliminates internal degrees of freedom.
+This expression exemplifies a _tensor contraction_—a multilinear map where the output $O_(i n)$ depends linearly on each input tensor $A, B, C, D, E$. The summation over repeated indices $(j, k, l, m)$ constitutes the "contraction" operation that eliminates internal degrees of freedom.
 
-Tensor networks extend this algebraic concept through a powerful graphical representation where each tensor becomes a _node_ (represented as a circle or shape), each tensor index becomes an _edge_ or "leg" connecting nodes, shared indices between tensors become _internal edges_, and unshared indices become _external edges_ representing the final tensor's dimensions. This graphical notation transforms abstract index manipulations into intuitive network diagrams, making the computational structure immediately visible.
+#exampleblock([
+*Exercise: Multilinear algebra*
+
+Identify the multilinear algebra in the following expression
+1. scalar product: $f(x, y, z) = x y z$
+2. trace multiplication: $f(A, B, C) = tr(A B C)$
+3. kronecker product: $f(X, Y, Z) = X times.circle Y times.circle Z$
+4. addition: $f(x, y, z) = x + y + z$
+
+#solution([
+  1. Yes
+  2. Yes
+  3. Yes
+  4. No
+])
+])
+
+#definition([Tensor network diagram])[
+  A _tensor network diagram_ is a graphical representation of multilinear algebra operations that provides an intuitive visualization of tensor contractions. In this representation:
+  - Each tensor becomes a _node_ (represented as a circle or geometric shape)
+  - Each tensor index becomes an _edge_ or "leg" extending from nodes
+  - Shared indices between tensors become _internal edges_ connecting different nodes
+  - Unshared indices become _external edges_ representing the dimensions of the final result
+  
+  The tensor network transforms abstract index manipulations into intuitive network diagrams where the computational structure becomes immediately apparent. The contraction of the entire network corresponds to summing over all internal indices while preserving external indices.
+]
+
+This graphical notation extends the algebraic concept of tensor contraction through powerful visual representation, rendering complex multilinear operations more accessible and revealing underlying computational structure that guides optimization strategies.
 
 #align(center, text(10pt, canvas({
   import draw: *
@@ -116,7 +153,7 @@ The diagrammatic representation of @eq:tensor-contraction reveals the underlying
   labeledge("E", (rel: (1, 0)), "n")
 })))
 
-This visual approach becomes indispensable when analyzing complex tensor contractions, as illustrated in the following example.
+This visual approach proves indispensable when analyzing complex tensor contractions, as illustrated in the following example.
 
 #exampleblock([
 *Example: Trace Permutation Rule*
@@ -126,9 +163,7 @@ $
 "tr"(A B C) = "tr"(C A B) = "tr"(B C A)
 $
 
-*Algebraic proof*: This identity follows from the definition of matrix multiplication and trace, but requires careful index manipulation.
-
-*Tensor network insight*: The graphical approach reveals why this identity holds at a topological level.
+In the algebraic proof, this identity follows from the definition of matrix multiplication and trace, but requires careful index manipulation. In the tensor network approach, the graphical approach reveals why this identity holds at a topological level.
 
 #figure(canvas({
   import draw: *
@@ -141,16 +176,86 @@ $
   content("line.mid", "i", align: center, fill:white, frame:"rect", padding:0.1, stroke: none)
 }), numbering: none)
 
-*Visual insight*: The tensor network reveals the essential structure—a closed loop where indices connect cyclically. The trace operation corresponds to this loop contraction, and the cyclic symmetry becomes visually obvious.
+The tensor network reveals the essential structure—a closed loop where indices connect cyclically. The trace operation corresponds to this loop contraction, and the cyclic symmetry becomes immediately apparent.
 
 *Key lesson*: Regardless of where we "cut" the loop to begin algebraic evaluation, the result remains identical. The three expressions $"tr"(A B C)$, $"tr"(C A B)$, and $"tr"(B C A)$ represent the same geometric object viewed from different starting points. This topological invariance provides deeper insight than purely algebraic derivations.
 ])
 
+#exampleblock([
+*Exercise: Tensor network diagram*
+
+Draw the tensor network diagram for the multilinear algebra operations in the first excerise.
+#solution([
+  1. #align(center, text(10pt, canvas({
+  import draw: *
+  tensor((0, 0), "x", [$x$])
+  tensor((1, 0), "y", [$y$])
+  tensor((2, 0), "z", [$z$])
+})))
+2. see above.
+3. #align(center, text(10pt, canvas({
+  import draw: *
+  tensor((0, 0), "X", [$X$])
+  tensor((1, 0), "Y", [$Y$])
+  tensor((2, 0), "Z", [$Z$])
+  line("X", (rel: (0, 0.7)))
+  line("X", (rel: (0, -0.7)))
+  line("Y", (rel: (0, 0.7)))
+  line("Y", (rel: (0, -0.7)))
+  line("Z", (rel: (0, 0.7)))
+  line("Z", (rel: (0, -0.7)))
+})))
+])
+])
 
 == Einsum Notation and Computational Complexity
-In computational practice, tensor network topologies are specified using _einsum notation_—a compact string representation that encodes contraction structure through a simple syntax. The notation employs `->` to separate input tensors (left) from output tensor (right), with `,` separating the index signatures of different input tensors. Each character represents a unique tensor index, where indices appearing only on the right become output dimensions, and indices not appearing on the right are summed over during contraction.
 
-Matrix multiplication $C = A B$ exemplifies this notation as `ij,jk->ik`, where the input tensors `ij` (matrix $A$) and `jk` (matrix $B$) share the contracted index `j` (which appears twice on the left but is absent on the right), producing the output tensor `ik` (matrix $C$).
+#definition([Einsum notation])[
+  _Einsum notation_ (short for "Einstein summation notation") is a compact string-based representation for specifying tensor network topologies and contractions. The notation consists of:
+  - Input tensor specifications on the left side, separated by commas
+  - The symbol `->` separating inputs from outputs
+  - Output tensor specification on the right side
+  - Each character represents a unique tensor index
+  
+  The contraction rules are:
+  - Indices appearing only on the right side become output dimensions
+  - Indices appearing on the left but not on the right are summed over (contracted)
+  
+  For example, matrix multiplication $C = A B$ is represented as `ij,jk->ik`, where $i$ and $k$ are preserved output indices, and $j$ is contracted (summed over).
+]
+
+In computational practice, this notation provides a concise way to encode contraction structure through simple syntax, making complex tensor operations easily readable and implementable.
+
+#exampleblock([
+*Exercise: Einsum notation*
+
+1. Express the multilinear algebra operations in the first excerise using einsum notation.
+ #solution([
+  1. `,,->`
+  2. `ij,jk,ki->`
+  3. `ij,kl,mn->ikmjln`
+])
+2. Identify the operations:
+  1. `aa->`
+  2. `aa->a`
+  3. `ab->`
+  4. `ijl,jkl->ikl`
+  5. `i->ii`
+  6. `->i`
+  7. `j,j->`
+  8. `i,j->ij`
+
+  #solution([
+    1. `aa->`: trace of a matrix
+    2. `aa->a`: diagonal extraction of a matrix
+    3. `ab->`: summation of a matrix
+    4. `ijl,jkl->ikl`: batched matrix multiplication
+    5. `i->ii`: create a diagonal matrix from a vector
+    6. `->i`: broadcast a scalar into a vector
+    7. `j,j->`: dot product of two vectors
+    8. `i,j->ij`: outer product of two vectors
+  ])
+])
 
 The following examples use the #link("https://github.com/under-Peter/OMEinsum.jl", "OMEinsum") package to demonstrate tensor network specification, contraction order optimization, and execution. Tensor network topologies can be defined using either the convenient `ein` string literal or the more flexible `EinCode` constructor for programmatic construction.
 
@@ -196,7 +301,7 @@ Read-write complexity: 2^15.287712379549449
 
 Tensor contraction complexity can be analyzed through three complementary lenses:
 
-*Time complexity* ($≈ 100^4$ operations): The total number of floating-point operations (FLOPs) required for contraction. For einsum operations, this generally equals the product of all unique index dimensions—each combination of index values requires one multiplication and addition. Crucially, intelligent contraction ordering can reduce this from exponential to polynomial scaling.
+*Time complexity* ($≈ 100^4$ operations): The total number of floating-point operations (FLOPs) required for contraction. For einsum operations, this generally equals the product of all unique index dimensions—each combination of index values requires one multiplication and addition. Crucially, intelligent contraction ordering can dramatically reduce this from exponential to polynomial scaling.
 
 *Space complexity* ($≈ 100^2$ elements): The peak memory footprint needed to store the largest intermediate tensor during contraction. This represents the computational "bottleneck" that determines whether a calculation is feasible on available hardware.
 
@@ -211,7 +316,7 @@ julia> code(randn(2, 2), randn(2, 2), randn(2, 2))  # not recommended
  -0.674225  1.40281
 ```
 
-This direct approach is *strongly discouraged* because `OMEinsum` defaults to an unoptimized contraction order that can be exponentially inefficient. The naive left-to-right evaluation often creates unnecessarily large intermediate tensors.
+This direct approach is *strongly discouraged* because `OMEinsum` defaults to an unoptimized contraction order that can be exponentially inefficient. The naive left-to-right evaluation frequently creates unnecessarily large intermediate tensors.
 
 A superior approach explicitly specifies the contraction order using parentheses to guide the computation:
 
@@ -299,46 +404,58 @@ The einsum notation `ij,kl->ijkl` reveals the $O(n^4)$ complexity, which arises 
 ])
 
 === Tensor Network Contraction is \#P-Complete
-General tensor network contraction belongs to the \#P-complete complexity class—a computational category even more challenging than the famous NP-complete problems. Understanding this complexity helps explain why approximate methods and heuristics dominate practical tensor network algorithms.
+
+Understanding the computational complexity of tensor network contraction requires connecting it to established hard problems in computer science. We achieve this through the concept of computational reduction.
 
 *Computational reduction*: To establish computational hardness, we use the technique of _reduction_. If we can transform any instance of problem $cal(A)$ into an instance of problem $cal(B)$ using polynomial-time operations, then $cal(B)$ is at least as hard as $cal(A)$. When $cal(A)$ is known to be computationally intractable, this proves that $cal(B)$ is also intractable.
 
-We establish the \#P-completeness of tensor network contraction through a reduction from a canonical \#P-complete problem: counting the satisfying assignments of 2-SAT Boolean formulas. This reduction demonstrates that any algorithm efficiently solving general tensor contractions could also efficiently count 2-SAT solutions—something believed to be computationally impossible.
+#definition([2-SAT formula])[
+    A _2-SAT formula_ is a Boolean formula in conjunctive normal form (CNF) where each clause contains at most two literals. For those not familiar with Boolean logic:
+    - A _literal_ is a Boolean variable or its negation ($not$)
+    - A _clause_ is a disjunction (logical or: $or$) of literals  
+    - A Boolean formula in _conjunctive normal form_ is a conjunction (logical and: $and$) of clauses
+    
+    The _satisfiability problem_ asks whether there exists an assignment of truth values that makes the formula true. The _counting problem_ asks how many such satisfying assignments exist.
+]
 
-#definition([2-SAT formula], [
-    A 2-SAT formula is a Boolean formula in conjunctive normal form (CNF) where each clause contains at most two literals.
-    For those who are not familiar with boolean logic, a clause is a disjunction (logical or: $or$) of literals, and a literal is a boolean variable or its negation ($not$).
-    A boolean formula can always be represented as a conjunction (logical and: $and$) of clauses, which is called the conjunctive normal form.
-
-*Example:*
+*Example*: Consider the 2-SAT formula:
 $
-  (x_1 or x_2) and (x_2 or x_3) and (x_3 or x_4) and (x_4 or x_5) and (x_5 or x_1) and (x_3 or not x_5)
+(x_1 or x_2) and (x_2 or x_3) and (x_3 or x_4) and (x_4 or x_5) and (x_5 or x_1) and (x_3 or not x_5)
 $ <eq:2sat>
 
-- A satisfying assignment is: $x_1 = 1, x_2 = 0, x_3 = 1, x_4 = 0, x_5 = 1$.
-- A non-satisfying assignment is: $x_1 = 1, x_2 = 0, x_3 = 0, x_4 = 0, x_5 = 1$, since it violates $x_2 or x_3$, $x_3 or x_4$ and $x_3 or not x_5$.
+This formula contains six clauses and five Boolean variables. A satisfying assignment is: $x_1 = 1, x_2 = 0, x_3 = 1, x_4 = 0, x_5 = 1$. A non-satisfying assignment is: $x_1 = 1, x_2 = 0, x_3 = 0, x_4 = 0, x_5 = 1$, since it violates the clauses $x_2 or x_3$, $x_3 or x_4$ and $x_3 or not x_5$.
 
-The counting of 2-SAT formula asks how many satisfying assignments are there.
-])
+*Computational complexity*: While determining satisfiability (finding any solution) for 2-SAT formulas is polynomial-time solvable, counting the number of satisfying assignments is \#P-complete—a complexity class considered even more challenging than NP-complete problems.
 
-While determining satisfiability (finding any solution) for 2-SAT formulas is polynomial-time solvable, counting the *number* of satisfying assignments is \#P-complete—a complexity class considered even more challenging than NP-complete problems.
+#theorem([\#P-Completeness of Tensor Network Contraction])[
+  General tensor network contraction is \#P-complete. That is, the problem of computing the scalar result of contracting a tensor network belongs to the \#P-complete complexity class.
+]
 
-The reduction proceeds by encoding the 2-SAT counting problem as a tensor network:
+#proof[
+We establish \#P-completeness through a polynomial-time reduction from the canonical \#P-complete problem of counting satisfying assignments of 2-SAT Boolean formulas.
 
-*Step 1: Clause encoding.* The boolean variables $x_1, x_2, ..., x_n$ directly maps to (hyper)edges in tensor network, now we need to decide the tensors relating these variables. Each clause becomes a rank-2 tensor encoding its truth table. For the clause $(x_3 or not x_5)$, we construct tensor $T_(+-)$:
+*Reduction construction*: Given a 2-SAT formula, we construct a tensor network that computes the number of its satisfying assignments.
+
+_Step 1: Variable encoding._ Boolean variables $x_1, x_2, dots, x_n$ map directly to tensor indices in the network.
+
+_Step 2: Clause encoding._ Each clause becomes a rank-2 tensor encoding its truth table. For a clause $(x_i or not x_j)$, we construct tensor $T$ where entry $T_(v_i, v_j)$ equals 1 if the clause is satisfied by assignment $x_i = v_i, x_j = v_j$, and 0 otherwise.
+
+_Step 3: Network contraction._ The counting problem reduces to the tensor contraction:
 $
-  T_(+-) = mat(1, 0; 1, 1)
+"count" = sum_(x_1, x_2, dots, x_n) product_("clauses") T_"clause"
 $
-where rows correspond to $x_3 in {0, 1}$ and columns to $x_5 in {0, 1}$. The entry $(T_(+-))_(0,1) = 0$ indicates that $x_3 = 0, x_5 = 1$ makes the clause false. Similar tensors $T_(++)$, $T_(--)$, and $T_(-+)$ encode other clause types.
 
-*Step 2: Network construction.* The counting problem reduces to the tensor contraction:
-$
-  "count" = sum_(x_1, x_2, dots, x_n) product_("clauses") T_("clause")
-$
-where the summation spans all Boolean assignments and the product combines all clause tensors. This contraction precisely counts satisfying assignments.
-Note tensor network contraction corresponds to sum of product of elements from each tensor, whenever a tensor contributes a zero multiplication factor, the net contribution of this assignment is 0. On the other hand, since we have a 0-1 element only, if all the tensors contribute a 1 multiplication factor (means this constraint is satisfied), the net contribution of this assignment is 1. Hence the contraction corresponds to the counting of true assignments.
+This contraction precisely counts satisfying assignments because each valid assignment contributes 1 to the sum (all clause tensors evaluate to 1), while invalid assignments contribute 0 (at least one clause tensor evaluates to 0).
 
-For the 2-SAT formula in @eq:2sat, the corresponding tensor network is:
+Since counting satisfying assignments for 2-SAT is \#P-complete, and this reduction can be performed in polynomial time, general tensor network contraction is also \#P-complete.
+]
+
+To illustrate this reduction, we apply it to the formula in @eq:2sat. For the clause $(x_3 or not x_5)$, we construct tensor $T_(+-)$ where entry $(i,j)$ indicates whether the clause is satisfied when $x_3 = i$ and $x_5 = j$:
+$
+T_(+-) = mat(1, 0; 1, 1)
+$
+
+The complete tensor network for this formula is:
 #figure(canvas({
   import draw: *
   let s(it) = text(10pt)[#it]
@@ -355,8 +472,7 @@ For the 2-SAT formula in @eq:2sat, the corresponding tensor network is:
   line("T5", "x5")
 }))
 
-
-Since counting satisfying assignments for 2-SAT is \#P-complete, and we have demonstrated a polynomial-time reduction from this problem to tensor network contraction, it follows that general tensor network contraction is also \#P-complete. This establishes tensor network optimization as fundamentally intractable, motivating the development of approximation algorithms and heuristic methods discussed in subsequent sections.
+This \#P-completeness result explains why approximate methods and heuristic algorithms dominate practical tensor network computations, motivating the optimization techniques discussed in subsequent sections.
 
 == Contraction order optimization and slicing
 
@@ -393,19 +509,19 @@ Consider the contraction `ein"ab,bc,cd->ad"`, which admits multiple valid orderi
   content((0, -2), text(10pt)[`ein"(ab,cd),bc->ad"`])
 }), numbering: none)
 
-The left ordering is dramatically superior: it achieves $O(n^3)$ time and $O(n^2)$ space complexity by first contracting compatible matrices. The right ordering creates a $O(n^4)$ intermediate tensor through an inefficient Kronecker product, illustrating how ordering choice can determine computational feasibility.
+The left ordering proves dramatically superior: it achieves $O(n^3)$ time and $O(n^2)$ space complexity by first contracting compatible matrices. The right ordering creates a $O(n^4)$ intermediate tensor through an inefficient Kronecker product, illustrating how ordering choice can determine computational feasibility.
 
 Finding the globally optimal contraction order constitutes an NP-complete optimization problem@Markov2008. Fortunately, near-optimal solutions often suffice for practical applications and can be obtained efficiently through sophisticated heuristic methods. Modern optimization algorithms have achieved remarkable scalability, successfully handling tensor networks with over $10^4$ tensors@Gray2021,@Roa2024.
 
 The optimal contraction order has a deep mathematical connection to the _tree decomposition_@Markov2008 of the tensor network's line graph.
-#definition([Tree decomposition and treewidth], [A _tree decomposition_ of a (hyper)graph $G=(V,E)$ is a tree $T=(B,F)$ where each node $B_i in B$ contains a subset of vertices in $V$ (called a "bag"), satisfying:
+#definition([Tree decomposition and treewidth])[A _tree decomposition_ of a (hyper)graph $G=(V,E)$ is a tree $T=(B,F)$ where each node $B_i in B$ contains a subset of vertices in $V$ (called a "bag"), satisfying:
 
 1. Every vertex $v in V$ appears in at least one bag.
 2. For each (hyper)edge $e in E$, there exists a bag containing all vertices in $e$.
 3. For each vertex $v in V$, the bags containing $v$ form a connected subtree of $T$.
 
 The _width_ of a tree decomposition is the size of its largest bag minus one. The _treewidth_ of a graph is the minimum width among all possible tree decompositions.
-])
+]
 
 
 The line graph of a tensor network is a graph where vertices represent indices and edges represent tensors sharing those indices. The relationship between a tensor network's contraction order and the tree decomposition of its line graph can be understood through several key correspondences:
@@ -781,13 +897,19 @@ The compression efficiency depends on the dimensions involved. Let $d_i = \dim(i
 *Compression ratio*: The storage reduction achieved is $(d_i d_j)/(d_k (d_i + d_j))$, representing the ratio of original matrix elements to total decomposed elements.
 
 === CP Decomposition
-The Canonical Polyadic (CP) decomposition, also known as CANDECOMP/PARAFAC, represents tensors as sums of rank-1 components. This decomposition is particularly effective for tensors with inherent low-rank structure.
 
-*Mathematical form*: A rank-4 tensor $T$ decomposes as:
-$
-T_(i j k l) = sum_(c=1)^R U_1^(i c) U_2^(j c) U_3^(k c) U_4^(l c) Lambda_c
-$
-where $R$ is the CP rank and $Lambda_c$ are optional scaling factors.
+#definition([CP Decomposition])[
+  The _Canonical Polyadic (CP) decomposition_, also known as CANDECOMP/PARAFAC, represents a tensor as a sum of rank-1 components. For an $N$-mode tensor $cal(T) in bb(R)^(d_1 times d_2 times dots times d_N)$, the CP decomposition is:
+  $
+  cal(T)_(i_1, i_2, dots, i_N) = sum_(r=1)^R lambda_r u_1^(r)_(i_1) u_2^(r)_(i_2) dots u_N^(r)_(i_N)
+  $
+  where:
+  - $R$ is the _CP rank_ (number of rank-1 components)
+  - $lambda_r$ are optional scaling factors  
+  - $u_k^(r) in bb(R)^(d_k)$ are factor vectors for the $k$-th mode and $r$-th component
+  
+  This decomposition is particularly effective for tensors with inherent low-rank structure.
+]
 
 #align(center, text(10pt, canvas({
   import draw: *
@@ -826,13 +948,19 @@ For our rank-4 example: $(d_i d_j d_k d_l)/(R(d_i + d_j + d_k + d_l + 1))$
 *Key advantage*: Storage scales linearly with tensor order, avoiding the "curse of dimensionality."
 
 === Tucker Decomposition
-Tucker decomposition generalizes matrix SVD to higher-order tensors by decomposing each mode separately while retaining a dense core tensor. This provides more flexibility than CP decomposition at the cost of exponential core tensor growth.
 
-*Mathematical form*: A rank-4 tensor $T$ decomposes as:
-$
-T_(i j k l) = sum_(a,b,c,d) U_1^(i a) U_2^(j b) U_3^(k c) U_4^(l d) X_(a b c d)
-$
-where $\{U_i\}$ are mode-wise orthogonal matrices and $X$ is the core tensor encoding mode interactions.
+#definition([Tucker Decomposition])[
+  The _Tucker decomposition_ generalizes matrix SVD to higher-order tensors by decomposing each mode separately while retaining a dense core tensor. For an $N$-mode tensor $cal(T) in bb(R)^(d_1 times d_2 times dots times d_N)$, the Tucker decomposition is:
+  $
+  cal(T)_(i_1, i_2, dots, i_N) = sum_(j_1=1)^(r_1) sum_(j_2=1)^(r_2) dots sum_(j_N=1)^(r_N) cal(X)_(j_1, j_2, dots, j_N) product_(k=1)^N U_k^((i_k, j_k))
+  $
+  where:
+  - $cal(X) in bb(R)^(r_1 times r_2 times dots times r_N)$ is the _core tensor_ encoding mode interactions
+  - $U_k in bb(R)^(d_k times r_k)$ are mode-wise factor matrices (typically orthogonal)
+  - $r_k$ are the mode ranks (dimensions of the core tensor)
+  
+  This decomposition provides more flexibility than CP decomposition at the cost of exponential core tensor growth with the number of modes.
+]
 
 #figure(canvas({
   import draw: *
@@ -872,7 +1000,19 @@ Consequently, Tucker decomposition finds optimal application in moderate-order s
 
 === Tensor Train
 
-Tensor Train (TT) is a specific tensor network architecture that represents high-dimensional tensors as a chain of lower-rank tensors, providing an efficient compressed representation:
+#definition([Tensor Train (TT)])[
+  _Tensor Train (TT)_ is a specific tensor network architecture that represents high-dimensional tensors as a sequential chain of lower-rank tensors. For an $N$-mode tensor $cal(T) in bb(R)^(d_1 times d_2 times dots times d_N)$, the TT decomposition is:
+  $
+  cal(T)_(i_1, i_2, dots, i_N) = sum_(alpha_1, dots, alpha_(N-1)) A_1^(i_1)_(alpha_1) A_2^(i_2)_(alpha_1, alpha_2) dots A_N^(i_N)_(alpha_(N-1))
+  $
+  where:
+  - $A_1^(i_1) in bb(R)^(r_1)$ is the first tensor (vector)
+  - $A_k^(i_k) in bb(R)^(r_(k-1) times r_k)$ are intermediate tensors for $k = 2, dots, N-1$
+  - $A_N^(i_N) in bb(R)^(r_(N-1))$ is the last tensor (vector)
+  - $r_k$ are the _bond dimensions_ (ranks of virtual indices)
+  
+  The storage requirement scales as $O(sum_(k=1)^N d_k r_(k-1) r_k)$ with $r_0 = r_N = 1$, providing efficient compression for high-dimensional tensors.
+]
 #align(center, text(10pt, canvas({
   import draw: *
   set-origin((-2, -2))
@@ -1191,7 +1331,26 @@ The returned `gradients` is a vector of arrays, each of which is an adjoint of a
 = Quantum Circuit Simulation
 
 == Quantum States and Quantum Gates
-Quantum circuits map naturally onto tensor networks through a simple correspondence: quantum states become vectors (rank-1 tensors), quantum gates become matrices (rank-2 tensors), and multi-qubit gates become higher-rank tensors. This mapping transforms quantum circuit simulation into tensor network contraction problems.
+
+#definition([Quantum State])[
+  A _quantum state_ is a mathematical representation of a quantum system described by a vector in a complex Hilbert space. For an $n$-qubit system, the quantum state $|psi angle.r$ belongs to the Hilbert space $cal(H) = (bb(C)^2)^(times.circle n) tilde.equiv bb(C)^(2^n)$, where each qubit contributes a 2-dimensional complex vector space. The state can be written as:
+  $
+  |psi angle.r = sum_(i=0)^(2^n - 1) alpha_i |i angle.r
+  $
+  where $alpha_i in bb(C)$ are complex amplitudes satisfying the normalization condition $sum_(i=0)^(2^n - 1) |alpha_i|^2 = 1$, and $|i angle.r$ denotes the computational basis states.
+]
+
+#definition([Quantum Gate])[
+  A _quantum gate_ is a unitary transformation that acts on quantum states, represented mathematically by a unitary matrix $U$ satisfying $U U^dagger = I$. For single-qubit gates, $U in bb(C)^(2 times 2)$, while $k$-qubit gates have $U in bb(C)^(2^k times 2^k)$. The gate transforms a quantum state according to:
+  $
+  |psi angle.r arrow.r.bar U |psi angle.r
+  $
+  In tensor network representation, quantum gates become tensors where:
+  - Single-qubit gates are rank-2 tensors (matrices)
+  - Multi-qubit gates are higher-rank tensors with indices corresponding to input and output qubits
+]
+
+Quantum circuits map naturally onto tensor networks through this correspondence, transforming quantum circuit simulation into tensor network contraction problems.
 
 *Initial state representation*: A quantum system initialized to $|0 angle.r^(times.circle n)$ (the $n$-fold tensor product of computational zero states) decomposes as a product of independent single-qubit states:
 
@@ -1228,7 +1387,7 @@ where each $|0 angle.r = mat(1; 0)$ state appears as a rank-1 tensor in the netw
   line("init", (1, -3))
 }), numbering: none)
 
-*Multi-qubit gates*: Two-qubit and multi-qubit gates create richer tensor network structures by introducing shared virtual indices between previously independent qubits. The CNOT gate, which creates entanglement between qubits, admits the tensor network decomposition:
+*Multi-qubit gates*: Two-qubit and multi-qubit gates create richer tensor network structures by introducing shared virtual indices between previously independent qubits. The CNOT gate, which generates entanglement between qubits, admits the tensor network decomposition:
 
 #figure(canvas({
   import draw: *
@@ -1254,10 +1413,10 @@ where each $|0 angle.r = mat(1; 0)$ state appears as a rank-1 tensor in the netw
   line("H2", "H3")
 }), numbering: none)
 
-This decomposition (up to normalization) reveals a key insight: two-qubit gates create *entanglement* by establishing shared virtual bonds between previously independent qubits. These virtual indices carry the quantum correlations that classical systems cannot efficiently represent.
+This decomposition (up to normalization) reveals a fundamental insight: two-qubit gates create *entanglement* by establishing shared virtual bonds between previously independent qubits. These virtual indices carry the quantum correlations that classical systems cannot efficiently represent.
 
 === Useful Circuit Identities
-The graphical nature of tensor networks makes quantum circuit identities visually obvious, often revealing why certain simplifications work at an intuitive level. These identities become powerful tools for circuit optimization and theoretical analysis.
+The graphical nature of tensor networks renders quantum circuit identities visually apparent, often revealing why certain simplifications work at an intuitive level. These identities become powerful tools for circuit optimization and theoretical analysis.
 
 *Identity 1: Hadamard basis transformation*
 #figure(canvas({
@@ -1443,9 +1602,17 @@ Question: How to compute $angle.l "GHZ"|O|"GHZ" angle.r$ and what is the complex
 
 == Example: Hadamard test
 
-The Hadamard test is a quantum algorithm used to estimate the expectation value of a unitary operator $U$ with respect to a quantum state $|psi angle.r$. It provides a way to measure $angle.l psi | U | psi angle.r$ using an ancilla qubit.
-
-*Hadamard test circuit*
+#theorem([Hadamard Test])[
+  The _Hadamard test_ is a quantum algorithm that estimates the expectation value of a unitary operator $U$ with respect to a quantum state $|psi angle.r$ using a single ancilla qubit. The algorithm measures the expectation value:
+  $
+  angle.l psi | U | psi angle.r = angle.l Z angle.r_"ancilla"
+  $
+  where the measurement is performed on the ancilla qubit in the computational basis after applying the Hadamard test circuit.
+  
+  Specifically, measuring the ancilla qubit in the $Z$-basis yields:
+  - $angle.l Z angle.r_"ancilla" = "Re"(angle.l psi | U | psi angle.r)$ for the standard Hadamard test
+  - $angle.l X angle.r_"ancilla" = "Im"(angle.l psi | U | psi angle.r)$ for the modified Hadamard test (with additional $S$ gate)
+]
 
 The Hadamard test circuit is shown below:
 
@@ -1739,7 +1906,17 @@ Then we have
 #dev([
 == ZX calculus
 
-The ZX-calculus@Duncan2019 is a graphical language for reasoning about quantum circuits and processes. It represents quantum operations as diagrams composed of nodes (spiders) and wires, governed by rewrite rules that preserve quantum mechanical equivalence. Unlike traditional tensor networks, ZX-calculus provides a complete graphical language—any equation that holds between quantum processes can be derived using ZX rules.
+#definition([ZX Calculus])[
+  The _ZX calculus_ is a complete graphical language for representing and reasoning about quantum circuits and processes. It consists of:
+  - _Z-spiders_ (green nodes): representing rotations around the Z-axis and computational basis operations  
+  - _X-spiders_ (red nodes): representing rotations around the X-axis and superposition operations
+  - _Wires_: connecting spiders and representing quantum information flow
+  - _Rewrite rules_: graphical transformations that preserve quantum mechanical equivalence
+  
+  The calculus is _complete_, meaning any equation that holds between quantum processes can be derived using the graphical rewrite rules. Unlike traditional tensor networks that focus on efficient computation, ZX calculus emphasizes formal reasoning and proof verification in quantum mechanics.
+]
+
+This graphical language represents quantum operations as diagrams governed by rewrite rules that preserve quantum mechanical equivalence, providing a powerful tool for quantum circuit optimization and verification.
 
 The two spiders are defined as follows:
 #let zspider(loc, phase: none, name: none) = {
@@ -2029,15 +2206,19 @@ Quantum channels represent the evolution of open quantum systems, capturing both
 
 == Kraus operators
 
-A quantum channel $cal(E)$ can be represented using Kraus operators ${K_i}$ such that for any density matrix $rho$:
+#definition([Kraus Operators])[
+  _Kraus operators_ provide a mathematical representation of quantum channels describing the evolution of open quantum systems. A quantum channel $cal(E)$ acting on density matrices is characterized by a set of Kraus operators $\{K_i\}$ such that:
+  $
+  cal(E)(rho) = sum_i K_i rho K_i^dagger
+  $
+  where $rho$ is any density matrix. The Kraus operators must satisfy the _completeness relation_:
+  $
+  sum_i K_i^dagger K_i = I
+  $
+  This representation ensures the map is _completely positive_ (CP) and _trace-preserving_ (TP), meaning it preserves the positivity and normalization of density matrices, corresponding to valid quantum evolution.
+]
 
-$ cal(E)(rho) = sum_i K_i rho K_i^dagger $
-
-where the Kraus operators satisfy the completeness relation:
-
-$ sum_i K_i^dagger K_i = I $
-
-Kraus operators are a *completely positive (CP) and trace preserving (TP) map* on the density matrix space, which is a linear map that preserves the positivity and the probability of the density matrix.
+This formalism captures both unitary evolution and decoherence effects, enabling the description of realistic quantum systems interacting with their environment.
 
 #exampleblock([
 This formalism allows us to describe various noise processes:
@@ -2239,21 +2420,21 @@ In the path-integral point of view, we either pick the first term or the second 
 = Quantum Error Correction
 Quantum error correction (QEC) addresses a fundamental challenge in quantum computing: protecting fragile quantum information from inevitable errors caused by environmental decoherence, imperfect control systems, and gate imperfections@nielsen2010quantum@gottesman1997stabilizer@calderbank1996good.
 
-*Core principle*: QEC works by encoding logical quantum information into a larger physical Hilbert space with built-in redundancy. This encoding creates "error syndromes" that reveal error locations without destroying the logical information—a delicate balance unique to quantum mechanics.
+*Core principle*: QEC operates by encoding logical quantum information into a larger physical Hilbert space with built-in redundancy. This encoding creates "error syndromes" that reveal error locations without destroying the logical information—a delicate balance unique to quantum mechanics.
 
 *Stabilizer formalism*: Most practical QEC schemes are described using the elegant stabilizer formalism, which characterizes quantum codes through their symmetries rather than explicit state vectors.
 
 == Stabilizers and Quantum Codes
 The stabilizer formalism provides an algebraic framework for constructing and analyzing quantum error-correcting codes through group theory.
 
-#definition([Pauli Group and Stabilizer Group], [The _$n$-qubit Pauli group_ is the group generated by tensor products of single-qubit Pauli matrices@gaitan2008quantum:
+#definition([Pauli Group and Stabilizer Group])[The _$n$-qubit Pauli group_ is the group generated by tensor products of single-qubit Pauli matrices@gaitan2008quantum:
 $
 cal(P)_n = {plus.minus 1, plus.minus i} times {I, X, Y, Z}^(times.circle n)
 $
 Elements of this group are called _Pauli operators_ or _Pauli strings_.
 
-A _stabilizer group_ $cal(S)$ is an Abelian subgroup of $cal(P)_n$ that contains only operators with eigenvalue $+1$ on all code states. The requirement of commutativity ensures that stabilizer measurements are compatible and don't disturb each other.
-])
+A _stabilizer group_ $cal(S)$ is an Abelian subgroup of $cal(P)_n$ that contains only operators with eigenvalue $+1$ on all code states. The requirement of commutativity ensures that stabilizer measurements are compatible and do not disturb each other.
+]
 
 *Generator structure*: Any stabilizer group can be specified by a set of independent generators ${S_a}_(a=1,dots,m)$:
 $
@@ -2266,23 +2447,21 @@ $
 - All generators yield $+1$: state remains in code space  
 - Any generator yields $-1$: error detected, creating an "error syndrome"
 
-*Crucial insight*: Stabilizer measurements preserve quantum information because they project onto subspaces (code space or error spaces) rather than classical bit values. The logical quantum state remains coherent within these subspaces.
+*Key insight*: Stabilizer measurements preserve quantum information because they project onto subspaces (code space or error spaces) rather than classical bit values. The logical quantum state remains coherent within these subspaces.
 
 
-#definition(
-  [Quantum Code],[
+#definition([Quantum Code])[
     An $[[n,k,d]]$ quantum code encodes $k$ logical qubits into $n$ physical qubits with minimum distance $d$. The parameters have precise meanings:
     - $n$: number of physical qubits required
     - $k$: number of logical qubits protected  
     - $d$: minimum weight of Pauli operators that can transform one codeword into a different codeword
     
     The distance $d$ determines error-correcting capability: the code can detect up to $d-1$ errors and correct up to $floor((d-1)/2)$ errors.
-  ])
+  ]
 
 *Code specification*: An $[[n,k,d]]$ quantum code is typically specified by providing $n-k$ independent stabilizer generators, with the remaining degrees of freedom corresponding to the $k$ logical qubits.
 
-#definition(
-  [CSS Code@calderbank1996good@steane1996error@steane1996multiple],[
+#definition([CSS Code@calderbank1996good@steane1996error@steane1996multiple])[
     A quantum stabilizer code is called a _Calderbank-Shor-Steane (CSS) code_ if its stabilizer group can be generated entirely by Pauli operators containing only $X$ or only $Z$ (no $Y$ operators):
     
     $
@@ -2291,7 +2470,6 @@ $
     
     This structure enables classical error correction techniques to be applied separately to bit-flip ($X$) and phase-flip ($Z$) errors.
   ]
-)
 *Practical significance*: CSS codes represent a large and important class of quantum error-correcting codes that can be constructed using classical error correction principles. Many of the most practical quantum codes, including surface codes and color codes, belong to this family due to their relatively simple implementation requirements.
 
 == Surface code
@@ -2375,29 +2553,27 @@ Also we can have different sizes of the surface code.
 == Decoding problem
 If some Pauli errors happened, some of the stabilizers will be anti-commute with the errors. When we measure them We usually call the measurement outcome of the all stabilizers as syndrome. The decoding problem is given the syndrome, find the probable error pattern that is consistent with the syndrome.
 
-#definition(
-  [MLE Problem],[
-    The most-likely error(MLE) problem is given the syndrome, find the most probable error pattern that is consistent with the syndrome. 
+#definition([MLE Problem])[
+    The most-likely error (MLE) problem is given the syndrome, find the most probable error pattern that is consistent with the syndrome. 
     $
     op("argmax",
      limits: #true)_(e) p(e) \ 
      "s.t." H(e) = s
     $
     where $H(e)$ is the syndrome of the error pattern $e$.
-  ])
+  ]
 
 For a given error, applying any stabilizer to it leaves the syndrome unchanged. All such errors within the same degenerate class have an equivalent effect on the logical information. Thus, a better decoding approach than MLE is MLD (Maximum Likelihood Decoding), which directly determines the most probable logical effect of the error rather than the exact physical error.
 
-#definition(
-  [MLD Problem],[
-    The maximum likelihood decoding(MLD) problem is given the syndrome, find the most probable logical state by summing over all the error patterns that belong to the same degenerate class and are consistent with the syndrome. 
+#definition([MLD Problem])[
+    The maximum likelihood decoding (MLD) problem is given the syndrome, find the most probable logical state by summing over all the error patterns that belong to the same degenerate class and are consistent with the syndrome. 
     $
     op("argmax",
      limits: #true)_(l) p(l) = op("argmax",
      limits: #true)_(l)sum_(L(e) = l \ H(e) = s) p(e)
     $
     where $H(e)$ is the syndrome of the error pattern $e$, $L(e)$ is the logical information of the error pattern $e$.
-  ])
+  ]
 
 As shown, the MLD decoding problem involves summing over all error patterns within the same degenerate class that match the observed syndrome. This structure naturally lends itself to tensor network contraction methods. In the following section, we will introduce tensor network-based MLD decoder. Now we will give an example of the decoding problem.
 
@@ -2506,7 +2682,6 @@ The variables connected to the depolarizing channel represent Boolean variables 
 
   content((rel: (0, -1.1), to: "check-label"), text(25pt)[$...$])
 
-  content((rel: (2.1, 0.2), to: "check-label"), text(25pt)[$:$])
 
   content((rel: (6, 0), to: "check-label"), text(12pt)[$T(j_1, j_2, j_3, ..., j_k) = cases(1 "if" j_1 + j_2 + ... + j_k "is even",
   0 "if" j_1 + j_2 + ... + j_k "is odd",)
