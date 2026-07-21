@@ -1,4 +1,4 @@
-#import "@preview/cetz:0.4.0": canvas, draw, tree, coordinate
+#import "@preview/cetz:0.4.2": canvas, draw, tree, coordinate
 #import "@preview/cetz-plot:0.1.2": *
 #import "@preview/ctheorems:1.1.3": *
 #import "@preview/ouset:0.2.0": ouset
@@ -20,7 +20,7 @@
 #let corollary = thmbox("corollary", "Corollary", base: "theorem", stroke: none, fill: rgb("#f0f9e8"), namefmt: x => [(#strong[Corollary #x.])], titlefmt: x => [(#emph[#x])])
 #let proposition = thmbox("proposition", "Proposition", base: "theorem", stroke: none, fill: rgb("#f0f9e8"), namefmt: x => [(#strong[Proposition #x.])], titlefmt: x => [(#emph[#x])])
 #let proof = thmproof("proof", "Proof")
-#let ket(it) = [$|#it angle.r$]
+#let ket(it) = [$|#it chevron.r$]
 
 // hide contents under development
 #let hide-dev = true
@@ -80,7 +80,7 @@ The framework exhibits remarkable universality, emerging across diverse domains:
   $
   v_i mapsto f(v_1, dots, v_(i-1), v_i, v_(i+1), dots, v_k)
   $
-  is linear. The canonical example is the inner product $angle.l x, y angle.r$, which is _bilinear_—linear in $x$ when $y$ is fixed, and linear in $y$ when $x$ is fixed.
+  is linear. The canonical example is the inner product $chevron.l x, y chevron.r$, which is _bilinear_—linear in $x$ when $y$ is fixed, and linear in $y$ when $x$ is fixed.
 ]
 
 To build intuition, we begin by recalling that a function $f$ is _linear_ if it satisfies the fundamental properties of additivity, where $f(x + y) = f(x) + f(y)$ for any vectors $x$ and $y$, and homogeneity, where $f(alpha x) = alpha f(x)$ for any scalar $alpha$. 
@@ -97,7 +97,7 @@ This expression exemplifies a _tensor contraction_—a multilinear map where the
 Identify the multilinear algebra in the following expression
 1. scalar product: $f(x, y, z) = x y z$
 2. trace multiplication: $f(A, B, C) = tr(A B C)$
-3. kronecker product: $f(X, Y, Z) = X times.circle Y times.circle Z$
+3. kronecker product: $f(X, Y, Z) = X times.o Y times.o Z$
 4. addition: $f(x, y, z) = x + y + z$
 
 #solution([
@@ -138,7 +138,7 @@ $ <eq:matrix-multiplication-contraction>
 In the following discussion, we will ignore the set notation and use the more compact subscript notation for the variable sets: $(A B)_(i k) = sum_j A_(i j) B_(j k)$.
 ])
 
-*Generalization*: This definition introduces a minor generalization of the standard tensor network definition commonly used in physics. It allows a label to appear more than twice across the tensors in the network, deviating from the conventional practice of restricting each label to two appearances. This generalized form, while maintaining the same level of representational power, has been demonstrated to potentially reduce the network's treewidth, a metric that measures its connectivity.
+*Generalization*: This definition introduces a minor generalization of the standard tensor network definition commonly used in physics. It allows a label to appear more than twice across the tensors in the network, deviating from the conventional practice of restricting each label to two appearances. This generalized form, while maintaining the same level of representational power, has been demonstrated to potentially reduce the network's treewidth, a metric that measures its evaluation complexity.
 
 #definition([Tensor network diagram])[
   A _tensor network diagram_ is a graphical representation of a tensor network that provides an intuitive visualization of the mathematical structure. In this representation:
@@ -1362,17 +1362,17 @@ The returned `gradients` is a vector of arrays, each of which is an adjoint of a
 == Quantum States and Quantum Gates
 
 #definition([Quantum State])[
-  A _quantum state_ is a mathematical representation of a quantum system described by a vector in a complex Hilbert space. For an $n$-qubit system, the quantum state $|psi angle.r$ belongs to the Hilbert space $cal(H) = (bb(C)^2)^(times.circle n) tilde.equiv bb(C)^(2^n)$, where each qubit contributes a 2-dimensional complex vector space. The state can be written as:
+  A _quantum state_ is a mathematical representation of a quantum system described by a vector in a complex Hilbert space. For an $n$-qubit system, the quantum state $|psi chevron.r$ belongs to the Hilbert space $cal(H) = (bb(C)^2)^(times.o n) tilde.equiv bb(C)^(2^n)$, where each qubit contributes a 2-dimensional complex vector space. The state can be written as:
   $
-  |psi angle.r = sum_(i=0)^(2^n - 1) alpha_i |i angle.r
+  |psi chevron.r = sum_(i=0)^(2^n - 1) alpha_i |i chevron.r
   $
-  where $alpha_i in bb(C)$ are complex amplitudes satisfying the normalization condition $sum_(i=0)^(2^n - 1) |alpha_i|^2 = 1$, and $|i angle.r$ denotes the computational basis states.
+  where $alpha_i in bb(C)$ are complex amplitudes satisfying the normalization condition $sum_(i=0)^(2^n - 1) |alpha_i|^2 = 1$, and $|i chevron.r$ denotes the computational basis states.
 ]
 
 #definition([Quantum Gate])[
   A _quantum gate_ is a unitary transformation that acts on quantum states, represented mathematically by a unitary matrix $U$ satisfying $U U^dagger = I$. For single-qubit gates, $U in bb(C)^(2 times 2)$, while $k$-qubit gates have $U in bb(C)^(2^k times 2^k)$. The gate transforms a quantum state according to:
   $
-  |psi angle.r arrow.r.bar U |psi angle.r
+  |psi chevron.r arrow.r.bar U |psi chevron.r
   $
   In tensor network representation, quantum gates become tensors where:
   - Single-qubit gates are rank-2 tensors (matrices)
@@ -1381,7 +1381,7 @@ The returned `gradients` is a vector of arrays, each of which is an adjoint of a
 
 Quantum circuits map naturally onto tensor networks through this correspondence, transforming quantum circuit simulation into tensor network contraction problems.
 
-*Initial state representation*: A quantum system initialized to $|0 angle.r^(times.circle n)$ (the $n$-fold tensor product of computational zero states) decomposes as a product of independent single-qubit states:
+*Initial state representation*: A quantum system initialized to $|0 chevron.r^(times.o n)$ (the $n$-fold tensor product of computational zero states) decomposes as a product of independent single-qubit states:
 
 #figure(canvas({
   import draw: *
@@ -1396,7 +1396,7 @@ Quantum circuits map naturally onto tensor networks through this correspondence,
   line("init", (1, -3))
 }), numbering: none)
 
-where each $|0 angle.r = mat(1; 0)$ state appears as a rank-1 tensor in the network.
+where each $|0 chevron.r = mat(1; 0)$ state appears as a rank-1 tensor in the network.
 
 *Gate representation*: Single-qubit gates correspond to rank-2 tensors (matrices) that transform individual qubits. For example, applying a Hadamard gate $H = 1/sqrt(2) mat(1, 1; 1, -1)$ to the first qubit creates the tensor network:
 
@@ -1460,7 +1460,7 @@ The graphical nature of tensor networks renders quantum circuit identities visua
   line("id", (rel: (1, 0)))
 }), numbering: none)
 
-The Hadamard gate transforms the computational basis state $|0 angle.r$ into the superposition state $|+ angle.r = (|0 angle.r + |1 angle.r)/sqrt(2)$. Graphically, this substitution can be made wherever the pattern appears.
+The Hadamard gate transforms the computational basis state $|0 chevron.r$ into the superposition state $|+ chevron.r = (|0 chevron.r + |1 chevron.r)/sqrt(2)$. Graphically, this substitution can be made wherever the pattern appears.
 
 *Identity 2: Basis rotation under conjugation*
 #figure(canvas({
@@ -1519,9 +1519,9 @@ julia> reshape(ein"ij->ijij"([1 1; 1 -1]), 4, 4)
 
 
 === Expectation Values
-Computing quantum expectation values $angle.l psi | O | psi angle.r$ requires working with both the quantum state and its complex conjugate, leading to distinctive "sandwich" tensor network patterns. This structure naturally emerges from the Born rule for quantum measurements.
+Computing quantum expectation values $chevron.l psi | O | psi chevron.r$ requires working with both the quantum state and its complex conjugate, leading to distinctive "sandwich" tensor network patterns. This structure naturally emerges from the Born rule for quantum measurements.
 
-*Mathematical setup*: For a quantum state $|psi angle.r = U|0^n angle.r$ prepared by unitary circuit $U$ and observable $O$, the expectation value becomes:
+*Mathematical setup*: For a quantum state $|psi chevron.r = U|0^n chevron.r$ prepared by unitary circuit $U$ and observable $O$, the expectation value becomes:
 
 #figure(canvas({
   import draw: *
@@ -1554,7 +1554,7 @@ Computing quantum expectation values $angle.l psi | O | psi angle.r$ requires wo
   line((2 * gap + dx, y2), "fin2")
 }), numbering: none)
 
-*Tensor network structure*: The resulting "sandwich" pattern represents the quantum mechanical formula $angle.l 0^n | U^dagger O U | 0^n angle.r$. This structure has several important features:
+*Tensor network structure*: The resulting "sandwich" pattern represents the quantum mechanical formula $chevron.l 0^n | U^dagger O U | 0^n chevron.r$. This structure has several important features:
 - The observable $O$ sits between the forward evolution $U$ and backward evolution $U^dagger$
 - Initial and final states are identical computational basis states
 - The contraction computes a scalar expectation value
@@ -1564,12 +1564,12 @@ This pattern appears throughout quantum algorithms and forms the basis for varia
 #exampleblock([
 *Example: GHZ state preparation circuit*
 
-Consider a 3-qubit quantum circuit that prepares the GHZ state $|"GHZ" angle.r = 1/sqrt(2)(|000 angle.r + |111 angle.r)$. The quantum circuit generating this state is shown below:
+Consider a 3-qubit quantum circuit that prepares the GHZ state $|"GHZ" chevron.r = 1/sqrt(2)(|000 chevron.r + |111 chevron.r)$. The quantum circuit generating this state is shown below:
 
 #align(center, quantum-circuit(
-  lstick($|0 angle.r$), $H$, ctrl(1), 1, [\ ],
-  lstick($|0 angle.r$), 1, targ(), ctrl(1), [\ ],
-  lstick($|0 angle.r$), 2, targ(), 1
+  lstick($|0 chevron.r$), $H$, ctrl(1), 1, [\ ],
+  lstick($|0 chevron.r$), 1, targ(), ctrl(1), [\ ],
+  lstick($|0 chevron.r$), 2, targ(), 1
 ))
 
 The corresponding tensor network diagram is:
@@ -1578,9 +1578,9 @@ The corresponding tensor network diagram is:
   import draw: *
   let s(it) = text(11pt, it)
   let dy = 1.5
-  tensor((0, 0), "a", s[$|0 angle.r$])
-  tensor((0, -dy), "b", s[$|0 angle.r$])
-  tensor((0, -2*dy), "c", s[$|0 angle.r$])
+  tensor((0, 0), "a", s[$|0 chevron.r$])
+  tensor((0, -dy), "b", s[$|0 chevron.r$])
+  tensor((0, -2*dy), "c", s[$|0 chevron.r$])
   tensor((1, 0), "H1", s[$H$])
   tensor((1, -dy), "H2", s[$H$])
   tensor((3, -dy), "H2b", s[$H$])
@@ -1626,33 +1626,33 @@ which can be simplified to
   line((0, 0), (0, -2*dy))
 }), numbering: none)
 
-Question: How to compute $angle.l "GHZ"|O|"GHZ" angle.r$ and what is the complexity?
+Question: How to compute $chevron.l "GHZ"|O|"GHZ" chevron.r$ and what is the complexity?
 ])
 
 == Example: Hadamard test
 
 #theorem([Hadamard Test])[
-  The _Hadamard test_ is a quantum algorithm that estimates the expectation value of a unitary operator $U$ with respect to a quantum state $|psi angle.r$ using a single ancilla qubit. The algorithm measures the expectation value:
+  The _Hadamard test_ is a quantum algorithm that estimates the expectation value of a unitary operator $U$ with respect to a quantum state $|psi chevron.r$ using a single ancilla qubit. The algorithm measures the expectation value:
   $
-  angle.l psi | U | psi angle.r = angle.l Z angle.r_"ancilla"
+  chevron.l psi | U | psi chevron.r = chevron.l Z chevron.r_"ancilla"
   $
   where the measurement is performed on the ancilla qubit in the computational basis after applying the Hadamard test circuit.
   
   Specifically, measuring the ancilla qubit in the $Z$-basis yields:
-  - $angle.l Z angle.r_"ancilla" = "Re"(angle.l psi | U | psi angle.r)$ for the standard Hadamard test
-  - $angle.l X angle.r_"ancilla" = "Im"(angle.l psi | U | psi angle.r)$ for the modified Hadamard test (with additional $S$ gate)
+  - $chevron.l Z chevron.r_"ancilla" = "Re"(chevron.l psi | U | psi chevron.r)$ for the standard Hadamard test
+  - $chevron.l X chevron.r_"ancilla" = "Im"(chevron.l psi | U | psi chevron.r)$ for the modified Hadamard test (with additional $S$ gate)
 ]
 
 The Hadamard test circuit is shown below:
 
 #align(center, quantum-circuit(
-  lstick($|0 angle.r$), $H$, ctrl(1), $H$, 1, [\ ],
-  lstick($|psi angle.r$), nwire([$n$]), gate($U$), 1
+  lstick($|0 chevron.r$), $H$, ctrl(1), $H$, 1, [\ ],
+  lstick($|psi chevron.r$), nwire([$n$]), gate($U$), 1
 ))
 
 The expectation value of $Z$ on the first qubit is given by
 $
-angle.l Z angle.r = "Re"(angle.l psi | U | psi angle.r)
+chevron.l Z chevron.r = "Re"(chevron.l psi | U | psi chevron.r)
 $
 
 The corresponding tensor network representation is:
@@ -1660,15 +1660,15 @@ The corresponding tensor network representation is:
 #figure(canvas({
   import draw: *
   let s(it) = text(11pt, it)
-  tensor((0, 0), "init", s[$|0 angle.r$])
-  tensor((0, -1), "psi", s[$|psi angle.r$])
+  tensor((0, 0), "init", s[$|0 chevron.r$])
+  tensor((0, -1), "psi", s[$|psi chevron.r$])
   tensor((1, 0), "H1", s[$H$])
   tensor((3, 0), "H2", s[$H$])
   tensor((4, 0), "Z", s[$Z$])
   tensor((5, 0), "H3", s[$H$])
   tensor((7, 0), "H4", s[$H$])
-  tensor((8, 0), "fin", s[$angle.l 0|$])
-  tensor((8, -1), "psi2", s[$angle.l psi|$])
+  tensor((8, 0), "fin", s[$chevron.l 0|$])
+  tensor((8, -1), "psi2", s[$chevron.l psi|$])
   tensor((2, -1), "U1", s[$U$])
   tensor((6, -1), "U2", s[$U$])
   line("init", "H1")
@@ -1686,13 +1686,13 @@ The corresponding tensor network representation is:
   content((4, -2), [$arrow.b$])
 
   set-origin((0, -3))
-  tensor((0, 0), "init", s[$|0 angle.r$])
-  tensor((0, -1), "psi", s[$|psi angle.r$])
+  tensor((0, 0), "init", s[$|0 chevron.r$])
+  tensor((0, -1), "psi", s[$|psi chevron.r$])
   tensor((1, 0), "H1", s[$H$])
   tensor((4, 0), "X", s[$X$])
   tensor((7, 0), "H4", s[$H$])
-  tensor((8, 0), "fin", s[$angle.l 0|$])
-  tensor((8, -1), "psi2", s[$angle.l psi|$])
+  tensor((8, 0), "fin", s[$chevron.l 0|$])
+  tensor((8, -1), "psi2", s[$chevron.l psi|$])
   tensor((2, -1), "U1", s[$U$])
   tensor((6, -1), "U2", s[$U$])
   line("init", "H1")
@@ -1708,11 +1708,11 @@ The corresponding tensor network representation is:
   content((4, -2), [$arrow.b$])
 
   set-origin((0, -3))
-  tensor((0, 0), "init", s[$|0 angle.r$])
-  tensor((0, -1), "psi", s[$|psi angle.r$])
+  tensor((0, 0), "init", s[$|0 chevron.r$])
+  tensor((0, -1), "psi", s[$|psi chevron.r$])
   tensor((2, 0), "Z", s[$Z$])
-  tensor((4, 0), "fin", s[$angle.l 0|$])
-  tensor((4, -1), "psi2", s[$angle.l psi|$])
+  tensor((4, 0), "fin", s[$chevron.l 0|$])
+  tensor((4, -1), "psi2", s[$chevron.l psi|$])
   tensor((2, -1), "U1", s[$U$])
   line("init", "Z")
   line("Z", "fin")
@@ -1722,8 +1722,8 @@ The corresponding tensor network representation is:
   content((5, -0.5), [$=$])
   set-origin((6, 0))
 
-  tensor((0, -0.5), "psi", s[$|psi angle.r$])
-  tensor((2, -0.5), "psi2", s[$angle.l psi|$])
+  tensor((0, -0.5), "psi", s[$|psi chevron.r$])
+  tensor((2, -0.5), "psi2", s[$chevron.l psi|$])
   tensor((1, -0.5), "U1", s[$U$])
   line("psi", "U1")
   line("U1", "psi2")
@@ -1732,17 +1732,17 @@ The corresponding tensor network representation is:
 
 == Example: Quantum teleportation
 
-Teleportation transmits an unknown state $|psi angle.r$ from Alice to Bob using a shared Bell pair and two classical bits. The steps are: (1) prepare a Bell pair on qubits 2–3, (2) perform a Bell-basis measurement on qubits 1–2, (3) apply Pauli corrections $Z^(m_1) X^(m_2)$ on qubit 3 according to outcomes $(m_1, m_2)$.
+Teleportation transmits an unknown state $|psi chevron.r$ from Alice to Bob using a shared Bell pair and two classical bits. The steps are: (1) prepare a Bell pair on qubits 2–3, (2) perform a Bell-basis measurement on qubits 1–2, (3) apply Pauli corrections $Z^(m_1) X^(m_2)$ on qubit 3 according to outcomes $(m_1, m_2)$.
 
 === Circuit
 
 #align(center, quantum-circuit(min-row-height: 20pt,
   // Qubit 1 (Alice): |psi>, CNOT(1->2), H, M1
-  lstick($|psi angle.r$), 2, ctrl(1), $H$, meter(label: [$M_1$]), [\ ],
+  lstick($|psi chevron.r$), 2, ctrl(1), $H$, meter(label: [$M_1$]), [\ ],
   // Qubit 2 (Alice’s ancilla): H, CNOT(2->3), target from 1, M2
-  lstick($|0 angle.r$), $H$, ctrl(1), targ(), 1, meter(label: [$M_2$]), [\ ],
+  lstick($|0 chevron.r$), $H$, ctrl(1), targ(), 1, meter(label: [$M_2$]), [\ ],
   // Qubit 3 (Bob): target from 2, Pauli corrections Z^{m1}, X^{m2}
-  lstick($|0 angle.r$), 1, targ(), 1, 1, gate($X^(m_2)$), gate($Z^(m_1)$), 1
+  lstick($|0 chevron.r$), 1, targ(), 1, 1, gate($X^(m_2)$), gate($Z^(m_1)$), 1
 ))
 
 === Tensor-network diagram and simplification
@@ -2332,13 +2332,13 @@ julia> superop_dep = reshape(ein"abk,cdk->acbd"(K, conj(K)), 4, 4)
 
 === Pauli transfer matrix formulation
 
-The PTM formalism provides a powerful framework for classical simulation of noisy quantum circuits. In this representation, the normalized Pauli basis $bb(P) = {I, X, Y, Z}/sqrt(2)$ forms an orthonormal basis for the operator space, where single-qubit quantum states become vectors $|rho angle.r.double_P$ with components:
+The PTM formalism provides a powerful framework for classical simulation of noisy quantum circuits. In this representation, the normalized Pauli basis $bb(P) = {I, X, Y, Z}/sqrt(2)$ forms an orthonormal basis for the operator space, where single-qubit quantum states become vectors $|rho chevron.r.double_P$ with components:
 
-$ (|rho angle.r.double_P)_i = tr(rho P_i), quad P_i in bb(P) $
+$ (|rho chevron.r.double_P)_i = tr(rho P_i), quad P_i in bb(P) $
 
-Let us denote the superoperator (vectorized) representation of density matrix $rho$ as $|rho angle.r.double$. The Pauli basis representation corresponds to the following basis transformation:
+Let us denote the superoperator (vectorized) representation of density matrix $rho$ as $|rho chevron.r.double$. The Pauli basis representation corresponds to the following basis transformation:
 $
-|rho angle.r.double_P = U|rho angle.r.double
+|rho chevron.r.double_P = U|rho chevron.r.double
 \
 U = mat(
   1/sqrt(2), 0, 0, 1/sqrt(2);
@@ -2406,7 +2406,7 @@ julia> pauli_dep = SymEngine.expand.(U * superop_dep * U')
 ```
 It is a diagonal matrix $cal(D)_P = "diag"(1, 1-p, 1-p, 1-p)$, enabling efficient multi-qubit simulation via tensor decomposition:
 $
-  cal(D)_P = (1-p)I + p|0angle.r.double angle.l.double 0|
+  cal(D)_P = (1-p)I + p|0chevron.r.double chevron.l.double 0|
 $
 Or diagramatically,
 #figure(canvas({
@@ -2458,7 +2458,7 @@ The stabilizer formalism provides an algebraic framework for constructing and an
 
 #definition([Pauli Group and Stabilizer Group])[The _$n$-qubit Pauli group_ is the group generated by tensor products of single-qubit Pauli matrices@gaitan2008quantum:
 $
-cal(P)_n = {plus.minus 1, plus.minus i} times {I, X, Y, Z}^(times.circle n)
+cal(P)_n = {plus.minus 1, plus.minus i} times {I, X, Y, Z}^(times.o n)
 $
 Elements of this group are called _Pauli operators_ or _Pauli strings_.
 
@@ -2467,7 +2467,7 @@ A _stabilizer group_ $cal(S)$ is an Abelian subgroup of $cal(P)_n$ that contains
 
 *Generator structure*: Any stabilizer group can be specified by a set of independent generators ${S_a}_(a=1,dots,m)$:
 $
-cal(S) = angle.l S_1, S_2, dots, S_m angle.r
+cal(S) = chevron.l S_1, S_2, dots, S_m chevron.r
 $
 
 *Code space definition*: The quantum code space consists of all states that are $+1$ eigenvectors of every stabilizer operator. This space contains the protected logical information.
@@ -2494,7 +2494,7 @@ $
     A quantum stabilizer code is called a _Calderbank-Shor-Steane (CSS) code_ if its stabilizer group can be generated entirely by Pauli operators containing only $X$ or only $Z$ (no $Y$ operators):
     
     $
-    cal(S) = angle.l S_a angle.r_(a=1,dots,n-k), quad "where " S_a in {I, X}^(times.circle n) union {I, Z}^(times.circle n)
+    cal(S) = chevron.l S_a chevron.r_(a=1,dots,n-k), quad "where " S_a in {I, X}^(times.o n) union {I, Z}^(times.o n)
     $
     
     This structure enables classical error correction techniques to be applied separately to bit-flip ($X$) and phase-flip ($Z$) errors.
